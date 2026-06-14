@@ -2,6 +2,8 @@ package com.web_tutorial.javabackend.model.tutorial;
 
 import java.util.List;
 
+import com.web_tutorial.javabackend.model.project.Project;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,7 +15,7 @@ import jakarta.persistence.Table;
  * Model Category: Phân loại danh mục cho các bài viết.
  */
 @Entity
-@Table(name = "categoris")
+@Table(name = "categores")
 public class Category {
 
     @Id
@@ -31,6 +33,9 @@ public class Category {
     // Danh sách bài viết thuộc danh mục này
     @OneToMany(mappedBy = "category")
     private List<Tutorial> listTutorials;
+
+    @OneToMany(mappedBy = "category")
+    private List<Project> projects;
 
     public Long getId() {
         return id;

@@ -3,8 +3,10 @@ package com.web_tutorial.javabackend.model.project;
 import java.time.Instant;
 import java.util.List;
 
+import com.web_tutorial.javabackend.model.tutorial.Category;
 import com.web_tutorial.javabackend.model.user.Author;
 
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,7 +38,9 @@ public class Project {
 
     // Phân loại dự án
     @Enumerated(EnumType.STRING)
-    private Difficulty difficulty; // Độ khó
+    private Difficulty difficulty;
+
+    @ElementCollection
     private List<String> tags; // Danh sách các công nghệ
 
     // Liên kết bên ngoài
@@ -58,6 +62,10 @@ public class Project {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id")
     private Author author;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     public Long getId() {
         return id;
