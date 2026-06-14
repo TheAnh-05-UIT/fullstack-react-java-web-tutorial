@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.Tutorial;
+package com.web_tutorial.javabackend.model.tutorial;
 
 import java.util.List;
 
@@ -70,6 +70,14 @@ public class Category {
 
     public void setDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public List<Tutorial> getListTutorials() {
+        return listTutorials;
+    }
+
+    public void setListTutorials(List<Tutorial> listTutorials) {
+        this.listTutorials = listTutorials;
     }
 
 }

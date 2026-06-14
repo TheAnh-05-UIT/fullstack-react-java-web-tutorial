@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.User;
+package com.web_tutorial.javabackend.model.user;
 
 import java.time.Instant;
 import java.util.List;
@@ -70,6 +70,14 @@ public class Role {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
     }
 
 }

@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.Project;
+package com.web_tutorial.javabackend.model.project;
 
 // Trạng thái của dự án
 public enum ProjectStatus {

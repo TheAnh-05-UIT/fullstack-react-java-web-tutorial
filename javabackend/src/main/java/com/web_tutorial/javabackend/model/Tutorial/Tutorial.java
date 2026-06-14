@@ -1,8 +1,8 @@
-package com.web_tutorial.javabackend.model.Tutorial;
+package com.web_tutorial.javabackend.model.tutorial;
 
 import java.time.Instant;
 
-import com.web_tutorial.javabackend.model.User.Author;
+import com.web_tutorial.javabackend.model.user.Author;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -176,6 +176,20 @@ public class Tutorial {
         this.isDeleted = isDeleted;
     }
 
-    // Getters and Setters
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public Author getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
 
 }

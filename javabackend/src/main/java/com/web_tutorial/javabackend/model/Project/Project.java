@@ -1,9 +1,9 @@
-package com.web_tutorial.javabackend.model.Project;
+package com.web_tutorial.javabackend.model.project;
 
 import java.time.Instant;
 import java.util.List;
 
-import com.web_tutorial.javabackend.model.User.Author;
+import com.web_tutorial.javabackend.model.user.Author;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -201,6 +201,14 @@ public class Project {
 
     public void setUpdateBy(String updateBy) {
         this.updateBy = updateBy;
+    }
+
+    public Author getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
     }
 
 }

@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.User;
+package com.web_tutorial.javabackend.model.user;
 
 import java.time.Instant;
 
@@ -122,6 +122,14 @@ public class User {
 
     public void setUpdateBy(String updateBy) {
         this.updateBy = updateBy;
+    }
+
+    public Author getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
     }
 
 }

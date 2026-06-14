@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.Tutorial;
+package com.web_tutorial.javabackend.model.tutorial;
 
 public enum TutorialStatus {
     DRAFT,

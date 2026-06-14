@@ -1,10 +1,10 @@
-package com.web_tutorial.javabackend.model.User;
+package com.web_tutorial.javabackend.model.user;
 
 import java.time.Instant;
 import java.util.List;
 
-import com.web_tutorial.javabackend.model.Project.Project;
-import com.web_tutorial.javabackend.model.Tutorial.Tutorial;
+import com.web_tutorial.javabackend.model.project.Project;
+import com.web_tutorial.javabackend.model.tutorial.Tutorial;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -102,4 +102,29 @@ public class Author {
     public void setDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
     }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public List<Tutorial> getListTutorials() {
+        return listTutorials;
+    }
+
+    public void setListTutorials(List<Tutorial> listTutorials) {
+        this.listTutorials = listTutorials;
+    }
+
+    public List<Project> getListProject() {
+        return listProject;
+    }
+
+    public void setListProject(List<Project> listProject) {
+        this.listProject = listProject;
+    }
+
 }

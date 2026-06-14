@@ -1,9 +1,9 @@
-package com.web_tutorial.javabackend.model.Roadmap;
+package com.web_tutorial.javabackend.model.roadmap;
 
 import java.time.Instant;
 import java.util.List;
 
-import com.web_tutorial.javabackend.model.Project.Difficulty;
+import com.web_tutorial.javabackend.model.project.Difficulty;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.Project;
+package com.web_tutorial.javabackend.model.project;
 
 public enum Difficulty {
     BEGINNER,
