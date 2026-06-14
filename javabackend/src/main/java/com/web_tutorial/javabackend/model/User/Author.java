@@ -3,6 +3,7 @@ package com.web_tutorial.javabackend.model.User;
 import java.time.Instant;
 import java.util.List;
 
+import com.web_tutorial.javabackend.model.Project.Project;
 import com.web_tutorial.javabackend.model.Tutorial.Tutorial;
 
 import jakarta.persistence.Entity;
@@ -42,6 +43,9 @@ public class Author {
 
     @OneToMany(mappedBy = "author")
     private List<Tutorial> listTutorials;
+
+    @OneToMany(mappedBy = "author")
+    private List<Project> listProject;
 
     public Long getId() {
         return id;
