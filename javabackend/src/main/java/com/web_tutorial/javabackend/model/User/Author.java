@@ -1,6 +1,9 @@
 package com.web_tutorial.javabackend.model.User;
 
 import java.time.Instant;
+import java.util.List;
+
+import com.web_tutorial.javabackend.model.Tutorial.Tutorial;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -35,6 +39,9 @@ public class Author {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "author")
+    private List<Tutorial> listTutorials;
 
     public Long getId() {
         return id;

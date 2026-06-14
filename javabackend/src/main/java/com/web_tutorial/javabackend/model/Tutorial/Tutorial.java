@@ -2,6 +2,8 @@ package com.web_tutorial.javabackend.model.Tutorial;
 
 import java.time.Instant;
 
+import com.web_tutorial.javabackend.model.User.Author;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -49,6 +51,10 @@ public class Tutorial {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private Author author;
 
     public Long getId() {
         return id;
