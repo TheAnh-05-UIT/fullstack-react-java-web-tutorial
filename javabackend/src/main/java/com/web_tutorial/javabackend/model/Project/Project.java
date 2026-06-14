@@ -2,7 +2,6 @@ package com.web_tutorial.javabackend.model.Project;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Locale.Category;
 
 import com.web_tutorial.javabackend.model.User.Author;
 
