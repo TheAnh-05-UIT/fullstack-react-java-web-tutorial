@@ -1,11 +1,13 @@
 package com.web_tutorial.javabackend.model.User;
 
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 /**
@@ -25,6 +27,10 @@ public class Role {
 
     private Instant createdAt;
     private Instant updatedAt;
+
+    // role one to many user
+    @OneToMany(mappedBy = "role")
+    private List<User> users;
 
     public Long getId() {
         return id;

@@ -2,13 +2,19 @@ package com.web_tutorial.javabackend.model.User;
 
 import java.time.Instant;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
  * Model User: Quản lý thông tin tài khoản đăng nhập và phân quyền hệ thống.
  */
+@Entity
+@Table(name = "users")
 public class User {
 
     @Id
@@ -21,14 +27,17 @@ public class User {
     private String password; // Mật khẩu đã được mã hóa
     private String avatar; // Đường dẫn URL ảnh đại diện
 
-    // Liên kết với bảng phân quyền Role
-    private Role role;
-
     // Lưu thời gian và người thao tác
     private Instant createdAt;
     private String createBy;
     private Instant updatedAt;
     private String updateBy;
+
+    // Liên kết với bảng phân quyền Role
+    // user many to one role
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    private Role role;
 
     public Long getId() {
         return id;
