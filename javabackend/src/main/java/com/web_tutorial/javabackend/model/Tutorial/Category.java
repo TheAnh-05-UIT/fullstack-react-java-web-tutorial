@@ -1,9 +1,12 @@
 package com.web_tutorial.javabackend.model.Tutorial;
 
+import java.util.List;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 /**
@@ -24,6 +27,10 @@ public class Category {
 
     // Tracking
     private boolean isDeleted;
+
+    // Danh sách bài viết thuộc danh mục này
+    @OneToMany(mappedBy = "category")
+    private List<Tutorial> listTutorials;
 
     public Long getId() {
         return id;
