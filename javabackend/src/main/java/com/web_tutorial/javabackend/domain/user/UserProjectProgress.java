@@ -1,8 +1,8 @@
-package com.web_tutorial.javabackend.model.user;
+package com.web_tutorial.javabackend.domain.user;
 
 import java.time.Instant;
 
-import com.web_tutorial.javabackend.model.project.Project;
+import com.web_tutorial.javabackend.domain.project.Project;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import com.web_tutorial.javabackend.model.roadmap.Roadmap;
+import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.repository.roadmap.RoadmapRepository;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
 

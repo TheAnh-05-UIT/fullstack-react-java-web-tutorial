@@ -1,8 +1,8 @@
-package com.web_tutorial.javabackend.model.tutorial;
+package com.web_tutorial.javabackend.domain.tutorial;
 
 import java.util.List;
 
-import com.web_tutorial.javabackend.model.project.Project;
+import com.web_tutorial.javabackend.domain.project.Project;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

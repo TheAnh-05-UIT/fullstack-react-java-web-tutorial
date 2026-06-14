@@ -3,7 +3,7 @@ package com.web_tutorial.javabackend.service.roadmap;
 import java.util.List;
 import java.util.Optional;
 
-import com.web_tutorial.javabackend.model.roadmap.Roadmap;
+import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 
 public interface RoadmapService {
     List<Roadmap> getAllRoadmaps();

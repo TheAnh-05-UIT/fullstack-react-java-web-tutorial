@@ -1,7 +1,9 @@
 package com.web_tutorial.javabackend.service.user;
 
-import com.web_tutorial.javabackend.model.user.User;
 import java.util.Optional;
+
+import com.web_tutorial.javabackend.domain.user.User;
+
 import java.util.List;
 
 public interface UserService {

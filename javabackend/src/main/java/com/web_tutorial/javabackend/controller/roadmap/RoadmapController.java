@@ -1,6 +1,6 @@
 package com.web_tutorial.javabackend.controller.roadmap;
 
-import com.web_tutorial.javabackend.model.roadmap.Roadmap;
+import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

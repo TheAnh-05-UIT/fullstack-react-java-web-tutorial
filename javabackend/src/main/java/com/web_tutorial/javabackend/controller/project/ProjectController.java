@@ -1,6 +1,6 @@
 package com.web_tutorial.javabackend.controller.project;
 
-import com.web_tutorial.javabackend.model.project.Project;
+import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.service.project.ProjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

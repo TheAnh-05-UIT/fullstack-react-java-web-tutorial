@@ -1,11 +1,11 @@
 package com.web_tutorial.javabackend.repository.tutorial;
 
-import com.web_tutorial.javabackend.model.tutorial.Category;
-
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.web_tutorial.javabackend.domain.tutorial.Category;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {

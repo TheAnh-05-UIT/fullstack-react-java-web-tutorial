@@ -1,6 +1,6 @@
 package com.web_tutorial.javabackend.controller.user;
 
-import com.web_tutorial.javabackend.model.user.User;
+import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.service.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

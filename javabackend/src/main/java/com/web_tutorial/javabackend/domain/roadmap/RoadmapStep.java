@@ -1,9 +1,9 @@
-package com.web_tutorial.javabackend.model.roadmap;
+package com.web_tutorial.javabackend.domain.roadmap;
 
 import java.time.Instant;
 
-import com.web_tutorial.javabackend.model.project.Project;
-import com.web_tutorial.javabackend.model.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.project.Project;
+import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

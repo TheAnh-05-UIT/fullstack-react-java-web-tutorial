@@ -1,4 +1,4 @@
-package com.web_tutorial.javabackend.model.user;
+package com.web_tutorial.javabackend.domain.user;
 
 import java.time.Instant;
 

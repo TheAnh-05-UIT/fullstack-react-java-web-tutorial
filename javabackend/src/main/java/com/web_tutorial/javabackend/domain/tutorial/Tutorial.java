@@ -1,12 +1,9 @@
-package com.web_tutorial.javabackend.model.project;
+package com.web_tutorial.javabackend.domain.tutorial;
 
 import java.time.Instant;
-import java.util.List;
 
-import com.web_tutorial.javabackend.model.tutorial.Category;
-import com.web_tutorial.javabackend.model.user.Author;
+import com.web_tutorial.javabackend.domain.user.Author;
 
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,39 +16,31 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 /**
- * Model Project: Lưu trữ thông tin các dự án thực hành.
+ * Model Tutorial: Lưu trữ thông tin chi tiết các bài viết.
  */
 @Entity
-@Table(name = "projects")
-public class Project {
+@Table(name = "tutorials")
+public class Tutorial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Thông tin nội dung cơ bản
+    // Nội dung bài viết
     private String title;
     private String slug; // Đường dẫn chuẩn SEO
-    private String description;
-    private String content; // Nội dung chi tiết
+    private String description; // Mô tả
+    private String content; // Nội dung bài viết
     private String coverImage; // URL ảnh bìa
 
-    // Phân loại dự án
+    // Thông tin thêm
+    private Integer readTime; // Thời gian đọc
+    private Long views; // Lượt xem bài viết
+
     @Enumerated(EnumType.STRING)
-    private Difficulty difficulty;
+    private TutorialStatus status; // Trạng thái
 
-    @ElementCollection
-    private List<String> tags; // Danh sách các công nghệ
-
-    // Liên kết bên ngoài
-    private String githubUrl;
-    private String demoUrl;
-    // Thống kê và Trạng thái
-    private Long views; // Số lượt xem
-    @Enumerated(EnumType.STRING)
-    private ProjectStatus status;
-
-    // Tracking thời gian
+    // Tracking
     private Instant publishedAt; // Thời điểm xuất bản
     private Instant createdAt;
     private String createBy;
@@ -60,12 +49,12 @@ public class Project {
     private boolean isDeleted; // Xóa mềm
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id")
-    private Author author;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private Author author;
 
     public Long getId() {
         return id;
@@ -115,36 +104,12 @@ public class Project {
         this.coverImage = coverImage;
     }
 
-    public Difficulty getDifficulty() {
-        return difficulty;
+    public Integer getReadTime() {
+        return readTime;
     }
 
-    public void setDifficulty(Difficulty difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public List<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<String> tags) {
-        this.tags = tags;
-    }
-
-    public String getGithubUrl() {
-        return githubUrl;
-    }
-
-    public void setGithubUrl(String githubUrl) {
-        this.githubUrl = githubUrl;
-    }
-
-    public String getDemoUrl() {
-        return demoUrl;
-    }
-
-    public void setDemoUrl(String demoUrl) {
-        this.demoUrl = demoUrl;
+    public void setReadTime(Integer readTime) {
+        this.readTime = readTime;
     }
 
     public Long getViews() {
@@ -155,11 +120,11 @@ public class Project {
         this.views = views;
     }
 
-    public ProjectStatus getStatus() {
+    public TutorialStatus getStatus() {
         return status;
     }
 
-    public void setStatus(ProjectStatus status) {
+    public void setStatus(TutorialStatus status) {
         this.status = status;
     }
 
@@ -179,12 +144,28 @@ public class Project {
         this.createdAt = createdAt;
     }
 
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
     public Instant getUpdatedAt() {
         return updatedAt;
     }
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getUpdateBy() {
+        return updateBy;
+    }
+
+    public void setUpdateBy(String updateBy) {
+        this.updateBy = updateBy;
     }
 
     public boolean isDeleted() {
@@ -195,20 +176,12 @@ public class Project {
         this.isDeleted = isDeleted;
     }
 
-    public String getCreateBy() {
-        return createBy;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setCreateBy(String createBy) {
-        this.createBy = createBy;
-    }
-
-    public String getUpdateBy() {
-        return updateBy;
-    }
-
-    public void setUpdateBy(String updateBy) {
-        this.updateBy = updateBy;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public Author getAuthor() {

@@ -1,6 +1,6 @@
 package com.web_tutorial.javabackend.controller.tutorial;
 
-import com.web_tutorial.javabackend.model.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
