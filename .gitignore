@@ -1,0 +1,40 @@
+# Spring Boot / Java
+javabackend/target/
+javabackend/*.log
+
+# Maven
+.mvn/timing.properties
+application.properties
+
+# React / Node.js
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment Variables
+.env
+
+# IDE
+.idea/
+*.iml
+
+.vscode/*
+.vscode
+!.vscode/extensions.json
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
