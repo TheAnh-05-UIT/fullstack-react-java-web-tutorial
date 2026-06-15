@@ -32,7 +32,9 @@ public class Roadmap {
 
     // Tracking
     private Instant createdAt;
+    private String createBy;
     private Instant updatedAt;
+    private String updateBy;
     private boolean isDeleted;
 
     public Long getId() {
@@ -113,6 +115,22 @@ public class Roadmap {
 
     public void setDeleted(boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    public String getUpdateBy() {
+        return updateBy;
+    }
+
+    public void setUpdateBy(String updateBy) {
+        this.updateBy = updateBy;
     }
 
 }
