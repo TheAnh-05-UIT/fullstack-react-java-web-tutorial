@@ -1,5 +1,7 @@
 package com.web_tutorial.javabackend.controller.user;
 
+import com.web_tutorial.javabackend.domain.dto.request.user.CreateUserRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.user.UpdateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.user.CreateUserResponseDTO;
 import com.web_tutorial.javabackend.domain.dto.response.user.UpdateUserResponseDTO;
 import com.web_tutorial.javabackend.domain.dto.response.user.UserResponseDTO;
@@ -8,6 +10,8 @@ import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.user.UserService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,11 +51,15 @@ public class UserController {
 
     @PostMapping
     @ApiMessage("Create a User")
-    public ResponseEntity<CreateUserResponseDTO> createUser(@RequestBody User user) throws IdInvalidException {
-        boolean isEmailExist = this.userService.existsUserByEmail(user.getEmail());
+    public ResponseEntity<CreateUserResponseDTO> createUser(
+            @RequestBody @Valid CreateUserRequestDTO requestDTO)
+            throws IdInvalidException {
+        boolean isEmailExist = this.userService.existsUserByEmail(requestDTO.getEmail());
         if (isEmailExist) {
-            throw new IdInvalidException("Email " + user.getEmail() + " already exists, please use another email.");
+            throw new IdInvalidException(
+                    "Email " + requestDTO.getEmail() + " already exists, please use another email.");
         }
+        User user = MapperUtils.toUser(requestDTO);
         User createdUser = userService.createUser(user);
         CreateUserResponseDTO userResponseDTO = MapperUtils.toCreateUserResponseDTO(createdUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponseDTO);
@@ -61,7 +69,9 @@ public class UserController {
     @ApiMessage("Update a User")
     public ResponseEntity<UpdateUserResponseDTO> updateUser(
             @PathVariable Long id,
-            @RequestBody User userDetails) throws IdInvalidException {
+            @RequestBody @Valid UpdateUserRequestDTO requestDTO) throws IdInvalidException {
+        User userDetails = new User();
+        MapperUtils.updateUserFromDTO(requestDTO, userDetails);
         User userUpdate = this.userService.updateUser(id, userDetails);
         if (userUpdate == null) {
             throw new IdInvalidException("User with Id " + id + " is invalid");

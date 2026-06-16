@@ -42,9 +42,12 @@ public class UserServiceImpl implements UserService {
         Optional<User> userById = this.userRepository.findById(id);
         if (userById.isPresent()) {
             User userUpdate = userById.get();
-            userUpdate.setUsername(userDetails.getUsername());
-            userUpdate.setEmail(userDetails.getEmail());
-            //
+            if (userDetails.getUsername() != null)
+                userUpdate.setUsername(userDetails.getUsername());
+            if (userDetails.getEmail() != null)
+                userUpdate.setEmail(userDetails.getEmail());
+            if (userDetails.getAvatar() != null)
+                userUpdate.setAvatar(userDetails.getAvatar());
             return this.userRepository.save(userUpdate);
         }
         return null;
