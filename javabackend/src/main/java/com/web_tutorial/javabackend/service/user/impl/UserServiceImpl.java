@@ -39,16 +39,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateUser(Long id, User userDetails) {
-        return this.userRepository.findById(id).map(user -> {
-            user.setUsername(userDetails.getUsername());
-            user.setEmail(userDetails.getEmail());
+        Optional<User> userById = this.userRepository.findById(id);
+        if (userById.isPresent()) {
+            User userUpdate = userById.get();
+            userUpdate.setUsername(userDetails.getUsername());
+            userUpdate.setEmail(userDetails.getEmail());
             //
-            return this.userRepository.save(user);
-        }).orElseThrow(() -> new RuntimeException("User not found with id " + id));
+            return this.userRepository.save(userUpdate);
+        }
+        return null;
     }
 
     @Override
     public void deleteUser(Long id) {
         this.userRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean existsUserByEmail(String email) {
+        return this.userRepository.existsByEmail(email);
     }
 }

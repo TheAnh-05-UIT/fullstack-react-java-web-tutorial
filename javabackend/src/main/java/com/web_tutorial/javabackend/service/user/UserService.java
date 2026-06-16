@@ -24,4 +24,7 @@ public interface UserService {
 
     // Xóa user (Soft Delete hoặc Hard Delete)
     void deleteUser(Long id);
+
+    // Tồn tại email
+    boolean existsUserByEmail(String email);
 }

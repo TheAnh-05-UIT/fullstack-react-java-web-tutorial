@@ -1,12 +1,20 @@
 package com.web_tutorial.javabackend.controller.user;
 
+import com.web_tutorial.javabackend.domain.dto.response.user.CreateUserResponseDTO;
+import com.web_tutorial.javabackend.domain.dto.response.user.UpdateUserResponseDTO;
+import com.web_tutorial.javabackend.domain.dto.response.user.UserResponseDTO;
 import com.web_tutorial.javabackend.domain.user.User;
+import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.user.UserService;
+import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -19,36 +27,57 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.getAllUsers());
+    @ApiMessage("Get All User")
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        List<User> listUser = this.userService.getAllUsers();
+        List<UserResponseDTO> listUserResponseDTOs = MapperUtils.toUserResponseDTOList(listUser);
+        return ResponseEntity.status(HttpStatus.OK).body(listUserResponseDTOs);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(user -> ResponseEntity.status(HttpStatus.OK).body(user))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get User by Id")
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) throws IdInvalidException {
+        Optional<User> userById = this.userService.getUserById(id);
+        if (!userById.isPresent()) {
+            throw new IdInvalidException("Id " + id + " does not exist");
+        }
+        UserResponseDTO userResponseDTO = MapperUtils.toUserResponseDTO(userById.get());
+        return ResponseEntity.status(HttpStatus.OK).body(userResponseDTO);
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    @ApiMessage("Create a User")
+    public ResponseEntity<CreateUserResponseDTO> createUser(@RequestBody User user) throws IdInvalidException {
+        boolean isEmailExist = this.userService.existsUserByEmail(user.getEmail());
+        if (isEmailExist) {
+            throw new IdInvalidException("Email " + user.getEmail() + " already exists, please use another email.");
+        }
         User createdUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        CreateUserResponseDTO userResponseDTO = MapperUtils.toCreateUserResponseDTO(createdUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userResponseDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        try {
-            User updatedUser = userService.updateUser(id, userDetails);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    @ApiMessage("Update a User")
+    public ResponseEntity<UpdateUserResponseDTO> updateUser(
+            @PathVariable Long id,
+            @RequestBody User userDetails) throws IdInvalidException {
+        User userUpdate = this.userService.updateUser(id, userDetails);
+        if (userUpdate == null) {
+            throw new IdInvalidException("User with Id " + id + " is invalid");
         }
+        UpdateUserResponseDTO updateUserResponseDTO = MapperUtils.toUpdateUserResponseDTO(userUpdate);
+        return ResponseEntity.status(HttpStatus.OK).body(updateUserResponseDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    @ApiMessage("Delelte a User")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) throws IdInvalidException {
+        Optional<User> deleteUser = this.userService.getUserById(id);
+        if (!deleteUser.isPresent()) {
+            throw new IdInvalidException("Id " + id + " does not exist");
+        }
+        this.userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
