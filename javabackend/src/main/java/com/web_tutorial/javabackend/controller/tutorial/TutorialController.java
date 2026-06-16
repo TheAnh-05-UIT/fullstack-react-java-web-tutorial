@@ -1,5 +1,7 @@
 package com.web_tutorial.javabackend.controller.tutorial;
 
+import com.web_tutorial.javabackend.domain.dto.request.tutorial.CreateTutorialRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.tutorial.UpdateTutorialRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
@@ -7,6 +9,8 @@ import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +62,9 @@ public class TutorialController {
 
     @PostMapping
     @ApiMessage("Create a Tutorial")
-    public ResponseEntity<TutorialResponseDTO> createTutorial(@RequestBody Tutorial tutorial) {
+    public ResponseEntity<TutorialResponseDTO> createTutorial(
+            @RequestBody @Valid CreateTutorialRequestDTO requestDTO) {
+        Tutorial tutorial = MapperUtils.toTutorial(requestDTO);
         Tutorial createdTutorial = this.tutorialService.createTutorial(tutorial);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(createdTutorial);
         return ResponseEntity.status(HttpStatus.CREATED).body(tutorialResponseDTO);
@@ -68,11 +74,13 @@ public class TutorialController {
     @ApiMessage("Update a Tutorial")
     public ResponseEntity<TutorialResponseDTO> updateTutorial(
             @PathVariable Long id,
-            @RequestBody Tutorial tutorialDetails) throws IdInvalidException {
+            @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) throws IdInvalidException {
         Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
         if (!tutorialById.isPresent()) {
             throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
         }
+        Tutorial tutorialDetails = new Tutorial();
+        MapperUtils.updateTutorialFromDTO(requestDTO, tutorialDetails);
         Tutorial updatedTutorial = this.tutorialService.updateTutorial(id, tutorialDetails);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(updatedTutorial);
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);

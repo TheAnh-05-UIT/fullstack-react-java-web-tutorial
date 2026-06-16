@@ -40,9 +40,18 @@ public class TutorialServiceImpl implements TutorialService {
     @Override
     public Tutorial updateTutorial(Long id, Tutorial tutorialDetails) {
         return this.tutorialRepository.findById(id).map(tutorial -> {
-            tutorial.setTitle(tutorialDetails.getTitle());
-            tutorial.setSlug(tutorialDetails.getSlug());
-            tutorial.setContent(tutorialDetails.getContent());
+            if (tutorialDetails.getTitle() != null)
+                tutorial.setTitle(tutorialDetails.getTitle());
+            if (tutorialDetails.getSlug() != null)
+                tutorial.setSlug(tutorialDetails.getSlug());
+            if (tutorialDetails.getDescription() != null)
+                tutorial.setDescription(tutorialDetails.getDescription());
+            if (tutorialDetails.getContent() != null)
+                tutorial.setContent(tutorialDetails.getContent());
+            if (tutorialDetails.getCoverImage() != null)
+                tutorial.setCoverImage(tutorialDetails.getCoverImage());
+            if (tutorialDetails.getStatus() != null)
+                tutorial.setStatus(tutorialDetails.getStatus());
             return this.tutorialRepository.save(tutorial);
         }).orElseThrow(() -> new RuntimeException("Tutorial not found with id " + id));
     }

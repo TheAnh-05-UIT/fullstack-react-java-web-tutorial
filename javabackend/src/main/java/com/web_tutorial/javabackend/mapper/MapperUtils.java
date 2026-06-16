@@ -7,6 +7,8 @@ import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequ
 import com.web_tutorial.javabackend.domain.dto.request.project.UpdateProjectRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.roadmap.CreateRoadmapRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.roadmap.UpdateRoadmapRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.tutorial.CreateTutorialRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.tutorial.UpdateTutorialRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.user.CreateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.user.UpdateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
@@ -157,6 +159,29 @@ public class MapperUtils {
         if (tutorials == null)
             return null;
         return tutorials.stream().map(MapperUtils::toTutorialResponseDTO).collect(Collectors.toList());
+    }
+
+    public static Tutorial toTutorial(CreateTutorialRequestDTO dto) {
+        if (dto == null)
+            return null;
+        Tutorial tutorial = new Tutorial();
+        tutorial.setTitle(dto.getTitle());
+        tutorial.setSlug(dto.getSlug());
+        tutorial.setDescription(dto.getDescription());
+        tutorial.setContent(dto.getContent());
+        tutorial.setCoverImage(dto.getCoverImage());
+        return tutorial;
+    }
+
+    public static void updateTutorialFromDTO(UpdateTutorialRequestDTO dto, Tutorial tutorial) {
+        if (dto == null || tutorial == null)
+            return;
+        tutorial.setTitle(dto.getTitle());
+        tutorial.setSlug(dto.getSlug());
+        tutorial.setDescription(dto.getDescription());
+        tutorial.setContent(dto.getContent());
+        tutorial.setCoverImage(dto.getCoverImage());
+        tutorial.setStatus(dto.getStatus());
     }
 
     // --- Roadmap Mapper ---
