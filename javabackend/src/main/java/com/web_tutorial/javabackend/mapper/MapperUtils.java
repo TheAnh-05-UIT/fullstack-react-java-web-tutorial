@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.project.UpdateProjectRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.roadmap.CreateRoadmapRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.roadmap.UpdateRoadmapRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.user.CreateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.user.UpdateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
@@ -176,5 +178,27 @@ public class MapperUtils {
         if (roadmaps == null)
             return null;
         return roadmaps.stream().map(MapperUtils::toRoadmapResponseDTO).collect(Collectors.toList());
+    }
+
+    public static Roadmap toRoadmap(CreateRoadmapRequestDTO dto) {
+        if (dto == null)
+            return null;
+        Roadmap roadmap = new Roadmap();
+        roadmap.setTitle(dto.getTitle());
+        roadmap.setSlug(dto.getSlug());
+        roadmap.setDescription(dto.getDescription());
+        roadmap.setCoverImage(dto.getCoverImage());
+        roadmap.setDifficulty(dto.getDifficulty());
+        return roadmap;
+    }
+
+    public static void updateRoadmapFromDTO(UpdateRoadmapRequestDTO dto, Roadmap roadmap) {
+        if (dto == null || roadmap == null)
+            return;
+        roadmap.setTitle(dto.getTitle());
+        roadmap.setSlug(dto.getSlug());
+        roadmap.setDescription(dto.getDescription());
+        roadmap.setCoverImage(dto.getCoverImage());
+        roadmap.setDifficulty(dto.getDifficulty());
     }
 }

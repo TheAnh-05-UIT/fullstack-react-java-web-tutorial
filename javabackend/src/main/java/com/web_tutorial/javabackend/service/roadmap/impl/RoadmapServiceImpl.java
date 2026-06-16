@@ -41,9 +41,16 @@ public class RoadmapServiceImpl implements RoadmapService {
     @Override
     public Roadmap updateRoadmap(Long id, Roadmap roadmapDetails) {
         return this.roadmapRepository.findById(id).map(roadmap -> {
-            roadmap.setTitle(roadmapDetails.getTitle());
-            roadmap.setSlug(roadmapDetails.getSlug());
-            roadmap.setDescription(roadmapDetails.getDescription());
+            if (roadmapDetails.getTitle() != null)
+                roadmap.setTitle(roadmapDetails.getTitle());
+            if (roadmapDetails.getSlug() != null)
+                roadmap.setSlug(roadmapDetails.getSlug());
+            if (roadmapDetails.getDescription() != null)
+                roadmap.setDescription(roadmapDetails.getDescription());
+            if (roadmapDetails.getCoverImage() != null)
+                roadmap.setCoverImage(roadmapDetails.getCoverImage());
+            if (roadmapDetails.getDifficulty() != null)
+                roadmap.setDifficulty(roadmapDetails.getDifficulty());
             return this.roadmapRepository.save(roadmap);
         }).orElseThrow(() -> new RuntimeException("roadmap not found with id " + id));
     }
