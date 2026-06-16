@@ -1,5 +1,6 @@
 package com.web_tutorial.javabackend.controller.project;
 
+import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
@@ -7,6 +8,8 @@ import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.project.ProjectService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +61,9 @@ public class ProjectController {
 
     @PostMapping
     @ApiMessage("Create a Project")
-    public ResponseEntity<ProjectResponseDTO> createProject(@RequestBody Project project) {
+    public ResponseEntity<ProjectResponseDTO> createProject(
+            @RequestBody @Valid CreateProjectRequestDTO requestDTO) {
+        Project project = MapperUtils.toProject(requestDTO);
         Project createdProject = projectService.createProject(project);
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(createdProject);
         return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);

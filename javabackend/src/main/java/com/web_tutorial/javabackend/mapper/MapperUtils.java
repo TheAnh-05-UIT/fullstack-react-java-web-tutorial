@@ -3,6 +3,8 @@ package com.web_tutorial.javabackend.mapper;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.project.UpdateProjectRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.user.CreateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.user.UpdateUserRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
@@ -102,6 +104,35 @@ public class MapperUtils {
         if (projects == null)
             return null;
         return projects.stream().map(MapperUtils::toProjectResponseDTO).collect(Collectors.toList());
+    }
+
+    public static Project toProject(CreateProjectRequestDTO dto) {
+        if (dto == null)
+            return null;
+        Project project = new Project();
+        project.setTitle(dto.getTitle());
+        project.setSlug(dto.getSlug());
+        project.setDescription(dto.getDescription());
+        project.setContent(dto.getContent());
+        project.setCoverImage(dto.getCoverImage());
+        project.setGithubUrl(dto.getGithubUrl());
+        project.setDemoUrl(dto.getDemoUrl());
+        project.setDifficulty(dto.getDifficulty());
+        return project;
+    }
+
+    public static void updateProjectFromDTO(UpdateProjectRequestDTO dto, Project project) {
+        if (dto == null || project == null)
+            return;
+        project.setTitle(dto.getTitle());
+        project.setSlug(dto.getSlug());
+        project.setDescription(dto.getDescription());
+        project.setContent(dto.getContent());
+        project.setCoverImage(dto.getCoverImage());
+        project.setGithubUrl(dto.getGithubUrl());
+        project.setDemoUrl(dto.getDemoUrl());
+        project.setDifficulty(dto.getDifficulty());
+        project.setStatus(dto.getStatus());
     }
 
     // --- Tutorial Mapper ---
