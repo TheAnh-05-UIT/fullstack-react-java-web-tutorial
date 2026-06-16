@@ -1,12 +1,19 @@
 package com.web_tutorial.javabackend.controller.roadmap;
 
+import com.web_tutorial.javabackend.domain.dto.response.roadmap.RoadmapResponseDTO;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
+import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
+import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/roadmaps")
@@ -19,43 +26,66 @@ public class RoadmapController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Roadmap>> getAllRoadmaps() {
-        return ResponseEntity.status(HttpStatus.OK).body(roadmapService.getAllRoadmaps());
+    @ApiMessage("Get All Roadmaps")
+    public ResponseEntity<List<RoadmapResponseDTO>> getAllRoadmaps() {
+        List<Roadmap> listRoadmap = this.roadmapService.getAllRoadmaps();
+        List<RoadmapResponseDTO> listRoadmapResponseDTOs = MapperUtils.toRoadmapResponseDTOList(listRoadmap);
+        return ResponseEntity.status(HttpStatus.OK).body(listRoadmapResponseDTOs);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Roadmap> getRoadmapById(@PathVariable Long id) {
-        return roadmapService.getRoadmapById(id)
-                .map(roadmap -> ResponseEntity.status(HttpStatus.OK).body(roadmap))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get Roadmap by Id")
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapById(@PathVariable Long id) throws IdInvalidException {
+        Optional<Roadmap> roadmapById = this.roadmapService.getRoadmapById(id);
+        if (!roadmapById.isPresent()) {
+            throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
+        }
+        RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(roadmapById.get());
+        return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<Roadmap> getRoadmapBySlug(@PathVariable String slug) {
-        return roadmapService.getRoadmapBySlug(slug)
-                .map(roadmap -> ResponseEntity.status(HttpStatus.OK).body(roadmap))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get Roadmap by slug")
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapBySlug(@PathVariable String slug)
+            throws ResourceNotFoundException {
+        Optional<Roadmap> roadmapBySlug = this.roadmapService.getRoadmapBySlug(slug);
+        if (!roadmapBySlug.isPresent()) {
+            throw new ResourceNotFoundException("Roadmap with slug " + slug + " does not exist");
+        }
+        RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(roadmapBySlug.get());
+        return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
     @PostMapping
-    public ResponseEntity<Roadmap> createRoadmap(@RequestBody Roadmap roadmap) {
+    @ApiMessage("Create a Roadmap")
+    public ResponseEntity<RoadmapResponseDTO> createRoadmap(@RequestBody Roadmap roadmap) {
         Roadmap createdRoadmap = roadmapService.createRoadmap(roadmap);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRoadmap);
+        RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(createdRoadmap);
+        return ResponseEntity.status(HttpStatus.CREATED).body(roadmapResponseDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Roadmap> updateRoadmap(@PathVariable Long id, @RequestBody Roadmap roadmapDetails) {
-        try {
-            Roadmap updatedRoadmap = roadmapService.updateRoadmap(id, roadmapDetails);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedRoadmap);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    @ApiMessage("Update a Roadmap")
+    public ResponseEntity<RoadmapResponseDTO> updateRoadmap(
+            @PathVariable Long id,
+            @RequestBody Roadmap roadmapDetails) throws IdInvalidException {
+        Optional<Roadmap> roadmapById = this.roadmapService.getRoadmapById(id);
+        if (!roadmapById.isPresent()) {
+            throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
         }
+        Roadmap updatedRoadmap = this.roadmapService.updateRoadmap(id, roadmapDetails);
+        RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(updatedRoadmap);
+        return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRoadmap(@PathVariable Long id) {
-        roadmapService.deleteRoadmap(id);
+    @ApiMessage("Delete a Roadmap")
+    public ResponseEntity<Void> deleteRoadmap(@PathVariable Long id) throws IdInvalidException {
+        Optional<Roadmap> roadmapById = this.roadmapService.getRoadmapById(id);
+        if (!roadmapById.isPresent()) {
+            throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
+        }
+        this.roadmapService.deleteRoadmap(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

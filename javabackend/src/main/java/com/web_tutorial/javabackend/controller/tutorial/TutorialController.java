@@ -1,12 +1,19 @@
 package com.web_tutorial.javabackend.controller.tutorial;
 
+import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
+import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/tutorials")
@@ -19,43 +26,66 @@ public class TutorialController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Tutorial>> getAllTutorials() {
-        return ResponseEntity.status(HttpStatus.OK).body(tutorialService.getAllTutorials());
+    @ApiMessage("Get All Tutorials")
+    public ResponseEntity<List<TutorialResponseDTO>> getAllTutorials() {
+        List<Tutorial> listTutorials = this.tutorialService.getAllTutorials();
+        List<TutorialResponseDTO> tutorialResponseDTOList = MapperUtils.toTutorialResponseDTOList(listTutorials);
+        return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTOList);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Tutorial> getTutorialById(@PathVariable Long id) {
-        return tutorialService.getTutorialById(id)
-                .map(tutorial -> ResponseEntity.status(HttpStatus.OK).body(tutorial))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get Tutorial by Id")
+    public ResponseEntity<TutorialResponseDTO> getTutorialById(@PathVariable Long id) throws IdInvalidException {
+        Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
+        if (!tutorialById.isPresent()) {
+            throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
+        }
+        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialById.get());
+        return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<Tutorial> getTutorialBySlug(@PathVariable String slug) {
-        return tutorialService.getTutorialBySlug(slug)
-                .map(tutorial -> ResponseEntity.status(HttpStatus.OK).body(tutorial))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get Tutorial by Slug")
+    public ResponseEntity<TutorialResponseDTO> getTutorialBySlug(@PathVariable String slug)
+            throws ResourceNotFoundException {
+        Optional<Tutorial> tutorialBySlug = this.tutorialService.getTutorialBySlug(slug);
+        if (!tutorialBySlug.isPresent()) {
+            throw new ResourceNotFoundException("Tutorial with slug " + slug + " does not exist");
+        }
+        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialBySlug.get());
+        return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
 
     @PostMapping
-    public ResponseEntity<Tutorial> createTutorial(@RequestBody Tutorial tutorial) {
-        Tutorial createdTutorial = tutorialService.createTutorial(tutorial);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTutorial);
+    @ApiMessage("Create a Tutorial")
+    public ResponseEntity<TutorialResponseDTO> createTutorial(@RequestBody Tutorial tutorial) {
+        Tutorial createdTutorial = this.tutorialService.createTutorial(tutorial);
+        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(createdTutorial);
+        return ResponseEntity.status(HttpStatus.CREATED).body(tutorialResponseDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Tutorial> updateTutorial(@PathVariable Long id, @RequestBody Tutorial tutorialDetails) {
-        try {
-            Tutorial updatedTutorial = tutorialService.updateTutorial(id, tutorialDetails);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedTutorial);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    @ApiMessage("Update a Tutorial")
+    public ResponseEntity<TutorialResponseDTO> updateTutorial(
+            @PathVariable Long id,
+            @RequestBody Tutorial tutorialDetails) throws IdInvalidException {
+        Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
+        if (!tutorialById.isPresent()) {
+            throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
         }
+        Tutorial updatedTutorial = this.tutorialService.updateTutorial(id, tutorialDetails);
+        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(updatedTutorial);
+        return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTutorial(@PathVariable Long id) {
-        tutorialService.deleteTutorial(id);
+    @ApiMessage("Delete a Tutorial")
+    public ResponseEntity<Void> deleteTutorial(@PathVariable Long id) throws IdInvalidException {
+        Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
+        if (!tutorialById.isPresent()) {
+            throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
+        }
+        this.tutorialService.deleteTutorial(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

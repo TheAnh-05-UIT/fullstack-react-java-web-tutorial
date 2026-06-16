@@ -1,12 +1,19 @@
 package com.web_tutorial.javabackend.controller.project;
 
+import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
 import com.web_tutorial.javabackend.domain.project.Project;
+import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.project.ProjectService;
+import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -19,43 +26,66 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Project>> getAllProjects() {
-        return ResponseEntity.status(HttpStatus.OK).body(projectService.getAllProjects());
+    @ApiMessage("Get All Projects")
+    public ResponseEntity<List<ProjectResponseDTO>> getAllProjects() {
+        List<Project> lisProjects = this.projectService.getAllProjects();
+        List<ProjectResponseDTO> projectResponseDTO = MapperUtils.toProjectResponseDTOList(lisProjects);
+        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
-        return projectService.getProjectById(id)
-                .map(project -> ResponseEntity.status(HttpStatus.OK).body(project))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get All by Id")
+    public ResponseEntity<ProjectResponseDTO> getProjectById(@PathVariable Long id) throws IdInvalidException {
+        Optional<Project> projectById = this.projectService.getProjectById(id);
+        if (!projectById.isPresent()) {
+            throw new IdInvalidException("Project with Id " + id + " does not exist");
+        }
+        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectById.get());
+        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<Project> getProjectBySlug(@PathVariable String slug) {
-        return projectService.getProjectBySlug(slug)
-                .map(project -> ResponseEntity.status(HttpStatus.OK).body(project))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    @ApiMessage("Get Project by slug")
+    public ResponseEntity<ProjectResponseDTO> getProjectBySlug(@PathVariable String slug)
+            throws ResourceNotFoundException {
+        Optional<Project> projectBySlug = this.projectService.getProjectBySlug(slug);
+        if (!projectBySlug.isPresent()) {
+            throw new ResourceNotFoundException("Project with slug " + slug + " does not exist");
+        }
+        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectBySlug.get());
+        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
     @PostMapping
-    public ResponseEntity<Project> createProject(@RequestBody Project project) {
+    @ApiMessage("Create a Project")
+    public ResponseEntity<ProjectResponseDTO> createProject(@RequestBody Project project) {
         Project createdProject = projectService.createProject(project);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProject);
+        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(createdProject);
+        return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
-        try {
-            Project updatedProject = projectService.updateProject(id, projectDetails);
-            return ResponseEntity.status(HttpStatus.OK).body(updatedProject);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    @ApiMessage("Update a Project")
+    public ResponseEntity<ProjectResponseDTO> updateProject(
+            @PathVariable Long id,
+            @RequestBody Project projectDetails) throws IdInvalidException {
+        Optional<Project> projectById = this.projectService.getProjectById(id);
+        if (!projectById.isPresent()) {
+            throw new IdInvalidException("Project with Id " + id + " does not exist");
         }
+        Project updatedProject = this.projectService.updateProject(id, projectDetails);
+        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(updatedProject);
+        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
-        projectService.deleteProject(id);
+    @ApiMessage("Delete a Project")
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) throws IdInvalidException {
+        Optional<Project> projectById = this.projectService.getProjectById(id);
+        if (!projectById.isPresent()) {
+            throw new IdInvalidException("Project with Id " + id + " does not exist");
+        }
+        this.projectService.deleteProject(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
