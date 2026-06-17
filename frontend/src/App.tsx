@@ -4,8 +4,24 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 
 import { DashboardLayout } from './pages/DashboardLayout';
-import { DashboardHome } from './pages/user/DashboardHome';
-import { AppProvider } from './context/AppContext';
+import { 
+  DashboardHome, 
+  DashboardLearning, 
+  DashboardTutorials, 
+  DashboardProjects, 
+  DashboardSettings 
+} from './pages/user';
+
+import { 
+  AdminOverview, 
+  AdminUsers, 
+  AdminTutorials, 
+  AdminProjects, 
+  AdminRoadmaps, 
+  AdminSettings 
+} from './pages/admin';
+
+import { AppProvider, useApp } from './context/AppContext';
 
 // Import Public Layout và Pages
 import { Navbar, Footer } from './components/layout';
@@ -32,16 +48,23 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode, requiredRole?: string }) {
+  const { isAuthenticated, role } = useAuth();
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
+  if (requiredRole && role !== requiredRole && role !== 'ROLE_ADMIN' && requiredRole === 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 }
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
+  const { viewMode } = useApp();
 
   return (
     <Routes>
@@ -65,6 +88,24 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<DashboardHome />} />
+        <Route path="learning" element={<DashboardLearning />} />
+        <Route path="tutorials" element={<DashboardTutorials />} />
+        <Route path="projects" element={<DashboardProjects />} />
+        <Route path="settings" element={<DashboardSettings />} />
+      </Route>
+
+      {/* Dashboard Dành Cho Admin */}
+      <Route path="/admin" element={
+        <ProtectedRoute requiredRole="ADMIN">
+          <DashboardLayout variant="admin" />
+        </ProtectedRoute>
+      }>
+        <Route index element={<AdminOverview />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="tutorials" element={<AdminTutorials />} />
+        <Route path="projects" element={<AdminProjects />} />
+        <Route path="roadmaps" element={<AdminRoadmaps />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
       
       <Route path="*" element={<Navigate to="/" replace />} />
