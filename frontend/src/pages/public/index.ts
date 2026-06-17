@@ -1,0 +1,9 @@
+export { HomePage } from './HomePage';
+export { TutorialsPage } from './TutorialsPage';
+export { TutorialDetailPage } from './TutorialDetailPage';
+export { ProjectsPage } from './ProjectsPage';
+export { ProjectDetailPage } from './ProjectDetailPage';
+export { RoadmapsPage } from './RoadmapsPage';
+export { RoadmapDetailPage } from './RoadmapDetailPage';
+export { AboutPage } from './AboutPage';
+export { RegisterPage } from './RegisterPage';
