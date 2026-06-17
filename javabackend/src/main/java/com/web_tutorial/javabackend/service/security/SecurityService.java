@@ -14,16 +14,21 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import com.web_tutorial.javabackend.config.SecurityConfiguration;
 
+// Service xử lý sinh và giải mã JWT Token
 @Service
 public class SecurityService {
 
     private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
+
+    // Tiêm các cài đặt từ file application.properties
 
     @Value("${javabackend.jwt.base64-secret}")
     private String jwtKey;
@@ -31,11 +36,15 @@ public class SecurityService {
     @Value("${javabackend.jwt.access-token-validity-in-seconds}")
     private Long jwtExpiration;
 
-    public SecurityService(JwtEncoder jwtEncoder) {
+    @Value("${javabackend.jwt.refresh-token-validity-in-seconds}")
+    private Long refreshTokenExpiration;
+
+    public SecurityService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder) {
         this.jwtEncoder = jwtEncoder;
+        this.jwtDecoder = jwtDecoder;
     }
 
-    // Tạo JWT token chuẩn OAuth2
+    // Tạo Access Token Ngắn hạn, chứa scope quyền
     public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.jwtExpiration, ChronoUnit.SECONDS);
@@ -61,9 +70,32 @@ public class SecurityService {
                 .getTokenValue();
     }
 
+    // Lấy username đang đăng nhập hiện tại từ Security Context
     public static Optional<String> getCurrentUserLogin() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));
+    }
+
+    // Tạo Refresh Token Dài hạn, không chứa scope
+    public String generateRefreshToken(String email) {
+        Instant now = Instant.now();
+        Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer("web-tutorial")
+                .issuedAt(now)
+                .expiresAt(validity)
+                .subject(email)
+                .build();
+
+        return this.jwtEncoder.encode(
+                JwtEncoderParameters.from(JwsHeader.with(SecurityConfiguration.JWT_ALGORITHM).build(), claims))
+                .getTokenValue();
+    }
+
+    // Giải mã JWT Token
+    public Jwt decodeToken(String token) {
+        return this.jwtDecoder.decode(token);
     }
 
     private static String extractPrincipal(Authentication authentication) {
