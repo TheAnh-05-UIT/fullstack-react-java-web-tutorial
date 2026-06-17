@@ -41,6 +41,11 @@ export function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
+                  onClick={(e) => {
+                    if (isActive(link.path)) {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(link.path)
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -76,17 +81,19 @@ export function Navbar() {
             <div className="hidden sm:flex items-center gap-2">
               {isAuthenticated && user ? (
                 <>
-                  <button 
-                    onClick={() => setViewMode('user')}
+                  <Link 
+                    to="/dashboard"
                     className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Avatar alt={user.username || 'User'} size="sm" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{(user.username || 'User').split(' ')[0]}</span>
-                  </button>
+                  </Link>
                   {role === 'ADMIN' && (
-                    <Button variant="secondary" size="md" onClick={() => setViewMode('admin')}>
-                      Admin
-                    </Button>
+                    <Link to="/admin">
+                      <Button variant="secondary" size="md">
+                        Admin
+                      </Button>
+                    </Link>
                   )}
                 </>
               ) : (
@@ -123,7 +130,12 @@ export function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (isActive(link.path)) {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
                   className={`px-3 py-2 rounded-lg text-sm font-medium ${isActive(link.path)
                     ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                     : 'text-gray-600 dark:text-gray-400'
@@ -136,14 +148,18 @@ export function Navbar() {
             <div className="mt-4 flex flex-col gap-2">
               {isAuthenticated && user ? (
                 <>
-                  <Button variant="ghost" className="w-full justify-center" onClick={() => setViewMode('user')}>
-                    <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
-                  </Button>
-                  {role === 'ADMIN' && (
-                    <Button variant="secondary" className="w-full justify-center" onClick={() => setViewMode('admin')}>
-                      Admin Dashboard
+                  <Link to="/dashboard" className="block w-full" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-center">
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
                     </Button>
+                  </Link>
+                  {role === 'ADMIN' && (
+                    <Link to="/admin" className="block w-full" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="secondary" className="w-full justify-center">
+                        Admin Dashboard
+                      </Button>
+                    </Link>
                   )}
                 </>
               ) : (

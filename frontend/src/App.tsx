@@ -22,6 +22,8 @@ import {
 } from './pages/admin';
 
 import { AppProvider, useApp } from './context/AppContext';
+import { ScrollToTop } from './components/ScrollToTop';
+import { BackToTop } from './components/ui';
 
 // Import Public Layout và Pages
 import { Navbar, Footer } from './components/layout';
@@ -116,9 +118,11 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <AppProvider>
           <AppRoutes />
+          <BackToTop />
         </AppProvider>
       </AuthProvider>
     </BrowserRouter>
