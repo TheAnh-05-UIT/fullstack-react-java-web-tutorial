@@ -7,9 +7,18 @@ import { DashboardLayout } from './pages/DashboardLayout';
 import { DashboardHome } from './pages/user/DashboardHome';
 import { AppProvider } from './context/AppContext';
 
-// Import Public Layout và HomePage
+// Import Public Layout và Pages
 import { Navbar, Footer } from './components/layout';
-import { HomePage } from './pages/public';
+import { 
+  HomePage, 
+  TutorialsPage, 
+  TutorialDetailPage, 
+  ProjectsPage, 
+  ProjectDetailPage, 
+  RoadmapsPage, 
+  RoadmapDetailPage, 
+  AboutPage 
+} from './pages/public';
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -39,12 +48,15 @@ function AppRoutes() {
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />} />
       
-      {/* Trang Chủ Công Khai */}
-      <Route path="/" element={
-        <PublicLayout>
-          <HomePage />
-        </PublicLayout>
-      } />
+      {/* Các Trang Công Khai */}
+      <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
+      <Route path="/tutorials" element={<PublicLayout><TutorialsPage /></PublicLayout>} />
+      <Route path="/tutorials/:id" element={<PublicLayout><TutorialDetailPage /></PublicLayout>} />
+      <Route path="/projects" element={<PublicLayout><ProjectsPage /></PublicLayout>} />
+      <Route path="/projects/:id" element={<PublicLayout><ProjectDetailPage /></PublicLayout>} />
+      <Route path="/roadmaps" element={<PublicLayout><RoadmapsPage /></PublicLayout>} />
+      <Route path="/roadmaps/:id" element={<PublicLayout><RoadmapDetailPage /></PublicLayout>} />
+      <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
       
       {/* Dashboard Dành Cho Người Dùng Đã Đăng Nhập */}
       <Route path="/dashboard" element={
