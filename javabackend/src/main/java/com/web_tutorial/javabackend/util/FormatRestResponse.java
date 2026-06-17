@@ -6,6 +6,7 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.lang.Nullable;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import com.web_tutorial.javabackend.domain.dto.response.RestResponse;
@@ -14,6 +15,7 @@ import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 import jakarta.servlet.http.HttpServletResponse;
 
 // Format tất cả response API trong hệ thống
+@RestControllerAdvice
 public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
     /**
