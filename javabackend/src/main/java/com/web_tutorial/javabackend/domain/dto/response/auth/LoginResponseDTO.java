@@ -7,6 +7,7 @@ import lombok.Setter;
 
 public class LoginResponseDTO {
     private String accessToken;
+    private String refreshToken;
     private UserLogin userLogin;
 
     // inner class
@@ -23,8 +24,9 @@ public class LoginResponseDTO {
     public LoginResponseDTO() {
     }
 
-    public LoginResponseDTO(String accessToken, UserLogin userLogin) {
+    public LoginResponseDTO(String accessToken, String refreshToken, UserLogin userLogin) {
         this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         this.userLogin = userLogin;
     }
 
@@ -34,6 +36,14 @@ public class LoginResponseDTO {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
     public UserLogin getUserLogin() {
