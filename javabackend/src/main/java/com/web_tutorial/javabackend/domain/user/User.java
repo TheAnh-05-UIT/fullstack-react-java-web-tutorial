@@ -29,6 +29,8 @@ public class User {
     private String password; // Mật khẩu đã được mã hóa
     private String avatar; // Đường dẫn URL ảnh đại diện
 
+    private String refreshToken;
+
     // Lưu thời gian và người thao tác
     private Instant createdAt;
     private String createBy;
@@ -130,6 +132,14 @@ public class User {
 
     public void setAuthor(Author author) {
         this.author = author;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 
 }

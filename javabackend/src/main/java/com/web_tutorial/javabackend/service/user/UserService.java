@@ -30,4 +30,10 @@ public interface UserService {
 
     // Tìm user theo Email
     Optional<User> getUserByEmail(String email);
+
+    // Lưu Refresh Token vào Database
+    void updateRefreshToken(String email, String refreshToken);
+
+    // Tìm User bằng Refresh Token
+    Optional<User> getUserByRefreshToken(String refreshToken);
 }

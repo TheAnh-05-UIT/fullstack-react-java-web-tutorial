@@ -67,4 +67,19 @@ public class UserServiceImpl implements UserService {
     public Optional<User> getUserByEmail(String email) {
         return this.userRepository.findByEmail(email);
     }
+
+    @Override
+    public void updateRefreshToken(String email, String refreshToken) {
+        Optional<User> userOptional = this.userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setRefreshToken(refreshToken);
+            this.userRepository.save(user);
+        }
+    }
+
+    @Override
+    public Optional<User> getUserByRefreshToken(String refreshToken) {
+        return this.userRepository.findByRefreshToken(refreshToken);
+    }
 }
