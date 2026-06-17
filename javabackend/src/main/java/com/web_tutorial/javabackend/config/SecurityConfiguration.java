@@ -2,14 +2,11 @@ package com.web_tutorial.javabackend.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
-import com.web_tutorial.javabackend.service.user.impl.UserDetailsServiceImpl;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,16 +25,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+// Cấu hình trung tâm bảo mật của ứng dụng (OAuth2 + JWT)
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfiguration {
-
-    private final UserDetailsServiceImpl userDetailsService;
-
-    // Chìa khóa bí mật dùng chung cho cả bộ Encoder và Decoder
-    // private static final String SECRET_KEY =
-    // "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
 
     @Value("${javabackend.jwt.base64-secret}")
     private String jwtKey;
@@ -47,10 +39,7 @@ public class SecurityConfiguration {
 
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
 
-    public SecurityConfiguration(UserDetailsServiceImpl userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
-
+    // Lấy secret key từ file cấu hình để mã hóa/giải mã JWT
     private SecretKey getSecretKey() {
         byte[] keyBytes = Base64.from(jwtKey).decode();
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
@@ -61,6 +50,7 @@ public class SecurityConfiguration {
         return new NimbusJwtEncoder(new ImmutableSecret<>(getSecretKey()));
     }
 
+    // Tạo JWT Decoder để xác thực token
     @Bean
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
@@ -74,30 +64,24 @@ public class SecurityConfiguration {
         };
     }
 
-    // Cấu hình luồng đi của các API
+    // Cấu hình phân quyền truy cập cho các API
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/login", "/api/v1/register").permitAll()
-                        .anyRequest().authenticated())
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
 
-                // KÍCH HOẠT TÍNH NĂNG TỰ ĐỘNG SOÁT VÉ BẰNG JWT OAUTH2 RESOURCE SERVER
+                        // Cho phép truy cập không cần token
+                        .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh").permitAll()
+                        // Yêu cầu token cho các request khác
+                        .anyRequest().authenticated())
+                // Không sử dụng Session
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // kịch hoạt tính năng kiểm tra bằng jwt oauth2 resource server
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
         return http.build();
-    }
-
-    // kiểm tra tài khoản/mật khẩu lúc đăng nhập
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
     }
 
     @Bean
@@ -105,6 +89,7 @@ public class SecurityConfiguration {
         return config.getAuthenticationManager();
     }
 
+    // Mã hóa mật khẩu
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
