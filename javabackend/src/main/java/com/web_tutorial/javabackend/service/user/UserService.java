@@ -27,4 +27,7 @@ public interface UserService {
 
     // Tồn tại email
     boolean existsUserByEmail(String email);
+
+    // Tìm user theo Email
+    Optional<User> getUserByEmail(String email);
 }
