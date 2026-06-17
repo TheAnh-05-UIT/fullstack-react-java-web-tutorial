@@ -1,4 +1,4 @@
-import { HTMLAttributes, forwardRef } from 'react';
+import { type HTMLAttributes, forwardRef } from 'react';
 
 type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
 

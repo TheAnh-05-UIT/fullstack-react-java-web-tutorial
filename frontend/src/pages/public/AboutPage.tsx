@@ -81,7 +81,7 @@ export function AboutPage() {
   });
 
   useEffect(() => {
-    api.get<{ key: string, value: string }>('/settings/ABOUT_US_CONTENT')
+      api.get<any, { key: string, value: string }>('/settings/ABOUT_US_CONTENT')
       .then(response => {
         if (response.value) {
           const data = JSON.parse(response.value);

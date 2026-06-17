@@ -23,7 +23,7 @@ export function FeaturedTutorials() {
   useEffect(() => {
     const fetchTutorials = async () => {
       try {
-        const data = await api.get<PagedResponse<Tutorial>>('/tutorials?page=0&size=3');
+        const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=3');
         if (data && data.content) {
           setTutorials(data.content);
         }

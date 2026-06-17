@@ -17,7 +17,7 @@ export function FeaturedProjects() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await api.get<PagedResponse<Project>>('/projects?page=0&size=3');
+        const data = await api.get<any, PagedResponse<Project>>('/projects?page=0&size=3');
         if (data && data.content) {
           setProjects(data.content);
         }

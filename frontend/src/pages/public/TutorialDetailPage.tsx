@@ -18,7 +18,7 @@ export function TutorialDetailPage() {
         // The Java backend ProjectController, TutorialController does have GET /{id} by default if it's standard Spring Data REST,
         // Actually earlier we added GET, POST, PUT, DELETE. Wait, did we add GET /{id}? 
         // We added standard CRUD, let's try calling it.
-        const data = await api.get<PagedResponse<Tutorial>>('/tutorials?page=0&size=100');
+        const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=100');
         const found = data?.content?.find(t => String(t.id) === id);
         setTutorial(found || null);
       } catch (error) {

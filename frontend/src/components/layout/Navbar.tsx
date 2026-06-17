@@ -80,8 +80,8 @@ export function Navbar() {
                     onClick={() => setViewMode('user')}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <Avatar src={user.avatar} alt={user.name} size="sm" />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{user.name.split(' ')[0]}</span>
+                    <Avatar alt={user.username} size="sm" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{user.username.split(' ')[0]}</span>
                   </button>
                   {role === 'ADMIN' && (
                     <Button variant="secondary" size="md" onClick={() => setViewMode('admin')}>

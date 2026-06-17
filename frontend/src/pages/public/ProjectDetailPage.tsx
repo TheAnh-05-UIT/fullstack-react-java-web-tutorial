@@ -13,7 +13,7 @@ export function ProjectDetailPage() {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const data = await api.get<PagedResponse<Project>>('/projects?page=0&size=100');
+        const data = await api.get<any, PagedResponse<Project>>('/projects?page=0&size=100');
         const found = data?.content?.find(p => String(p.id) === id);
         setProject(found || null);
       } catch (error) {

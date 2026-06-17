@@ -1,4 +1,4 @@
-import { HTMLAttributes, forwardRef, useState } from 'react';
+import { type HTMLAttributes, forwardRef, useState } from 'react';
 import { User } from 'lucide-react';
 
 interface AvatarProps extends HTMLAttributes<HTMLDivElement> {

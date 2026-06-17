@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { type InputHTMLAttributes, forwardRef } from 'react';
 import { Search } from 'lucide-react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

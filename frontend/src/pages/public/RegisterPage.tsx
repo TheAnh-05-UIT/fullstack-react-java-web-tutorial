@@ -37,10 +37,8 @@ export function RegisterPage() {
         password 
       });
       
-      login(response.token);
-      // Determine where to redirect based on decoded token? 
-      // It's a USER, so dashboard
-      navigate('/dashboard');
+      // Đăng ký thành công thì chuyển hướng về trang Đăng nhập
+      navigate('/login');
     } catch (err: any) {
       setError(err.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
     } finally {

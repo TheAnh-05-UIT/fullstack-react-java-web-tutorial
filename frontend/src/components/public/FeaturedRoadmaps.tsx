@@ -47,7 +47,7 @@ export function FeaturedRoadmaps() {
   useEffect(() => {
     const fetchRoadmaps = async () => {
       try {
-        const data = await api.get<PagedResponse<Roadmap>>('/roadmaps?page=0&size=3');
+        const data = await api.get<any, PagedResponse<Roadmap>>('/roadmaps?page=0&size=3');
         if (data && data.content) {
           setRoadmaps(data.content);
         }

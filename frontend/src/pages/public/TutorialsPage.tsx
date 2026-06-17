@@ -35,7 +35,7 @@ export function TutorialsPage() {
   const fetchTutorials = async () => {
     setIsLoading(true);
     try {
-      const data = await api.get<PagedResponse<Tutorial>>(`/tutorials?page=${currentPage}&size=10`);
+      const data = await api.get<any, PagedResponse<Tutorial>>(`/tutorials?page=${currentPage}&size=10`);
       if (data && data.content) {
         setTutorials(data.content);
         setTotalPages(data.totalPages);

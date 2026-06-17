@@ -14,7 +14,7 @@ export function RoadmapsPage() {
     const fetchRoadmaps = async () => {
       setIsLoading(true);
       try {
-        const data = await api.get<PagedResponse<Roadmap>>(`/roadmaps?page=${currentPage}&size=10`);
+        const data = await api.get<any, PagedResponse<Roadmap>>(`/roadmaps?page=${currentPage}&size=10`);
         if (data && data.content) {
           setRoadmaps(data.content);
           setTotalPages(data.totalPages);

@@ -12,7 +12,7 @@ export function RoadmapDetailPage() {
   useEffect(() => {
     const fetchRoadmap = async () => {
       try {
-        const data = await api.get<PagedResponse<Roadmap>>('/roadmaps?page=0&size=100');
+        const data = await api.get<any, PagedResponse<Roadmap>>('/roadmaps?page=0&size=100');
         const found = data?.content?.find(r => String(r.id) === id);
         setRoadmap(found || null);
       } catch (error) {

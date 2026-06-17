@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { type ButtonHTMLAttributes, forwardRef } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
