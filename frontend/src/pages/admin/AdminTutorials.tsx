@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, BookOpen } from 'lucide-react';
 import { Card, Badge, Button, SearchInput, Modal, Input } from '../../components/ui';
 import { api } from '../../services/api';
-import type { Tutorial, PagedResponse } from '../../types';
+import type { Tutorial } from '../../types';
 
 export function AdminTutorials() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
@@ -18,8 +18,8 @@ export function AdminTutorials() {
 
   const fetchTutorials = async () => {
     try {
-      const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=100');
-      setTutorials(data?.content || []);
+      const data = await api.get<any, any>('/tutorials?page=0&size=100');
+      setTutorials(Array.isArray(data) ? data : (data?.content || []));
     } catch (error) {
       console.error('Failed to fetch tutorials:', error);
     }

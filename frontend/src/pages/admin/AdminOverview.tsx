@@ -21,16 +21,16 @@ export function AdminOverview() {
     const fetchAllData = async () => {
       try {
         const [usersData, tutorialsData, projectsData] = await Promise.all([
-          api.get<any, PagedResponse<any>>('/users?page=0&size=100').then(res => res?.content || []),
-          api.get<any, PagedResponse<any>>('/tutorials?page=0&size=100').then(res => res?.content || []),
-          api.get<any, PagedResponse<any>>('/projects?page=0&size=100').then(res => res?.content || []),
+          api.get<any, any>('/users?page=0&size=100').then(res => (Array.isArray(res) ? res : res?.content) || []),
+          api.get<any, any>('/tutorials?page=0&size=100').then(res => (Array.isArray(res) ? res : res?.content) || []),
+          api.get<any, any>('/projects?page=0&size=100').then(res => (Array.isArray(res) ? res : res?.content) || []),
         ]);
 
         const users = usersData || [];
         const tutorials = tutorialsData || [];
         const projects = projectsData || [];
 
-        const totalViews = tutorials.reduce((sum, t) => sum + (t.views || 0), 0);
+        const totalViews = tutorials.reduce((sum: number, t: any) => sum + (t.views || 0), 0);
 
         setStats([
           { label: 'Total Users', value: users.length.toString() },
@@ -39,11 +39,11 @@ export function AdminOverview() {
           { label: 'Total Views', value: totalViews.toLocaleString() },
         ]);
 
-        setUsers(users.sort((a, b) => b.id - a.id).slice(0, 5));
+        setUsers(users.sort((a: any, b: any) => b.id - a.id).slice(0, 5));
 
         // Category distribution from tutorials
         const catMap = new Map<string, number>();
-        tutorials.forEach(t => {
+        tutorials.forEach((t: any) => {
           const cat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
           catMap.set(cat, (catMap.get(cat) || 0) + 1);
         });
@@ -61,7 +61,7 @@ export function AdminOverview() {
         // Weekly activity based on user registrations
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const weekData = days.map(day => ({ date: day, value: 0 }));
-        users.forEach(u => {
+        users.forEach((u: any) => {
           if (u.joinDate) {
             const d = new Date(u.joinDate).getDay();
             if (!isNaN(d)) weekData[d].value += 1;
@@ -71,11 +71,11 @@ export function AdminOverview() {
 
         // Recent activity mixed from users, tutorials, projects
         const mixed = [
-          ...users.map(u => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.name, time: u.joinDate || 'Recently', ts: u.id })),
-          ...tutorials.map(t => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: 'admin', time: t.publishDate || 'Recently', ts: t.id + 1000 })),
-          ...projects.map(p => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: 'admin', time: 'Recently', ts: p.id + 500 })),
+          ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.name, time: u.joinDate || 'Recently', ts: u.id })),
+          ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: 'admin', time: t.publishDate || 'Recently', ts: t.id + 1000 })),
+          ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: 'admin', time: 'Recently', ts: p.id + 500 })),
         ];
-        mixed.sort((a, b) => b.ts - a.ts);
+        mixed.sort((a: any, b: any) => b.ts - a.ts);
         setRecentActivities(mixed.slice(0, 5));
 
       } catch (error) {
@@ -162,7 +162,9 @@ export function AdminOverview() {
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name || 'Anonymous'}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email || 'No email'}</p>
                 </div>
-                <Badge variant={user.role === 'ADMIN' ? 'primary' : 'secondary'}>{user.role || 'USER'}</Badge>
+                <Badge variant={((user.role as any)?.name || user.role) === 'ADMIN' ? 'primary' : 'secondary'}>
+                  {((user.role as any)?.name || user.role) || 'USER'}
+                </Badge>
               </div>
             )) : (
               <p className="text-center text-gray-500 dark:text-gray-400 py-4">No users yet</p>

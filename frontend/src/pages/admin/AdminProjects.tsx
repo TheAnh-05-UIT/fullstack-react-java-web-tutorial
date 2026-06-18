@@ -18,8 +18,8 @@ export function AdminProjects() {
 
   const fetchProjects = async () => {
     try {
-      const data = await api.get<any, PagedResponse<Project>>('/projects?page=0&size=100');
-      setProjects(data?.content || []);
+      const data = await api.get<any, any>('/projects?page=0&size=100');
+      setProjects(Array.isArray(data) ? data : (data?.content || []));
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     }

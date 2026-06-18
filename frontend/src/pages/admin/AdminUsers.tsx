@@ -19,8 +19,8 @@ export function AdminUsers() {
 
   const fetchUsers = async () => {
     try {
-      const data = await api.get<any, PagedResponse<User>>('/users?page=0&size=100');
-      setUsers(data?.content || []);
+      const data = await api.get<any, any>('/users?page=0&size=100');
+      setUsers(Array.isArray(data) ? data : (data?.content || []));
     } catch (error) {
       console.error('Failed to fetch users:', error);
     }

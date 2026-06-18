@@ -18,8 +18,8 @@ export function AdminRoadmaps() {
 
   const fetchRoadmaps = async () => {
     try {
-      const data = await api.get<any, PagedResponse<Roadmap>>('/roadmaps?page=0&size=100');
-      setRoadmaps(data?.content || []);
+      const data = await api.get<any, any>('/roadmaps?page=0&size=100');
+      setRoadmaps(Array.isArray(data) ? data : (data?.content || []));
     } catch (error) {
       console.error('Failed to fetch roadmaps:', error);
     }
