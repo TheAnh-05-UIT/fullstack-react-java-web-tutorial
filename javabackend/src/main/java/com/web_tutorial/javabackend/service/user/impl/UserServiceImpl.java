@@ -48,6 +48,8 @@ public class UserServiceImpl implements UserService {
                 userUpdate.setEmail(userDetails.getEmail());
             if (userDetails.getAvatar() != null)
                 userUpdate.setAvatar(userDetails.getAvatar());
+            if (userDetails.getRole() != null)
+                userUpdate.setRole(userDetails.getRole());
             return this.userRepository.save(userUpdate);
         }
         return null;

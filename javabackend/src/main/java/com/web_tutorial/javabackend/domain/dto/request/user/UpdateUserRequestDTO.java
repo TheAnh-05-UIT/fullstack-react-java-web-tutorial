@@ -9,6 +9,8 @@ public class UpdateUserRequestDTO {
 
     private String avatar;
 
+    private String role;
+
     public String getUsername() {
         return username;
     }
@@ -23,5 +25,13 @@ public class UpdateUserRequestDTO {
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

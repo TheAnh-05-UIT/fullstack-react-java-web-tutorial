@@ -17,6 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.web_tutorial.javabackend.repository.user.RoleRepository;
+import com.web_tutorial.javabackend.domain.user.Role;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -25,9 +29,13 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     @GetMapping
@@ -60,6 +68,24 @@ public class UserController {
                     "Email " + requestDTO.getEmail() + " already exists, please use another email.");
         }
         User user = MapperUtils.toUser(requestDTO);
+        user.setPassword(this.passwordEncoder.encode(requestDTO.getPassword()));
+
+        if (requestDTO.getRole() != null) {
+            String roleName = requestDTO.getRole().toUpperCase();
+            Optional<Role> roleOpt = this.roleRepository.findByName(roleName);
+            if (roleOpt.isPresent()) {
+                user.setRole(roleOpt.get());
+            } else {
+                user.setRole(this.roleRepository.findByName("USER").orElse(null));
+            }
+        } else {
+            user.setRole(this.roleRepository.findByName("USER").orElse(null));
+        }
+
+        if (requestDTO.getAvatar() != null && !requestDTO.getAvatar().isEmpty()) {
+            user.setAvatar(requestDTO.getAvatar());
+        }
+
         User createdUser = userService.createUser(user);
         CreateUserResponseDTO userResponseDTO = MapperUtils.toCreateUserResponseDTO(createdUser);
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponseDTO);
@@ -72,6 +98,15 @@ public class UserController {
             @RequestBody @Valid UpdateUserRequestDTO requestDTO) throws IdInvalidException {
         User userDetails = new User();
         MapperUtils.updateUserFromDTO(requestDTO, userDetails);
+
+        if (requestDTO.getRole() != null) {
+            String roleName = requestDTO.getRole().toUpperCase();
+            Optional<Role> roleOpt = this.roleRepository.findByName(roleName);
+            if (roleOpt.isPresent()) {
+                userDetails.setRole(roleOpt.get());
+            }
+        }
+
         User userUpdate = this.userService.updateUser(id, userDetails);
         if (userUpdate == null) {
             throw new IdInvalidException("User with Id " + id + " is invalid");

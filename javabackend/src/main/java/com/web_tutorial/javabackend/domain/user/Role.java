@@ -3,6 +3,8 @@ package com.web_tutorial.javabackend.domain.user;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,6 +32,7 @@ public class Role {
 
     // role one to many user
     @OneToMany(mappedBy = "role")
+    @JsonIgnore
     private List<User> users;
 
     public Long getId() {
