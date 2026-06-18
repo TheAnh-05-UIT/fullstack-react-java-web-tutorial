@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, FolderKanban, Map, Bookmark, StickyNote, Award, User, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from '../ui';
 import { useApp } from '../../context/AppContext';
@@ -64,15 +64,15 @@ export function Sidebar({ variant = 'user' }: { variant?: 'user' | 'admin' }) {
         <nav className="flex-1 overflow-y-auto p-3 scrollbar-hide">
           <ul className="space-y-1">
             <li>
-              <button
-                onClick={() => setViewMode('public')}
+              <Link
+                to="/"
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 transition-all"
               >
                 <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 {sidebarOpen && <span>Back to Site</span>}
-              </button>
+              </Link>
             </li>
             <li className="h-px bg-gray-200 dark:bg-gray-800 my-3" />
             {links.map(link => (

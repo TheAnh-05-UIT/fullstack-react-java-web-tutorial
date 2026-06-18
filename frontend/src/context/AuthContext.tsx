@@ -4,7 +4,8 @@ import { api } from '../services/api';
 
 interface DecodedToken {
   sub: string;
-  role: string;
+  scope?: string;
+  role?: string;
   exp: number;
 }
 
@@ -12,6 +13,7 @@ export interface UserProfile {
   id: number;
   username: string;
   email: string;
+  role?: string;
 }
 
 interface AuthContextType {
@@ -40,8 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Cho dù access_token hết hạn, interceptor vẫn sẽ tự động refresh
           // Nên cứ tạm coi là có quyền nếu còn thẻ (refresh token sẽ gánh)
           setIsAuthenticated(true);
-          setRole(decoded.role || 'ROLE_USER');
-          setUser(JSON.parse(userStr));
+          const parsedUser = JSON.parse(userStr);
+          // Spring Boot Security puts role in "scope" claim like "ROLE_ADMIN"
+          let userRole = decoded.scope || decoded.role || parsedUser.role || 'USER';
+          if (userRole.startsWith('ROLE_')) {
+            userRole = userRole.substring(5); // Convert "ROLE_ADMIN" to "ADMIN"
+          }
+          setRole(userRole);
+          setUser(parsedUser);
         } catch (e) {
           logout();
         }
@@ -59,7 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const decoded = jwtDecode<DecodedToken>(accessToken);
       setIsAuthenticated(true);
-      setRole(decoded.role || 'ROLE_USER');
+      let userRole = decoded.scope || decoded.role || userData.role || 'USER';
+      if (userRole.startsWith('ROLE_')) {
+        userRole = userRole.substring(5); // Convert "ROLE_ADMIN" to "ADMIN"
+      }
+      setRole(userRole);
       setUser(userData);
     } catch (e) {
       console.error('Invalid token format');

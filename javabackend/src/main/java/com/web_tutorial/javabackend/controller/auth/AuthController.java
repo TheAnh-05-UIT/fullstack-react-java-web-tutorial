@@ -66,7 +66,9 @@ public class AuthController {
             LoginResponseDTO.UserLogin userLogin = new LoginResponseDTO.UserLogin(
                     userDBLogin.getId(),
                     userDBLogin.getUsername(),
-                    userDBLogin.getEmail());
+                    userDBLogin.getEmail(),
+                    userDBLogin.getRole() != null ? userDBLogin.getRole().getName() : "USER",
+                    userDBLogin.getAvatar() != null ? userDBLogin.getAvatar() : "/default-avatar.png");
             responseLoginDTO.setUserLogin(userLogin);
         }
 
@@ -111,7 +113,9 @@ public class AuthController {
             LoginResponseDTO.UserLogin userLogin = new LoginResponseDTO.UserLogin(
                     user.getId(),
                     user.getUsername(),
-                    user.getEmail());
+                    user.getEmail(),
+                    user.getRole() != null ? user.getRole().getName() : "USER",
+                    user.getAvatar() != null ? user.getAvatar() : "/default-avatar.png");
             LoginResponseDTO responseLoginDTO = new LoginResponseDTO(newAccessToken, newRefreshToken, userLogin);
 
             return ResponseEntity.ok().body(responseLoginDTO);

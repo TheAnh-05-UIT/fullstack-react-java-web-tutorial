@@ -17,8 +17,10 @@ public class LoginResponseDTO {
     @NoArgsConstructor
     public static class UserLogin {
         private long id;
-        private String name;
+        private String username;
         private String email;
+        private String role;
+        private String avatar;
     }
 
     public LoginResponseDTO() {
