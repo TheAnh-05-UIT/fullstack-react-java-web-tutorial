@@ -1,6 +1,7 @@
 package com.web_tutorial.javabackend.domain.dto.request.tutorial;
 
 import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
+import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
 import jakarta.validation.constraints.NotBlank;
 
 public class UpdateTutorialRequestDTO {
@@ -18,22 +19,61 @@ public class UpdateTutorialRequestDTO {
 
     private String coverImage;
     private TutorialStatus status;
+    private CategoryDTO category;
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getTitle() {
+        return title;
+    }
 
-    public String getSlug() { return slug; }
-    public void setSlug(String slug) { this.slug = slug; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getSlug() {
+        return slug;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
 
-    public String getCoverImage() { return coverImage; }
-    public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+    public String getDescription() {
+        return description;
+    }
 
-    public TutorialStatus getStatus() { return status; }
-    public void setStatus(TutorialStatus status) { this.status = status; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getCoverImage() {
+        return coverImage;
+    }
+
+    public void setCoverImage(String coverImage) {
+        this.coverImage = coverImage;
+    }
+
+    public TutorialStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TutorialStatus status) {
+        this.status = status;
+    }
+
+    public CategoryDTO getCategory() {
+        return category;
+    }
+
+    public void setCategory(CategoryDTO category) {
+        this.category = category;
+    }
 }

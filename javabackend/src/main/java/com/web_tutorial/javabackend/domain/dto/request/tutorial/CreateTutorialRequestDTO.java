@@ -1,6 +1,7 @@
 package com.web_tutorial.javabackend.domain.dto.request.tutorial;
 
 import jakarta.validation.constraints.NotBlank;
+import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
 
 public class CreateTutorialRequestDTO {
 
@@ -17,18 +18,53 @@ public class CreateTutorialRequestDTO {
 
     private String coverImage;
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    private CategoryDTO category;
 
-    public String getSlug() { return slug; }
-    public void setSlug(String slug) { this.slug = slug; }
+    public String getTitle() {
+        return title;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public String getSlug() {
+        return slug;
+    }
 
-    public String getCoverImage() { return coverImage; }
-    public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getCoverImage() {
+        return coverImage;
+    }
+
+    public void setCoverImage(String coverImage) {
+        this.coverImage = coverImage;
+    }
+
+    public CategoryDTO getCategory() {
+        return category;
+    }
+
+    public void setCategory(CategoryDTO category) {
+        this.category = category;
+    }
 }

@@ -1,6 +1,7 @@
 package com.web_tutorial.javabackend.domain.dto.response.tutorial;
 
 import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
+import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,4 +24,6 @@ public class TutorialResponseDTO {
     private Long viewCount;
     private Instant createdAt;
     private String createBy;
+    private String content;
+    private CategoryDTO category;
 }

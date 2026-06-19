@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.web_tutorial.javabackend.domain.user.Author;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -29,7 +30,10 @@ public class Tutorial {
     // Nội dung bài viết
     private String title;
     private String slug; // Đường dẫn chuẩn SEO
+    @Column(columnDefinition = "LONGTEXT")
     private String description; // Mô tả
+
+    @Column(columnDefinition = "LONGTEXT")
     private String content; // Nội dung bài viết
     private String coverImage; // URL ảnh bìa
 
