@@ -22,8 +22,12 @@ export function ProjectsPage() {
       setIsLoading(true);
       try {
         const url = `/projects?page=${currentPage}&size=10${difficulty !== 'All' ? `&difficulty=${difficulty}` : ''}`;
-        const data = await api.get<any, PagedResponse<Project>>(url);
-        if (data && data.content) {
+        const data = await api.get<any, any>(url);
+        if (Array.isArray(data)) {
+          setProjects(data);
+          setTotalPages(1);
+          setTotalElements(data.length);
+        } else if (data && data.content) {
           setProjects(data.content);
           setTotalPages(data.totalPages);
           setTotalElements(data.totalElements);
