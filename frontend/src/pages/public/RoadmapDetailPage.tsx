@@ -3,6 +3,15 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Map } from 'lucide-react';
 import { api } from '../../services/api';
 import type { PagedResponse, Roadmap } from '../../types';
+import { Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
+
+const iconComponents: Record<string, React.ReactNode> = {
+  'infinity': <Infinity className="w-8 h-8" />,
+  'cloud': <Cloud className="w-8 h-8" />,
+  'shield': <Shield className="w-8 h-8" />,
+  'layers': <Layers className="w-8 h-8" />,
+  'container': <Container className="w-8 h-8" />,
+};
 
 export function RoadmapDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -12,9 +21,12 @@ export function RoadmapDetailPage() {
   useEffect(() => {
     const fetchRoadmap = async () => {
       try {
-        const data = await api.get<any, PagedResponse<Roadmap>>('/roadmaps?page=0&size=100');
-        const found = data?.content?.find(r => String(r.id) === id);
-        setRoadmap(found || null);
+        const data = await api.get<any, any>(`/roadmaps/${id}`);
+        if (data && data.id) {
+          setRoadmap(data);
+        } else {
+          setRoadmap(null);
+        }
       } catch (error) {
         console.error('Failed to fetch roadmap details:', error);
       } finally {
@@ -54,8 +66,8 @@ export function RoadmapDetailPage() {
         <div className="bg-white dark:bg-gray-950 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-800 p-8 md:p-12">
           
           <div className="flex items-center gap-4 mb-6">
-            <div className={`w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${roadmap.color}`}>
-              <Map className="w-8 h-8" />
+            <div className={`w-16 h-16 rounded-xl flex items-center justify-center bg-${roadmap.color || 'primary'}-100 text-${roadmap.color || 'primary'}-700 dark:bg-${roadmap.color || 'primary'}-900/30 dark:text-${roadmap.color || 'primary'}-400`}>
+              {iconComponents[roadmap.icon] || <Map className="w-8 h-8" />}
             </div>
             <div>
               <h1 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-100">
