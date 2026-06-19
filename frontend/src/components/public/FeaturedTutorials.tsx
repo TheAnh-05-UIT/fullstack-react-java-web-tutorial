@@ -28,7 +28,9 @@ export function FeaturedTutorials() {
           setTutorials(data.content);
         }
       } catch (error) {
-        console.error('Failed to fetch tutorials:', error);
+        console.error('Failed to fetch featured tutorials:', error);
+      } finally {
+        // loading state handling if any
       }
     };
     fetchTutorials();
@@ -117,7 +119,7 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
             </div>
             <div className="flex items-center gap-1">
               <Eye className="w-3.5 h-3.5" />
-              {((tutorial.views || 0) / 1000).toFixed(1)}k
+              {(tutorial.views || 0) >= 1000 ? ((tutorial.views || 0) / 1000).toFixed(1) + 'K' : (tutorial.views || 0)}
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
