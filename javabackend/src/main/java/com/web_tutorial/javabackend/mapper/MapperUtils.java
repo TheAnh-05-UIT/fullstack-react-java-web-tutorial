@@ -19,8 +19,12 @@ import com.web_tutorial.javabackend.domain.dto.response.user.UpdateUserResponseD
 import com.web_tutorial.javabackend.domain.dto.response.user.UserResponseDTO;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
+import com.web_tutorial.javabackend.domain.roadmap.RoadmapStep;
+import com.web_tutorial.javabackend.domain.tutorial.Category;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.domain.user.User;
+import com.web_tutorial.javabackend.domain.dto.response.roadmap.RoadmapStepResponseDTO;
+import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
 
 public class MapperUtils {
 
@@ -101,7 +105,9 @@ public class MapperUtils {
                 project.getDemoUrl(),
                 project.getViews(),
                 project.getCreatedAt(),
-                project.getCreateBy());
+                project.getCreateBy(),
+                project.getContent(),
+                toCategoryDTO(project.getCategory()));
     }
 
     public static List<ProjectResponseDTO> toProjectResponseDTOList(List<Project> projects) {
@@ -122,6 +128,12 @@ public class MapperUtils {
         project.setGithubUrl(dto.getGithubUrl());
         project.setDemoUrl(dto.getDemoUrl());
         project.setDifficulty(dto.getDifficulty());
+
+        if (dto.getCategory() != null && dto.getCategory().getName() != null) {
+            Category category = new Category();
+            category.setName(dto.getCategory().getName());
+            project.setCategory(category);
+        }
         return project;
     }
 
@@ -137,6 +149,19 @@ public class MapperUtils {
         project.setDemoUrl(dto.getDemoUrl());
         project.setDifficulty(dto.getDifficulty());
         project.setStatus(dto.getStatus());
+
+        if (dto.getCategory() != null && dto.getCategory().getName() != null) {
+            Category category = new Category();
+            category.setName(dto.getCategory().getName());
+            project.setCategory(category);
+        }
+    }
+
+    // --- Category Mapper ---
+    public static CategoryDTO toCategoryDTO(Category category) {
+        if (category == null)
+            return null;
+        return new CategoryDTO(category.getId(), category.getName(), category.getSlug());
     }
 
     // --- Tutorial Mapper ---
@@ -152,7 +177,9 @@ public class MapperUtils {
                 tutorial.getStatus(),
                 tutorial.getViews(),
                 tutorial.getCreatedAt(),
-                tutorial.getCreateBy());
+                tutorial.getCreateBy(),
+                tutorial.getContent(),
+                toCategoryDTO(tutorial.getCategory()));
     }
 
     public static List<TutorialResponseDTO> toTutorialResponseDTOList(List<Tutorial> tutorials) {
@@ -170,6 +197,11 @@ public class MapperUtils {
         tutorial.setDescription(dto.getDescription());
         tutorial.setContent(dto.getContent());
         tutorial.setCoverImage(dto.getCoverImage());
+        if (dto.getCategory() != null && dto.getCategory().getName() != null) {
+            Category category = new Category();
+            category.setName(dto.getCategory().getName());
+            tutorial.setCategory(category);
+        }
         return tutorial;
     }
 
@@ -182,12 +214,31 @@ public class MapperUtils {
         tutorial.setContent(dto.getContent());
         tutorial.setCoverImage(dto.getCoverImage());
         tutorial.setStatus(dto.getStatus());
+        if (dto.getCategory() != null && dto.getCategory().getName() != null) {
+            Category category = new Category();
+            category.setName(dto.getCategory().getName());
+            tutorial.setCategory(category);
+        }
     }
 
     // --- Roadmap Mapper ---
+    public static RoadmapStepResponseDTO toRoadmapStepResponseDTO(RoadmapStep step) {
+        if (step == null)
+            return null;
+        return new RoadmapStepResponseDTO(
+                step.getId(),
+                step.getTitle(),
+                step.getDescription());
+    }
+
     public static RoadmapResponseDTO toRoadmapResponseDTO(Roadmap roadmap) {
         if (roadmap == null)
             return null;
+
+        List<RoadmapStepResponseDTO> steps = roadmap.getSteps() != null
+                ? roadmap.getSteps().stream().map(MapperUtils::toRoadmapStepResponseDTO).collect(Collectors.toList())
+                : null;
+
         return new RoadmapResponseDTO(
                 roadmap.getId(),
                 roadmap.getTitle(),
@@ -196,7 +247,11 @@ public class MapperUtils {
                 roadmap.getDifficulty(),
                 !roadmap.isDeleted(),
                 roadmap.getCreatedAt(),
-                roadmap.getCreateBy());
+                roadmap.getCreateBy(),
+                roadmap.getContent(),
+                roadmap.getIcon(),
+                roadmap.getColor(),
+                steps);
     }
 
     public static List<RoadmapResponseDTO> toRoadmapResponseDTOList(List<Roadmap> roadmaps) {
@@ -212,8 +267,11 @@ public class MapperUtils {
         roadmap.setTitle(dto.getTitle());
         roadmap.setSlug(dto.getSlug());
         roadmap.setDescription(dto.getDescription());
+        roadmap.setContent(dto.getContent());
         roadmap.setCoverImage(dto.getCoverImage());
         roadmap.setDifficulty(dto.getDifficulty());
+        roadmap.setIcon(dto.getIcon());
+        roadmap.setColor(dto.getColor());
         return roadmap;
     }
 
@@ -223,7 +281,10 @@ public class MapperUtils {
         roadmap.setTitle(dto.getTitle());
         roadmap.setSlug(dto.getSlug());
         roadmap.setDescription(dto.getDescription());
+        roadmap.setContent(dto.getContent());
         roadmap.setCoverImage(dto.getCoverImage());
         roadmap.setDifficulty(dto.getDifficulty());
+        roadmap.setIcon(dto.getIcon());
+        roadmap.setColor(dto.getColor());
     }
 }
