@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, UserPlus, Trash2, Edit2 } from 'lucide-react';
 import { Card, Badge, Button, SearchInput, Avatar, Modal, Input } from '../../components/ui';
 import { api } from '../../services/api';
-import type { User, PagedResponse } from '../../types';
+import type { User } from '../../types';
 
 export function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
@@ -75,9 +75,12 @@ export function AdminUsers() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const userName = (user as any).username || user.name || '';
+    const userRoleStr = ((user.role as any)?.name || user.role || 'USER').toLowerCase();
+    
+    const matchesSearch = userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role?.toLowerCase() === roleFilter.toLowerCase();
+    const matchesRole = roleFilter === 'all' || userRoleStr === roleFilter.toLowerCase();
     return matchesSearch && matchesRole;
   });
 
@@ -140,21 +143,21 @@ export function AdminUsers() {
                   <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <Avatar src={user.avatar} alt={user.name} size="md" />
+                        <Avatar src={user.avatar} alt={(user as any).username || user.name} size="md" />
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{user.name}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{(user as any).username || user.name}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={user.role === 'admin' ? 'primary' : 'secondary'}>
-                        {user.role === 'admin' && <Shield className="w-3 h-3" />}
-                        {user.role}
+                      <Badge variant={((user.role as any)?.name || user.role) === 'ADMIN' ? 'primary' : 'secondary'}>
+                        {((user.role as any)?.name || user.role) === 'ADMIN' && <Shield className="w-3 h-3" />}
+                        {((user.role as any)?.name || user.role)}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      {user.joinDate ? new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
+                      {(user as any).createdAt ? new Date((user as any).createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button onClick={() => handleOpenModal(user)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-blue-500 transition-colors">
