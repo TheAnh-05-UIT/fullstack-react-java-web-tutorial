@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.repository.roadmap.RoadmapRepository;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
+import java.time.Instant;
+import com.web_tutorial.javabackend.service.security.SecurityService;
 
 @Service
 public class RoadmapServiceImpl implements RoadmapService {
@@ -35,6 +37,9 @@ public class RoadmapServiceImpl implements RoadmapService {
 
     @Override
     public Roadmap createRoadmap(Roadmap roadmap) {
+        String currentUser = SecurityService.getCurrentUserLogin().orElse("System");
+        roadmap.setCreateBy(currentUser);
+        roadmap.setCreatedAt(Instant.now());
         return this.roadmapRepository.save(roadmap);
     }
 

@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "roadmaps")
@@ -23,9 +24,14 @@ public class Roadmap {
     // Thông tin chung về lộ trình
     private String title;
     private String slug;
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
+    @Column(columnDefinition = "LONGTEXT")
+    private String content;
     private String coverImage;
     private Difficulty difficulty;
+    private String icon;
+    private String color;
 
     @OneToMany(mappedBy = "roadmap")
     private List<RoadmapStep> steps;
@@ -69,6 +75,14 @@ public class Roadmap {
         this.description = description;
     }
 
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
     public String getCoverImage() {
         return coverImage;
     }
@@ -83,6 +97,22 @@ public class Roadmap {
 
     public void setDifficulty(Difficulty difficulty) {
         this.difficulty = difficulty;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 
     public List<RoadmapStep> getSteps() {

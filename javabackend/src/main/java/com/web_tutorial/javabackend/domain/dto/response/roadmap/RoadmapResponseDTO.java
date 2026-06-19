@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.List;
 
 @Setter
 @Getter
@@ -22,4 +23,8 @@ public class RoadmapResponseDTO {
     private Boolean isActive;
     private Instant createdAt;
     private String createBy;
+    private String content;
+    private String icon;
+    private String color;
+    private List<RoadmapStepResponseDTO> steps;
 }
