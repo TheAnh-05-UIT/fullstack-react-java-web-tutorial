@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
+
 @Setter
 @Getter
 @NoArgsConstructor
@@ -22,4 +24,6 @@ public class ProjectResponseDTO {
     private Long viewCount;
     private Instant createdAt;
     private String createBy;
+    private String content;
+    private CategoryDTO category;
 }

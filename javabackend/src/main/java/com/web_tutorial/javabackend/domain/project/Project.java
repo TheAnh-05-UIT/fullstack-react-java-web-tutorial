@@ -17,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 /**
  * Model Project: Lưu trữ thông tin các dự án thực hành.
@@ -32,7 +33,10 @@ public class Project {
     // Thông tin nội dung cơ bản
     private String title;
     private String slug; // Đường dẫn chuẩn SEO
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
+
+    @Column(columnDefinition = "MEDIUMTEXT")
     private String content; // Nội dung chi tiết
     private String coverImage; // URL ảnh bìa
 
@@ -219,4 +223,11 @@ public class Project {
         this.author = author;
     }
 
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
 }

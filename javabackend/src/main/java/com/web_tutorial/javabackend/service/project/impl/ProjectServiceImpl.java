@@ -1,5 +1,7 @@
 package com.web_tutorial.javabackend.service.project.impl;
 
+import com.web_tutorial.javabackend.domain.tutorial.Category;
+import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
 import com.web_tutorial.javabackend.service.project.ProjectService;
@@ -7,14 +9,18 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.Instant;
+import com.web_tutorial.javabackend.service.security.SecurityService;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final CategoryRepository categoryRepository;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository) {
+    public ProjectServiceImpl(ProjectRepository projectRepository, CategoryRepository categoryRepository) {
         this.projectRepository = projectRepository;
+        this.categoryRepository = categoryRepository;
     }
 
     @Override
@@ -34,6 +40,21 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Project createProject(Project project) {
+        String currentUser = SecurityService.getCurrentUserLogin().orElse("System");
+        project.setCreateBy(currentUser);
+        project.setCreatedAt(Instant.now());
+
+        if (project.getCategory() != null && project.getCategory().getName() != null) {
+            String catName = project.getCategory().getName();
+            Category category = categoryRepository.findByName(catName).orElseGet(() -> {
+                Category newCat = new Category();
+                newCat.setName(catName);
+                newCat.setSlug(catName.toLowerCase().replace(" ", "-"));
+                return categoryRepository.save(newCat);
+            });
+            project.setCategory(category);
+        }
+
         return this.projectRepository.save(project);
     }
 
@@ -58,6 +79,18 @@ public class ProjectServiceImpl implements ProjectService {
                 project.setDifficulty(projectDetails.getDifficulty());
             if (projectDetails.getStatus() != null)
                 project.setStatus(projectDetails.getStatus());
+
+            if (projectDetails.getCategory() != null && projectDetails.getCategory().getName() != null) {
+                String catName = projectDetails.getCategory().getName();
+                Category category = categoryRepository.findByName(catName).orElseGet(() -> {
+                    Category newCat = new Category();
+                    newCat.setName(catName);
+                    newCat.setSlug(catName.toLowerCase().replace(" ", "-"));
+                    return categoryRepository.save(newCat);
+                });
+                project.setCategory(category);
+            }
+
             return this.projectRepository.save(project);
         }).orElseThrow(() -> new RuntimeException("Project not found with id " + id));
     }
