@@ -24,6 +24,7 @@ export type ProjectStatus = 'Planned' | 'In Progress' | 'Review' | 'Completed';
 export interface Tutorial {
   id: string;
   title: string;
+  slug?: string;
   description: string;
   category: Category;
   coverImage: string;
@@ -32,6 +33,9 @@ export interface Tutorial {
   views: number;
   publishDate: string;
   content?: string;
+  createBy?: string;
+  createdAt?: string;
+  viewCount?: number;
 }
 
 export interface Author {
@@ -44,6 +48,7 @@ export interface Author {
 export interface Project {
   id: string;
   title: string;
+  slug?: string;
   description: string;
   thumbnail: string;
   techStack: string[];
@@ -52,16 +57,23 @@ export interface Project {
   demoUrl?: string;
   status?: ProjectStatus;
   content?: string;
+  createBy?: string;
+  createdAt?: string;
+  viewCount?: number;
 }
 
 export interface Roadmap {
   id: string;
   title: string;
+  slug?: string;
   description: string;
+  difficulty?: Difficulty | string;
   icon: string;
   color: string;
   steps: RoadmapStep[];
   content?: string;
+  createBy?: string;
+  createdAt?: string;
 }
 
 export interface RoadmapStep {
