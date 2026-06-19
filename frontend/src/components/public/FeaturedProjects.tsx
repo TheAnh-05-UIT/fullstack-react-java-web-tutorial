@@ -22,7 +22,9 @@ export function FeaturedProjects() {
           setProjects(data.content);
         }
       } catch (error) {
-        console.error('Failed to fetch projects:', error);
+        console.error('Failed to fetch featured projects:', error);
+      } finally {
+        // loading state handling if any
       }
     };
     fetchProjects();
