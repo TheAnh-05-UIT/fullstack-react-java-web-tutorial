@@ -14,8 +14,11 @@ export function RoadmapsPage() {
     const fetchRoadmaps = async () => {
       setIsLoading(true);
       try {
-        const data = await api.get<any, PagedResponse<Roadmap>>(`/roadmaps?page=${currentPage}&size=10`);
-        if (data && data.content) {
+        const data = await api.get<any, any>(`/roadmaps?page=${currentPage}&size=10`);
+        if (Array.isArray(data)) {
+          setRoadmaps(data);
+          setTotalPages(1);
+        } else if (data && data.content) {
           setRoadmaps(data.content);
           setTotalPages(data.totalPages);
         } else {
