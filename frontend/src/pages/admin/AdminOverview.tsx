@@ -62,8 +62,8 @@ export function AdminOverview() {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const weekData = days.map(day => ({ date: day, value: 0 }));
         users.forEach((u: any) => {
-          if (u.joinDate) {
-            const d = new Date(u.joinDate).getDay();
+          if (u.createdAt) {
+            const d = new Date(u.createdAt).getDay();
             if (!isNaN(d)) weekData[d].value += 1;
           }
         });
@@ -71,9 +71,9 @@ export function AdminOverview() {
 
         // Recent activity mixed from users, tutorials, projects
         const mixed = [
-          ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.name, time: u.joinDate || 'Recently', ts: u.id })),
-          ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: 'admin', time: t.publishDate || 'Recently', ts: t.id + 1000 })),
-          ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: 'admin', time: 'Recently', ts: p.id + 500 })),
+          ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.name, time: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently', ts: new Date(u.createdAt || Date.now()).getTime() })),
+          ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: t.createBy || 'admin', time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recently', ts: new Date(t.createdAt || Date.now()).getTime() })),
+          ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: p.createBy || 'admin', time: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Recently', ts: new Date(p.createdAt || Date.now()).getTime() })),
         ];
         mixed.sort((a: any, b: any) => b.ts - a.ts);
         setRecentActivities(mixed.slice(0, 5));
