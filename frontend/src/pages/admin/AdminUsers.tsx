@@ -181,33 +181,89 @@ export function AdminUsers() {
         title={editingUser ? 'Edit User' : 'Add New User'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-            <Input
-              required
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+              <Input
+                required
+                value={(formData as any).username || formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value, name: e.target.value } as any)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <Input
+                type="email"
+                required
+                value={formData.email || ''}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <Input
-              type="email"
-              required
-              value={formData.email || ''}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {!editingUser && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                <Input
+                  type="password"
+                  required={!editingUser}
+                  value={(formData as any).password || ''}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value } as any)}
+                />
+              </div>
+            )}
+            
+            <div className={editingUser ? "md:col-span-2" : ""}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+              <select
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2"
+                value={typeof formData.role === 'object' ? ((formData.role as any).name || 'USER').toLowerCase() : formData.role || 'user'}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'admin' })}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
-            <select
-              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2"
-              value={formData.role || 'user'}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'admin' })}
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Avatar URL</label>
+            <div className="flex gap-4 items-center">
+              <Avatar src={formData.avatar} alt="Preview" size="md" />
+              <div className="flex-1 space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.avatar || ''}
+                    onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+                    placeholder="https://example.com/avatar.jpg"
+                  />
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      id="avatar-upload" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // TODO: Handle actual file upload to Backend here
+                          // For now, just create a temporary local preview URL
+                          const previewUrl = URL.createObjectURL(file);
+                          setFormData({ ...formData, avatar: previewUrl });
+                        }
+                      }}
+                    />
+                    <label 
+                      htmlFor="avatar-upload" 
+                      className="flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl cursor-pointer transition-colors whitespace-nowrap"
+                    >
+                      Upload File
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex justify-end gap-3 mt-6">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} type="button">
