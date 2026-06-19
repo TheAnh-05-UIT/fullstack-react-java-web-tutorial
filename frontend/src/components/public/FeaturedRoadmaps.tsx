@@ -52,7 +52,9 @@ export function FeaturedRoadmaps() {
           setRoadmaps(data.content);
         }
       } catch (error) {
-        console.error('Failed to fetch roadmaps:', error);
+        console.error('Failed to fetch featured roadmaps:', error);
+      } finally {
+        // loading state handling if any
       }
     };
     fetchRoadmaps();
@@ -94,7 +96,7 @@ interface RoadmapCardProps {
 
 export function RoadmapCard({ roadmap }: RoadmapCardProps) {
   const colors = colorClasses[roadmap.color] || colorClasses.primary;
-  const completion = Math.floor(Math.random() * 100);
+  const completion = 0; // Removed fake data
 
   return (
     <Card hover className={`p-6 group ${colors.border}`}>
