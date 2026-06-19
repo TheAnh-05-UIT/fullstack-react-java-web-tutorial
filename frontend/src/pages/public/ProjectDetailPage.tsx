@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Github, Globe } from 'lucide-react';
 import { Badge } from '../../components/ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Project } from '../../types';
+import type { Project } from '../../types';
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,9 +13,12 @@ export function ProjectDetailPage() {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const data = await api.get<any, PagedResponse<Project>>('/projects?page=0&size=100');
-        const found = data?.content?.find(p => String(p.id) === id);
-        setProject(found || null);
+        const data = await api.get<any, any>(`/projects/${id}`);
+        if (data && data.id) {
+          setProject(data);
+        } else {
+          setProject(null);
+        }
       } catch (error) {
         console.error('Failed to fetch project details:', error);
       } finally {
