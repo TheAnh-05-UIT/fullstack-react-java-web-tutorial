@@ -33,13 +33,14 @@ export function AdminProjects() {
       setEditingProject(null);
       setFormData({
         title: '',
+        slug: '',
         description: '',
-        difficulty: 'Beginner',
+        difficulty: 'BEGINNER' as any,
         thumbnail: 'https://images.pexels.com/photos/270348/pexels-photo-270348.jpeg?auto=compress&cs=tinysrgb&w=600',
         techStack: [],
         githubUrl: '',
         demoUrl: '',
-        status: 'Planned',
+        status: 'DRAFT' as any,
       });
     }
     setIsModalOpen(true);
@@ -165,13 +166,27 @@ export function AdminProjects() {
         title={editingProject ? 'Edit Project' : 'Add New Project'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-            <Input
-              required
-              value={formData.title || ''}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+              <Input
+                required
+                value={formData.title || ''}
+                onChange={(e) => {
+                  const title = e.target.value;
+                  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+                  setFormData({ ...formData, title, slug });
+                }}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
+              <Input
+                required
+                value={formData.slug || ''}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
@@ -187,12 +202,12 @@ export function AdminProjects() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Difficulty</label>
             <select
               className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2"
-              value={formData.difficulty || 'Beginner'}
+              value={formData.difficulty || 'BEGINNER'}
               onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
             >
-              <option value="Beginner">Beginner</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
+              <option value="BEGINNER">Beginner</option>
+              <option value="INTERMEDIATE">Intermediate</option>
+              <option value="ADVANCED">Advanced</option>
             </select>
           </div>
           <div>
