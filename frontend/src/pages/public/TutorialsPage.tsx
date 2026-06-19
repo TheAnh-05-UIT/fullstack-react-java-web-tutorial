@@ -5,8 +5,6 @@ import { Button, SearchInput, Badge } from '../../components/ui';
 import type { PagedResponse, Category, Tutorial } from '../../types';
 import { api } from '../../services/api';
 
-// Removed hardcoded categories array
-
 const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error'> = {
   'DevOps': 'primary',
   'Docker': 'secondary',
@@ -25,7 +23,6 @@ export function TutorialsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -35,11 +32,13 @@ export function TutorialsPage() {
   const fetchTutorials = async () => {
     setIsLoading(true);
     try {
-      const data = await api.get<any, PagedResponse<Tutorial>>(`/tutorials?page=${currentPage}&size=10`);
-      if (data && data.content) {
+      const data = await api.get<any, any>(`/tutorials?page=${currentPage}&size=10`);
+      if (Array.isArray(data)) {
+        setTutorials(data);
+        setTotalPages(1);
+      } else if (data && data.content) {
         setTutorials(data.content);
         setTotalPages(data.totalPages);
-        setTotalElements(data.totalElements);
       } else {
         setTutorials([]);
       }
