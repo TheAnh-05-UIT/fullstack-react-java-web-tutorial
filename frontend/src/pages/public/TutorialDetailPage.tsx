@@ -3,24 +3,31 @@ import { useParams, Link } from 'react-router-dom';
 import { Clock, Eye, Calendar, ArrowLeft } from 'lucide-react';
 import { Badge, Avatar } from '../../components/ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Tutorial } from '../../types';
+import type { Tutorial } from '../../types';
 
 export function TutorialDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [tutorial, setTutorial] = useState<Tutorial | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const formatAuthorName = (emailOrName?: string) => {
+    if (!emailOrName) return null;
+    if (emailOrName.includes('@')) {
+      const namePart = emailOrName.split('@')[0];
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+    return emailOrName;
+  };
+
   useEffect(() => {
     const fetchTutorial = async () => {
       try {
-        // Since we don't have a single GET endpoint in the basic backend yet, 
-        // we can fetch all and find, or assume the backend has /tutorials/{id}.
-        // The Java backend ProjectController, TutorialController does have GET /{id} by default if it's standard Spring Data REST,
-        // Actually earlier we added GET, POST, PUT, DELETE. Wait, did we add GET /{id}? 
-        // We added standard CRUD, let's try calling it.
-        const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=100');
-        const found = data?.content?.find(t => String(t.id) === id);
-        setTutorial(found || null);
+        const data = await api.get<any, any>(`/tutorials/${id}`);
+        if (data && data.id) {
+          setTutorial(data);
+        } else {
+          setTutorial(null);
+        }
       } catch (error) {
         console.error('Failed to fetch tutorial details:', error);
       } finally {
@@ -76,11 +83,11 @@ export function TutorialDetailPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Eye className="w-4 h-4" />
-                  {((tutorial.views || 0) / 1000).toFixed(1)}k views
+                  {(((tutorial.viewCount ?? tutorial.views) || 0) / 1000).toFixed(1)}k views
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {new Date(tutorial.publishDate || Date.now()).toLocaleDateString()}
+                  {new Date(tutorial.createdAt || tutorial.publishDate || Date.now()).toLocaleDateString()}
                 </div>
               </div>
             </div>
@@ -93,7 +100,7 @@ export function TutorialDetailPage() {
               <Avatar src={tutorial.author?.avatar} alt={tutorial.author?.name} size="md" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {tutorial.author?.name || 'Unknown Author'}
+                  {formatAuthorName(tutorial.createBy) || tutorial.author?.name || 'Unknown Author'}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {tutorial.author?.role || 'Contributor'}
