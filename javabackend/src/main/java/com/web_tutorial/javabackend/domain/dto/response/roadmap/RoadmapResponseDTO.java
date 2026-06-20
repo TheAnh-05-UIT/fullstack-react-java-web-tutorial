@@ -27,4 +27,5 @@ public class RoadmapResponseDTO {
     private String icon;
     private String color;
     private List<RoadmapStepResponseDTO> steps;
+    private String authorName;
 }

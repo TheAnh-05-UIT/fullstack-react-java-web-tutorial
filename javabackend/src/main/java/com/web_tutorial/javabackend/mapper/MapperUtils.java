@@ -95,7 +95,7 @@ public class MapperUtils {
     public static ProjectResponseDTO toProjectResponseDTO(Project project) {
         if (project == null)
             return null;
-        return new ProjectResponseDTO(
+        ProjectResponseDTO responseDTO = new ProjectResponseDTO(
                 project.getId(),
                 project.getTitle(),
                 project.getSlug(),
@@ -107,7 +107,12 @@ public class MapperUtils {
                 project.getCreatedAt(),
                 project.getCreateBy(),
                 project.getContent(),
-                toCategoryDTO(project.getCategory()));
+                toCategoryDTO(project.getCategory()),
+                project.getDifficulty(),
+                project.getStatus(),
+                project.getTags(),
+                project.getAuthor() != null ? project.getAuthor().getName() : project.getCreateBy());
+        return responseDTO;
     }
 
     public static List<ProjectResponseDTO> toProjectResponseDTOList(List<Project> projects) {
@@ -128,6 +133,8 @@ public class MapperUtils {
         project.setGithubUrl(dto.getGithubUrl());
         project.setDemoUrl(dto.getDemoUrl());
         project.setDifficulty(dto.getDifficulty());
+        project.setStatus(dto.getStatus());
+        project.setTags(dto.getTechStack());
 
         if (dto.getCategory() != null && dto.getCategory().getName() != null) {
             Category category = new Category();
@@ -149,6 +156,7 @@ public class MapperUtils {
         project.setDemoUrl(dto.getDemoUrl());
         project.setDifficulty(dto.getDifficulty());
         project.setStatus(dto.getStatus());
+        project.setTags(dto.getTechStack());
 
         if (dto.getCategory() != null && dto.getCategory().getName() != null) {
             Category category = new Category();
@@ -179,7 +187,8 @@ public class MapperUtils {
                 tutorial.getCreatedAt(),
                 tutorial.getCreateBy(),
                 tutorial.getContent(),
-                toCategoryDTO(tutorial.getCategory()));
+                toCategoryDTO(tutorial.getCategory()),
+                null);
     }
 
     public static List<TutorialResponseDTO> toTutorialResponseDTOList(List<Tutorial> tutorials) {
@@ -251,7 +260,8 @@ public class MapperUtils {
                 roadmap.getContent(),
                 roadmap.getIcon(),
                 roadmap.getColor(),
-                steps);
+                steps,
+                null);
     }
 
     public static List<RoadmapResponseDTO> toRoadmapResponseDTOList(List<Roadmap> roadmaps) {

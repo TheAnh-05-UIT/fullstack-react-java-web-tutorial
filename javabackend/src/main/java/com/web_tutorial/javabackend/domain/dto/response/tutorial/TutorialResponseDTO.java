@@ -26,4 +26,5 @@ public class TutorialResponseDTO {
     private String createBy;
     private String content;
     private CategoryDTO category;
+    private String authorName;
 }
