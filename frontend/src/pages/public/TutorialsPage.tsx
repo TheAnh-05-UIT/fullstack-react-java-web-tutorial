@@ -39,9 +39,10 @@ export function TutorialsPage() {
 
   const filteredTutorials = useMemo(() => {
     return tutorials.filter((tutorial: Tutorial) => {
-      const categoryName = typeof tutorial.category === 'object' && tutorial.category 
+      const rawCat = typeof tutorial.category === 'object' && tutorial.category 
         ? (tutorial.category as any).name 
         : tutorial.category || 'Other';
+      const categoryName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
       
       const matchesCategory = selectedCategory === 'all' || categoryName === selectedCategory;
       const matchesSearch = (tutorial.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -52,7 +53,8 @@ export function TutorialsPage() {
 
   const categoryCounts = new Map<string, number>();
   tutorials.forEach((t: { category: any; }) => {
-    const catName = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
+    const rawCat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
+    const catName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
     categoryCounts.set(catName, (categoryCounts.get(catName) || 0) + 1);
   });
   const dynamicCategories = Array.from(categoryCounts.entries()).sort((a, b) => b[1] - a[1]); // Sort by count descending

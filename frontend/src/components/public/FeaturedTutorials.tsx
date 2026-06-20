@@ -67,9 +67,10 @@ interface TutorialCardProps {
 }
 
 export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) {
-  const categoryName = typeof tutorial.category === 'object' && tutorial.category 
+  const rawCat = typeof tutorial.category === 'object' && tutorial.category 
     ? (tutorial.category as any).name 
     : tutorial.category || 'DevOps';
+  const categoryName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
   const color = categoryColors[categoryName] || 'primary';
 
   return (
@@ -100,7 +101,7 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
             <Avatar src={tutorial.author?.avatar} alt={tutorial.author?.name} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {tutorial.author?.name}
+                {(tutorial.author?.name || tutorial.createBy || 'Administrator').split('@')[0]}
               </p>
             </div>
           </div>
