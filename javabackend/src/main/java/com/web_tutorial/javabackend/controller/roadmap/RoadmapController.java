@@ -7,6 +7,7 @@ import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
+import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
@@ -24,9 +25,11 @@ import java.util.Optional;
 public class RoadmapController {
 
     private final RoadmapService roadmapService;
+    private final UserRepository userRepository;
 
-    public RoadmapController(RoadmapService roadmapService) {
+    public RoadmapController(RoadmapService roadmapService, UserRepository userRepository) {
         this.roadmapService = roadmapService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -34,6 +37,11 @@ public class RoadmapController {
     public ResponseEntity<List<RoadmapResponseDTO>> getAllRoadmaps() {
         List<Roadmap> listRoadmap = this.roadmapService.getAllRoadmaps();
         List<RoadmapResponseDTO> listRoadmapResponseDTOs = MapperUtils.toRoadmapResponseDTOList(listRoadmap);
+        listRoadmapResponseDTOs.forEach(dto -> {
+            if (dto.getCreateBy() != null) {
+                userRepository.findByEmail(dto.getCreateBy()).ifPresent(u -> dto.setAuthorName(u.getUsername()));
+            }
+        });
         return ResponseEntity.status(HttpStatus.OK).body(listRoadmapResponseDTOs);
     }
 
@@ -45,6 +53,10 @@ public class RoadmapController {
             throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
         }
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(roadmapById.get());
+        if (roadmapResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(roadmapResponseDTO.getCreateBy())
+                    .ifPresent(u -> roadmapResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
@@ -57,6 +69,10 @@ public class RoadmapController {
             throw new ResourceNotFoundException("Roadmap with slug " + slug + " does not exist");
         }
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(roadmapBySlug.get());
+        if (roadmapResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(roadmapResponseDTO.getCreateBy())
+                    .ifPresent(u -> roadmapResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
@@ -67,6 +83,10 @@ public class RoadmapController {
         Roadmap roadmap = MapperUtils.toRoadmap(requestDTO);
         Roadmap createdRoadmap = roadmapService.createRoadmap(roadmap);
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(createdRoadmap);
+        if (roadmapResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(roadmapResponseDTO.getCreateBy())
+                    .ifPresent(u -> roadmapResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(roadmapResponseDTO);
     }
 
@@ -83,6 +103,10 @@ public class RoadmapController {
         MapperUtils.updateRoadmapFromDTO(requestDTO, roadmapDetails);
         Roadmap updatedRoadmap = this.roadmapService.updateRoadmap(id, roadmapDetails);
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(updatedRoadmap);
+        if (roadmapResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(roadmapResponseDTO.getCreateBy())
+                    .ifPresent(u -> roadmapResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 

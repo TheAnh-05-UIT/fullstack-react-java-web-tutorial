@@ -6,6 +6,7 @@ import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
+import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.project.ProjectService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
@@ -23,9 +24,11 @@ import java.util.Optional;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final UserRepository userRepository;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, UserRepository userRepository) {
         this.projectService = projectService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -33,6 +36,11 @@ public class ProjectController {
     public ResponseEntity<List<ProjectResponseDTO>> getAllProjects() {
         List<Project> lisProjects = this.projectService.getAllProjects();
         List<ProjectResponseDTO> projectResponseDTO = MapperUtils.toProjectResponseDTOList(lisProjects);
+        projectResponseDTO.forEach(dto -> {
+            if (dto.getCreateBy() != null) {
+                userRepository.findByEmail(dto.getCreateBy()).ifPresent(u -> dto.setAuthorName(u.getUsername()));
+            }
+        });
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
@@ -44,6 +52,10 @@ public class ProjectController {
             throw new IdInvalidException("Project with Id " + id + " does not exist");
         }
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectById.get());
+        if (projectResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(projectResponseDTO.getCreateBy())
+                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
@@ -56,6 +68,10 @@ public class ProjectController {
             throw new ResourceNotFoundException("Project with slug " + slug + " does not exist");
         }
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectBySlug.get());
+        if (projectResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(projectResponseDTO.getCreateBy())
+                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
@@ -66,6 +82,10 @@ public class ProjectController {
         Project project = MapperUtils.toProject(requestDTO);
         Project createdProject = projectService.createProject(project);
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(createdProject);
+        if (projectResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(projectResponseDTO.getCreateBy())
+                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
 
@@ -80,6 +100,10 @@ public class ProjectController {
         }
         Project updatedProject = this.projectService.updateProject(id, projectDetails);
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(updatedProject);
+        if (projectResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(projectResponseDTO.getCreateBy())
+                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 

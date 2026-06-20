@@ -7,6 +7,7 @@ import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
+import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
@@ -24,9 +25,11 @@ import java.util.Optional;
 public class TutorialController {
 
     private final TutorialService tutorialService;
+    private final UserRepository userRepository;
 
-    public TutorialController(TutorialService tutorialService) {
+    public TutorialController(TutorialService tutorialService, UserRepository userRepository) {
         this.tutorialService = tutorialService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -34,6 +37,11 @@ public class TutorialController {
     public ResponseEntity<List<TutorialResponseDTO>> getAllTutorials() {
         List<Tutorial> listTutorials = this.tutorialService.getAllTutorials();
         List<TutorialResponseDTO> tutorialResponseDTOList = MapperUtils.toTutorialResponseDTOList(listTutorials);
+        tutorialResponseDTOList.forEach(dto -> {
+            if (dto.getCreateBy() != null) {
+                userRepository.findByEmail(dto.getCreateBy()).ifPresent(u -> dto.setAuthorName(u.getUsername()));
+            }
+        });
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTOList);
     }
 
@@ -45,6 +53,10 @@ public class TutorialController {
             throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
         }
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialById.get());
+        if (tutorialResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
+                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
 
@@ -57,6 +69,10 @@ public class TutorialController {
             throw new ResourceNotFoundException("Tutorial with slug " + slug + " does not exist");
         }
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialBySlug.get());
+        if (tutorialResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
+                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
 
@@ -67,6 +83,10 @@ public class TutorialController {
         Tutorial tutorial = MapperUtils.toTutorial(requestDTO);
         Tutorial createdTutorial = this.tutorialService.createTutorial(tutorial);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(createdTutorial);
+        if (tutorialResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
+                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(tutorialResponseDTO);
     }
 
@@ -83,6 +103,10 @@ public class TutorialController {
         MapperUtils.updateTutorialFromDTO(requestDTO, tutorialDetails);
         Tutorial updatedTutorial = this.tutorialService.updateTutorial(id, tutorialDetails);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(updatedTutorial);
+        if (tutorialResponseDTO.getCreateBy() != null) {
+            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
+                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
 
