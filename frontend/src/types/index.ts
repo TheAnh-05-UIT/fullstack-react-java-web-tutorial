@@ -36,6 +36,7 @@ export interface Tutorial {
   createBy?: string;
   createdAt?: string;
   viewCount?: number;
+  authorName?: string;
 }
 
 export interface Author {
@@ -60,6 +61,7 @@ export interface Project {
   createBy?: string;
   createdAt?: string;
   viewCount?: number;
+  authorName?: string;
 }
 
 export interface Roadmap {
@@ -74,6 +76,7 @@ export interface Roadmap {
   content?: string;
   createBy?: string;
   createdAt?: string;
+  authorName?: string;
 }
 
 export interface RoadmapStep {
