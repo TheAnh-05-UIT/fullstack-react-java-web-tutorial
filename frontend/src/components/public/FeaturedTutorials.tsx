@@ -101,7 +101,7 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
             <Avatar src={tutorial.author?.avatar} alt={tutorial.author?.name} size="sm" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {(tutorial.author?.name || tutorial.createBy || 'Administrator').split('@')[0]}
+                {tutorial.authorName || (tutorial.author?.name || tutorial.createBy || 'Administrator').split('@')[0]}
               </p>
             </div>
           </div>

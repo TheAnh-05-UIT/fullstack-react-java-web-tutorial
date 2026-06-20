@@ -70,7 +70,7 @@ export function TutorialDetailPage() {
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </li>
               <li>
-                <Link to="/tutorials" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Tutorial</Link>
+                <Link to="/tutorials" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Blog</Link>
               </li>
               <li>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -120,7 +120,7 @@ export function TutorialDetailPage() {
               <Avatar src={tutorial.author?.avatar} alt={tutorial.author?.name} size="md" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {formatAuthorName(tutorial.createBy) || tutorial.author?.name || 'Unknown Author'}
+                  {tutorial.authorName || formatAuthorName(tutorial.createBy) || tutorial.author?.name || 'Unknown Author'}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {tutorial.author?.role || 'Contributor'}
