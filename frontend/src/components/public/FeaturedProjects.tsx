@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Github, ExternalLink, ArrowRight } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Project } from '../../types';
+import type { Project } from '../../types';
 
 const difficultyColors: Record<string, 'success' | 'warning' | 'error'> = {
   'Beginner': 'success',
@@ -12,23 +12,16 @@ const difficultyColors: Record<string, 'success' | 'warning' | 'error'> = {
 };
 
 export function FeaturedProjects() {
-  const [projects, setProjects] = useState<Project[]>([]);
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const data = await api.get<any, PagedResponse<Project>>('/projects?page=0&size=3');
-        if (data && data.content) {
-          setProjects(data.content);
-        }
-      } catch (error) {
-        console.error('Failed to fetch featured projects:', error);
-      } finally {
-        // loading state handling if any
+  const { data: projects = [] } = useQuery({
+    queryKey: ['featuredProjects'],
+    queryFn: async () => {
+      const response = await api.get<any, any>('/projects?page=0&size=3');
+      if (Array.isArray(response)) {
+        return response;
       }
-    };
-    fetchProjects();
-  }, []);
+      return response?.content || [];
+    }
+  });
 
   return (
     <section className="py-20 bg-white dark:bg-gray-950">
@@ -51,7 +44,7 @@ export function FeaturedProjects() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.slice(0, 3).map(project => (
+          {projects.slice(0, 3).map((project: Project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
 import { Card, Button } from '../ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Roadmap } from '../../types';
+import type { Roadmap } from '../../types';
 
 const iconComponents: Record<string, React.ReactNode> = {
   'infinity': <Infinity className="w-6 h-6" />,
@@ -42,23 +42,16 @@ const colorClasses: Record<string, { bg: string; text: string; border: string }>
 };
 
 export function FeaturedRoadmaps() {
-  const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
-
-  useEffect(() => {
-    const fetchRoadmaps = async () => {
-      try {
-        const data = await api.get<any, PagedResponse<Roadmap>>('/roadmaps?page=0&size=3');
-        if (data && data.content) {
-          setRoadmaps(data.content);
-        }
-      } catch (error) {
-        console.error('Failed to fetch featured roadmaps:', error);
-      } finally {
-        // loading state handling if any
+  const { data: roadmaps = [] } = useQuery({
+    queryKey: ['featuredRoadmaps'],
+    queryFn: async () => {
+      const response = await api.get<any, any>('/roadmaps?page=0&size=3');
+      if (Array.isArray(response)) {
+        return response;
       }
-    };
-    fetchRoadmaps();
-  }, []);
+      return response?.content || [];
+    }
+  });
 
   return (
     <section className="py-20 bg-gray-50 dark:bg-gray-900">
@@ -81,7 +74,7 @@ export function FeaturedRoadmaps() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {roadmaps.slice(0, 5).map(roadmap => (
+          {roadmaps.slice(0, 5).map((roadmap: Roadmap) => (
             <RoadmapCard key={roadmap.id} roadmap={roadmap} />
           ))}
         </div>

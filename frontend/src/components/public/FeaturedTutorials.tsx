@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Clock, Eye, Calendar } from 'lucide-react';
 import { Card, Badge, Button, Avatar } from '../ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Tutorial } from '../../types';
+import type { Tutorial } from '../../types';
 
 const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error'> = {
   'DevOps': 'primary',
@@ -18,23 +18,16 @@ const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'succe
 };
 
 export function FeaturedTutorials() {
-  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-
-  useEffect(() => {
-    const fetchTutorials = async () => {
-      try {
-        const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=3');
-        if (data && data.content) {
-          setTutorials(data.content);
-        }
-      } catch (error) {
-        console.error('Failed to fetch featured tutorials:', error);
-      } finally {
-        // loading state handling if any
+  const { data: tutorials = [] } = useQuery({
+    queryKey: ['featuredTutorials'],
+    queryFn: async () => {
+      const response = await api.get<any, any>('/tutorials?page=0&size=4');
+      if (Array.isArray(response)) {
+        return response;
       }
-    };
-    fetchTutorials();
-  }, []);
+      return response?.content || [];
+    }
+  });
 
   const featured = tutorials.slice(0, 4);
 
@@ -59,7 +52,7 @@ export function FeaturedTutorials() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map(tutorial => (
+          {featured.map((tutorial: Tutorial) => (
             <TutorialCard key={tutorial.id} tutorial={tutorial} />
           ))}
         </div>
