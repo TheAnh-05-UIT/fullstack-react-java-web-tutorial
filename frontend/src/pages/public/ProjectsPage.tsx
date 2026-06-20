@@ -1,54 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { ProjectCard } from '../../components/public';
 import { Button, SearchInput } from '../../components/ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Project } from '../../types';
+import type { Project } from '../../types';
 
 const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced'] as const;
 type DifficultyFilter = typeof difficulties[number];
 
 export function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      try {
-        const url = `/projects?page=${currentPage}&size=10${difficulty !== 'All' ? `&difficulty=${difficulty}` : ''}`;
-        const data = await api.get<any, any>(url);
-        if (Array.isArray(data)) {
-          setProjects(data);
-          setTotalPages(1);
-          setTotalElements(data.length);
-        } else if (data && data.content) {
-          setProjects(data.content);
-          setTotalPages(data.totalPages);
-          setTotalElements(data.totalElements);
-        } else {
-          setProjects([]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch projects:', error);
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ['projects', currentPage, difficulty],
+    queryFn: async () => {
+      const url = `/projects?page=${currentPage}&size=10${difficulty !== 'All' ? `&difficulty=${difficulty.toUpperCase()}` : ''}`;
+      const response = await api.get<any, any>(url);
+      if (Array.isArray(response)) {
+        return { content: response, totalPages: 1 };
       }
-    };
-    fetchProjects();
-  }, [currentPage, difficulty]);
-
-  const filteredProjects = projects.filter(project => {
-    const matchesDifficulty = difficulty === 'All' || project.difficulty === difficulty;
-    const matchesSearch = (project.title?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (project.description?.toLowerCase().includes(searchQuery.toLowerCase()) || '');
-    return matchesDifficulty && matchesSearch;
+      return { content: response?.content || [], totalPages: response?.totalPages || 1 };
+    }
   });
+
+  const projects = data?.content || [];
+  const totalPages = data?.totalPages || 1;
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project: Project) => {
+      const matchesDifficulty = difficulty === 'All' || project.difficulty === difficulty.toUpperCase() || project.difficulty === difficulty;
+      const matchesSearch = (project.title?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
+        (project.description?.toLowerCase().includes(searchQuery.toLowerCase()) || '');
+      return matchesDifficulty && matchesSearch;
+    });
+  }, [projects, difficulty, searchQuery]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -89,7 +77,7 @@ export function ProjectsPage() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map(project => (
+          {filteredProjects.map((project: Project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>

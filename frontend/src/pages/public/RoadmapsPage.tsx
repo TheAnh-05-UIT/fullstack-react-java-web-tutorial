@@ -1,37 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { RoadmapCard } from '../../components/public';
 import { api } from '../../services/api';
-import type { PagedResponse, Roadmap } from '../../types';
+import type { Roadmap } from '../../types';
 import { Button } from '../../components/ui';
 
 export function RoadmapsPage() {
-  const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchRoadmaps = async () => {
-      setIsLoading(true);
-      try {
-        const data = await api.get<any, any>(`/roadmaps?page=${currentPage}&size=10`);
-        if (Array.isArray(data)) {
-          setRoadmaps(data);
-          setTotalPages(1);
-        } else if (data && data.content) {
-          setRoadmaps(data.content);
-          setTotalPages(data.totalPages);
-        } else {
-          setRoadmaps([]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch roadmaps:', error);
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ['roadmaps', currentPage],
+    queryFn: async () => {
+      const response = await api.get<any, any>(`/roadmaps?page=${currentPage}&size=10`);
+      if (Array.isArray(response)) {
+        return { content: response, totalPages: 1 };
       }
-    };
-    fetchRoadmaps();
-  }, [currentPage]);
+      return { content: response?.content || [], totalPages: response?.totalPages || 1 };
+    }
+  });
+
+  const roadmaps = data?.content || [];
+  const totalPages = data?.totalPages || 1;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -53,7 +42,7 @@ export function RoadmapsPage() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {roadmaps.map(roadmap => (
+            {roadmaps.map((roadmap: Roadmap) => (
               <RoadmapCard key={roadmap.id} roadmap={roadmap} />
             ))}
           </div>

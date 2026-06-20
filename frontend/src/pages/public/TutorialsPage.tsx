@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Search, Filter } from 'lucide-react';
 import { TutorialCard } from '../../components/public';
 import { Button, SearchInput, Badge } from '../../components/ui';
-import type { PagedResponse, Category, Tutorial } from '../../types';
+import type { Category, Tutorial } from '../../types';
 import { api } from '../../services/api';
 
 const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error'> = {
@@ -18,51 +19,39 @@ const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'succe
 };
 
 export function TutorialsPage() {
-  const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTutorials();
-  }, [currentPage]);
-
-  const fetchTutorials = async () => {
-    setIsLoading(true);
-    try {
-      const data = await api.get<any, any>(`/tutorials?page=${currentPage}&size=10`);
-      if (Array.isArray(data)) {
-        setTutorials(data);
-        setTotalPages(1);
-      } else if (data && data.content) {
-        setTutorials(data.content);
-        setTotalPages(data.totalPages);
-      } else {
-        setTutorials([]);
+  const { data, isLoading } = useQuery({
+    queryKey: ['tutorials', currentPage],
+    queryFn: async () => {
+      const response = await api.get<any, any>(`/tutorials?page=${currentPage}&size=10`);
+      if (Array.isArray(response)) {
+        return { content: response, totalPages: 1 };
       }
-    } catch (error) {
-      console.error('Failed to fetch tutorials:', error);
-    } finally {
-      setIsLoading(false);
+      return { content: response?.content || [], totalPages: response?.totalPages || 1 };
     }
-  };
-
-
-  const filteredTutorials = tutorials.filter(tutorial => {
-    const categoryName = typeof tutorial.category === 'object' && tutorial.category 
-      ? (tutorial.category as any).name 
-      : tutorial.category || 'Other';
-    
-    const matchesCategory = selectedCategory === 'all' || categoryName === selectedCategory;
-    const matchesSearch = (tutorial.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (tutorial.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
   });
 
+  const tutorials = data?.content || [];
+  const totalPages = data?.totalPages || 1;
+
+  const filteredTutorials = useMemo(() => {
+    return tutorials.filter((tutorial: Tutorial) => {
+      const categoryName = typeof tutorial.category === 'object' && tutorial.category 
+        ? (tutorial.category as any).name 
+        : tutorial.category || 'Other';
+      
+      const matchesCategory = selectedCategory === 'all' || categoryName === selectedCategory;
+      const matchesSearch = (tutorial.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tutorial.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [tutorials, selectedCategory, searchQuery]);
+
   const categoryCounts = new Map<string, number>();
-  tutorials.forEach(t => {
+  tutorials.forEach((t: { category: any; }) => {
     const catName = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
     categoryCounts.set(catName, (categoryCounts.get(catName) || 0) + 1);
   });
@@ -151,7 +140,7 @@ export function TutorialsPage() {
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTutorials.map(tutorial => (
+              {filteredTutorials.map((tutorial: Tutorial) => (
                 <TutorialCard key={tutorial.id} tutorial={tutorial} />
               ))}
             </div>
