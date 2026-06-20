@@ -41,10 +41,10 @@ export function AdminOverview() {
 
         setUsers(users.sort((a: any, b: any) => b.id - a.id).slice(0, 5));
 
-        // Category distribution from tutorials
         const catMap = new Map<string, number>();
         tutorials.forEach((t: any) => {
-          const cat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
+          const rawCat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
+          const cat = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
           catMap.set(cat, (catMap.get(cat) || 0) + 1);
         });
 
@@ -71,7 +71,7 @@ export function AdminOverview() {
 
         // Recent activity mixed from users, tutorials, projects
         const mixed = [
-          ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.name, time: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently', ts: new Date(u.createdAt || Date.now()).getTime() })),
+          ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.username || u.name, time: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently', ts: new Date(u.createdAt || Date.now()).getTime() })),
           ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: t.createBy || 'admin', time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recently', ts: new Date(t.createdAt || Date.now()).getTime() })),
           ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: p.createBy || 'admin', time: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Recently', ts: new Date(p.createdAt || Date.now()).getTime() })),
         ];
@@ -156,10 +156,10 @@ export function AdminOverview() {
             {users.length > 0 ? users.map(user => (
               <div key={user.id} className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold">
-                  {(user.name || 'U').charAt(0).toUpperCase()}
+                  {((user.username || user.name) || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name || 'Anonymous'}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.username || user.name || 'Anonymous'}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email || 'No email'}</p>
                 </div>
                 <Badge variant={((user.role as any)?.name || user.role) === 'ADMIN' ? 'primary' : 'secondary'}>
