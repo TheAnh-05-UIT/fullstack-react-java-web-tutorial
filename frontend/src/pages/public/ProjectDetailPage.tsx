@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Github, Globe } from 'lucide-react';
+import { ArrowLeft, Github, Globe, ChevronRight } from 'lucide-react';
 import { Badge } from '../../components/ui';
 import { api } from '../../services/api';
 import type { Project } from '../../types';
@@ -48,13 +48,33 @@ export function ProjectDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link to="/projects" className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-8 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Projects
-        </Link>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      {/* Sticky Breadcrumb */}
+      <div className="sticky top-16 z-40 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 py-3 mb-8">
+        <div className="max-w-4xl mx-auto">
+          <nav className="flex text-sm font-medium text-gray-500 dark:text-gray-400">
+            <ol className="flex items-center space-x-2 whitespace-nowrap overflow-x-auto hide-scrollbar">
+              <li>
+                <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Trang chủ</Link>
+              </li>
+              <li>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </li>
+              <li>
+                <Link to="/projects" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Projects</Link>
+              </li>
+              <li>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </li>
+              <li className="text-gray-900 dark:text-gray-100 truncate max-w-[200px] sm:max-w-[400px]">
+                {project.title}
+              </li>
+            </ol>
+          </nav>
+        </div>
+      </div>
 
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-950 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-800">
           {project.thumbnail && (
             <img 
