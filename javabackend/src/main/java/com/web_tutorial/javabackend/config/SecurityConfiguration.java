@@ -6,6 +6,7 @@ import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -53,26 +54,25 @@ public class SecurityConfiguration {
     // Tạo JWT Decoder để xác thực token
     @Bean
     public JwtDecoder jwtDecoder() {
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
+        // Xóa bỏ try-catch vô nghĩa (catch rồi throw lại y hệt không làm gì thêm)
+        return NimbusJwtDecoder.withSecretKey(getSecretKey())
                 .macAlgorithm(JWT_ALGORITHM).build();
-        return token -> {
-            try {
-                return jwtDecoder.decode(token);
-            } catch (Exception e) {
-                throw e;
-            }
-        };
     }
 
     // Cấu hình phân quyền truy cập cho các API
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
 
                         // Cho phép truy cập không cần token
                         .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/tutorials/**", "/api/v1/projects/**",
+                                "/api/v1/roadmaps/**", "/uploads/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/upload").authenticated()
                         // Yêu cầu token cho các request khác
                         .anyRequest().authenticated())
                 // Không sử dụng Session
