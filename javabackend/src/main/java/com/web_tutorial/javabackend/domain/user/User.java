@@ -2,6 +2,7 @@ package com.web_tutorial.javabackend.domain.user;
 
 import java.time.Instant;
 
+import com.web_tutorial.javabackend.service.security.SecurityService;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 /**
@@ -45,6 +48,20 @@ public class User {
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     private Author author;
+
+    // Tự động set audit fields khi tạo mới
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+        this.createBy = SecurityService.getCurrentUserLogin().orElse("System");
+    }
+
+    // Tự động set audit fields khi cập nhật
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+        this.updateBy = SecurityService.getCurrentUserLogin().orElse("System");
+    }
 
     public Long getId() {
         return id;

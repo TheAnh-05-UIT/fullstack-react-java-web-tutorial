@@ -116,7 +116,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @ApiMessage("Delelte a User")
+    @ApiMessage("Delete a User")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) throws IdInvalidException {
         Optional<User> deleteUser = this.userService.getUserById(id);
         if (!deleteUser.isPresent()) {

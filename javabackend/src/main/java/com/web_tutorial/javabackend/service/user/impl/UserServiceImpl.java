@@ -52,7 +52,9 @@ public class UserServiceImpl implements UserService {
                 userUpdate.setRole(userDetails.getRole());
             return this.userRepository.save(userUpdate);
         }
-        return null;
+        // Throw exception thay vì trả null – tránh NullPointerException ở controller
+        throw new com.web_tutorial.javabackend.exception.ResourceNotFoundException(
+                "User with id " + id + " not found");
     }
 
     @Override
