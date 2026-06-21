@@ -1,89 +1,93 @@
-import type { PagedResponse } from '../../types';
-import { useState, useEffect } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { Activity } from 'lucide-react';
 import { Card, SimpleBarChart, DonutChart, Badge, Button } from '../../components/ui';
 import { api } from '../../services/api';
 
-
+// FE-04: Chuyển từ useEffect+useState sang React Query để nhất quán với codebase
 export function AdminOverview() {
-  const [stats, setStats] = useState([
-    { label: 'Total Users', value: '0' },
-    { label: 'Total Tutorials', value: '0' },
-    { label: 'Total Projects', value: '0' },
-    { label: 'Total Views', value: '0' },
-  ]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [activityData, setActivityData] = useState<any[]>([]);
-  const [distributionData, setDistributionData] = useState<any[]>([]);
-  const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        const [usersData, tutorialsData, projectsData] = await Promise.all([
-          api.get<any, any>('/users?page=0&size=100').then(res => (Array.isArray(res) ? res : res?.content) || []),
-          api.get<any, any>('/tutorials?page=0&size=100').then(res => (Array.isArray(res) ? res : res?.content) || []),
-          api.get<any, any>('/projects?page=0&size=100').then(res => (Array.isArray(res) ? res : res?.content) || []),
-        ]);
+  // Dùng useQueries để fetch song song cả 3 nguồn dữ liệu
+  const [usersQuery, tutorialsQuery, projectsQuery] = useQueries({
+    queries: [
+      {
+        queryKey: ['admin-users'],
+        queryFn: () => api.get<any, any>('/users?page=0&size=100').then(res =>
+          Array.isArray(res) ? res : (res?.content || [])),
+        staleTime: 30000,
+      },
+      {
+        queryKey: ['admin-tutorials'],
+        queryFn: () => api.get<any, any>('/tutorials?page=0&size=100').then(res =>
+          Array.isArray(res) ? res : (res?.content || [])),
+        staleTime: 30000,
+      },
+      {
+        queryKey: ['admin-projects'],
+        queryFn: () => api.get<any, any>('/projects?page=0&size=100').then(res =>
+          Array.isArray(res) ? res : (res?.content || [])),
+        staleTime: 30000,
+      },
+    ],
+  });
 
-        const users = usersData || [];
-        const tutorials = tutorialsData || [];
-        const projects = projectsData || [];
+  const isLoading = usersQuery.isLoading || tutorialsQuery.isLoading || projectsQuery.isLoading;
 
-        const totalViews = tutorials.reduce((sum: number, t: any) => sum + (t.views || 0), 0);
+  const users: any[] = usersQuery.data || [];
+  const tutorials: any[] = tutorialsQuery.data || [];
+  const projects: any[] = projectsQuery.data || [];
 
-        setStats([
-          { label: 'Total Users', value: users.length.toString() },
-          { label: 'Total Tutorials', value: tutorials.length.toString() },
-          { label: 'Total Projects', value: projects.length.toString() },
-          { label: 'Total Views', value: totalViews.toLocaleString() },
-        ]);
+  // Tính toán stats từ data
+  const totalViews = tutorials.reduce((sum: number, t: any) => sum + (t.views || 0), 0);
 
-        setUsers(users.sort((a: any, b: any) => b.id - a.id).slice(0, 5));
+  const stats = [
+    { label: 'Total Users', value: users.length.toString() },
+    { label: 'Total Tutorials', value: tutorials.length.toString() },
+    { label: 'Total Projects', value: projects.length.toString() },
+    { label: 'Total Views', value: totalViews.toLocaleString() },
+  ];
 
-        const catMap = new Map<string, number>();
-        tutorials.forEach((t: any) => {
-          const rawCat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
-          const cat = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
-          catMap.set(cat, (catMap.get(cat) || 0) + 1);
-        });
+  // Top 5 users mới nhất
+  const recentUsers = [...users].sort((a: any, b: any) => b.id - a.id).slice(0, 5);
 
-        const COLORS = ['#3b82f6', '#8b5cf6', '#f97316', '#10b981', '#6b7280', '#ef4444', '#eab308'];
-        const totalCat = tutorials.length || 1;
+  // Category distribution
+  const catMap = new Map<string, number>();
+  tutorials.forEach((t: any) => {
+    const rawCat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
+    const cat = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
+    catMap.set(cat, (catMap.get(cat) || 0) + 1);
+  });
+  const COLORS = ['#3b82f6', '#8b5cf6', '#f97316', '#10b981', '#6b7280', '#ef4444', '#eab308'];
+  const totalCat = tutorials.length || 1;
+  const distributionData = Array.from(catMap.entries()).map(([name, count], idx) => ({
+    name,
+    value: Math.round((count / totalCat) * 100),
+    color: COLORS[idx % COLORS.length],
+  }));
 
-        const dist = Array.from(catMap.entries()).map(([name, count], idx) => ({
-          name,
-          value: Math.round((count / totalCat) * 100),
-          color: COLORS[idx % COLORS.length]
-        }));
-        setDistributionData(dist);
+  // Weekly activity based on user registrations
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekData = days.map(day => ({ date: day, value: 0 }));
+  users.forEach((u: any) => {
+    if (u.createdAt) {
+      const d = new Date(u.createdAt).getDay();
+      if (!isNaN(d)) weekData[d].value += 1;
+    }
+  });
 
-        // Weekly activity based on user registrations
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const weekData = days.map(day => ({ date: day, value: 0 }));
-        users.forEach((u: any) => {
-          if (u.createdAt) {
-            const d = new Date(u.createdAt).getDay();
-            if (!isNaN(d)) weekData[d].value += 1;
-          }
-        });
-        setActivityData(weekData);
+  // Recent activity – mix users, tutorials, projects
+  const mixed = [
+    ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.username, time: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently', ts: new Date(u.createdAt || Date.now()).getTime() })),
+    ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: t.createBy || 'admin', time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recently', ts: new Date(t.createdAt || Date.now()).getTime() })),
+    ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: p.createBy || 'admin', time: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Recently', ts: new Date(p.createdAt || Date.now()).getTime() })),
+  ].sort((a, b) => b.ts - a.ts).slice(0, 5);
 
-        // Recent activity mixed from users, tutorials, projects
-        const mixed = [
-          ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.username || u.name, time: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently', ts: new Date(u.createdAt || Date.now()).getTime() })),
-          ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: t.createBy || 'admin', time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recently', ts: new Date(t.createdAt || Date.now()).getTime() })),
-          ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: p.createBy || 'admin', time: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Recently', ts: new Date(p.createdAt || Date.now()).getTime() })),
-        ];
-        mixed.sort((a: any, b: any) => b.ts - a.ts);
-        setRecentActivities(mixed.slice(0, 5));
-
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      }
-    };
-    fetchAllData();
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -106,8 +110,8 @@ export function AdminOverview() {
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="p-6">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-6">User Registrations</h3>
-          {activityData.some(d => d.value > 0) ? (
-            <SimpleBarChart data={activityData} height={200} />
+          {weekData.some(d => d.value > 0) ? (
+            <SimpleBarChart data={weekData} height={200} />
           ) : (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">No registration data yet</p>
           )}
@@ -130,7 +134,7 @@ export function AdminOverview() {
             <Button variant="ghost" size="sm">View all</Button>
           </div>
           <div className="space-y-4">
-            {recentActivities.length > 0 ? recentActivities.map(activity => (
+            {mixed.length > 0 ? mixed.map(activity => (
               <div key={activity.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <Activity className="w-5 h-5 text-gray-500" />
@@ -153,7 +157,7 @@ export function AdminOverview() {
             <Button variant="ghost" size="sm">View all</Button>
           </div>
           <div className="space-y-4">
-            {users.length > 0 ? users.map(user => (
+            {recentUsers.length > 0 ? recentUsers.map(user => (
               <div key={user.id} className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold">
                   {((user.username || user.name) || 'U').charAt(0).toUpperCase()}

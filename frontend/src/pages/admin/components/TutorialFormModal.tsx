@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import MDEditor from '@uiw/react-md-editor';
 import rehypeRaw from 'rehype-raw';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Modal, Input, Button } from '../../../components/ui';
+import { Modal, Input, Button, ImageUpload } from '../../../components/ui';
 import type { Tutorial } from '../../../types';
 
 const tutorialSchema = z.object({
@@ -47,7 +47,7 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
           slug: tutorial.slug || '',
           description: tutorial.description || '',
           category: typeof tutorial.category === 'object' && tutorial.category ? (tutorial.category as any).name : tutorial.category || '',
-          coverImage: tutorial.coverImage || '',
+          coverImage: tutorial.coverImage || tutorial.thumbnail || '',
           content: tutorial.content || '',
         });
       } else {
@@ -114,9 +114,19 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
           {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Image URL</label>
-          <Input {...register('coverImage')} />
-          {errors.coverImage && <p className="text-red-500 text-xs mt-1">{errors.coverImage.message}</p>}
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Cover Image
+          </label>
+          <Controller
+            name="coverImage"
+            control={control}
+            render={({ field }) => (
+              <ImageUpload value={field.value} onChange={field.onChange} folder="tutorials" />
+            )}
+          />
+          {errors.coverImage && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.coverImage.message}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">HTML Content</label>
@@ -124,26 +134,31 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
             <Controller
               name="content"
               control={control}
-              render={({ field }) => (
-                <>
-                  <div data-color-mode="light" className="dark:hidden">
-                    <MDEditor 
-                      value={field.value || ''} 
-                      onChange={field.onChange} 
-                      height={400} 
+              render={({ field }) => {
+                // FE-06: Dùng 1 MDEditor instance duy nhất, đổi color-mode theo dark mode
+                // Tránh mount 2 editor cùng lúc (gây double memory + potential desync)
+                const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
+                useEffect(() => {
+                  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+                  const isDark = document.documentElement.classList.contains('dark');
+                  setColorMode(isDark ? 'dark' : 'light');
+                  const observer = new MutationObserver(() => {
+                    setColorMode(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+                  });
+                  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+                  return () => observer.disconnect();
+                }, []);
+                return (
+                  <div data-color-mode={colorMode}>
+                    <MDEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      height={400}
                       previewOptions={{ rehypePlugins: [[rehypeRaw]] }}
                     />
                   </div>
-                  <div data-color-mode="dark" className="hidden dark:block">
-                    <MDEditor 
-                      value={field.value || ''} 
-                      onChange={field.onChange} 
-                      height={400} 
-                      previewOptions={{ rehypePlugins: [[rehypeRaw]] }}
-                    />
-                  </div>
-                </>
-              )}
+                );
+              }}
             />
           </div>
         </div>

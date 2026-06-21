@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, X } from 'lucide-react';
 import { TutorialCard } from '../../components/public';
 import { Button, SearchInput, Badge } from '../../components/ui';
 import type { Category, Tutorial } from '../../types';
@@ -100,7 +100,7 @@ export function TutorialsPage() {
                           : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                         }`}
                     >
-                      {category}
+                      <span className="capitalize">{category}</span>
                       <span className="text-xs text-gray-400">
                         {count}
                       </span>
@@ -129,51 +129,22 @@ export function TutorialsPage() {
                 {selectedCategory !== 'all' && (
                   <Badge
                     variant={categoryColors[selectedCategory] || 'primary'}
-                    className="cursor-pointer"
+                    className="flex items-center gap-1 cursor-pointer hover:opacity-80 capitalize"
                     onClick={() => setSelectedCategory('all')}
                   >
                     {selectedCategory}
-                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X className="w-3 h-3" />
                   </Badge>
                 )}
               </div>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTutorials.map((tutorial: Tutorial) => (
-                <TutorialCard key={tutorial.id} tutorial={tutorial} />
-              ))}
-            </div>
-
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-8">
-                <Button 
-                  variant="secondary" 
-                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Page {currentPage + 1} of {totalPages}
-                </span>
-                <Button 
-                  variant="secondary" 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                  disabled={currentPage >= totalPages - 1}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-
+            {/* FE-05: Loading spinner đặt TRƯỚC grid và pagination */}
             {isLoading ? (
               <div className="flex justify-center items-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
               </div>
-            ) : filteredTutorials.length === 0 && (
+            ) : filteredTutorials.length === 0 ? (
               <div className="text-center py-16">
                 <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
                   <Search className="w-8 h-8 text-gray-400" />
@@ -188,6 +159,36 @@ export function TutorialsPage() {
                   Clear filters
                 </Button>
               </div>
+            ) : (
+              <>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredTutorials.map((tutorial: Tutorial) => (
+                    <TutorialCard key={tutorial.id} tutorial={tutorial} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 mt-8">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                      disabled={currentPage === 0}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Page {currentPage + 1} of {totalPages}
+                    </span>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={currentPage >= totalPages - 1}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
