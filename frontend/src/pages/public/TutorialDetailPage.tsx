@@ -86,9 +86,9 @@ export function TutorialDetailPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white dark:bg-gray-950 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-800">
-          {tutorial.coverImage && (
+          {(tutorial.coverImage || tutorial.thumbnail) && (
             <img 
-              src={tutorial.coverImage} 
+              src={tutorial.coverImage || tutorial.thumbnail} 
               alt={tutorial.title} 
               className="w-full h-64 md:h-96 object-cover"
             />
@@ -137,34 +137,45 @@ export function TutorialDetailPage() {
               {tutorial.content ? (
                 <div className="w-full mt-8 rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-gray-800 shadow-sm">
                   <iframe
-                    srcDoc={`
-                      <!DOCTYPE html>
-                      <html>
-                        <head>
-                          <style>
-                            body::-webkit-scrollbar { display: none; }
-                            body { 
-                              -ms-overflow-style: none; scrollbar-width: none; 
-                              font-family: ui-sans-serif, system-ui, sans-serif;
-                              line-height: 1.6;
-                              color: #374151;
-                              margin: 0;
-                              padding: 24px;
-                            }
-                            html { overflow-y: hidden !important; height: auto !important; }
-                            pre { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
-                            code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: ui-monospace, monospace; }
-                            a { color: #4f46e5; text-decoration: none; }
-                            a:hover { text-decoration: underline; }
-                            img { max-width: 100%; height: auto; border-radius: 0.5rem; }
-                            blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; color: #6b7280; font-style: italic; }
-                          </style>
-                        </head>
-                        <body>
-                          ${marked.parse(tutorial.content)}
-                        </body>
-                      </html>
-                    `}
+                    srcDoc={
+                      (() => {
+                        const trimmed = tutorial.content.trim();
+                        const isFullHtml = trimmed.toLowerCase().includes('<!doctype html>') || 
+                                           trimmed.toLowerCase().includes('<html') ||
+                                           (trimmed.startsWith('<') && trimmed.includes('<style>'));
+                                           
+                        if (isFullHtml) {
+                          return tutorial.content;
+                        }
+
+                        return `
+                          <!DOCTYPE html>
+                          <html>
+                            <head>
+                              <style>
+                                body { 
+                                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                                  line-height: 1.6;
+                                  color: #374151;
+                                  margin: 0;
+                                  padding: 24px;
+                                }
+                                html { overflow-y: hidden !important; height: auto !important; }
+                                pre { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+                                code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: ui-monospace, monospace; }
+                                a { color: #4f46e5; text-decoration: none; }
+                                a:hover { text-decoration: underline; }
+                                img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+                                blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; color: #6b7280; font-style: italic; }
+                              </style>
+                            </head>
+                            <body>
+                              ${marked.parse(tutorial.content)}
+                            </body>
+                          </html>
+                        `;
+                      })()
+                    }
                     title={tutorial.title}
                     className="w-full transition-all duration-300"
                     style={{ minHeight: '400px', border: 'none' }}

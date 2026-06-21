@@ -78,13 +78,13 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
       <Card hover className="overflow-hidden h-full">
         <div className="relative">
           <img
-            src={tutorial.coverImage}
+            src={tutorial.coverImage || tutorial.thumbnail}
             alt={tutorial.title}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <Badge
             variant={color}
-            className="absolute top-3 left-3"
+            className="absolute top-3 left-3 capitalize"
           >
             {categoryName}
           </Badge>
