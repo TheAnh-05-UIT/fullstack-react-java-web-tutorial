@@ -57,7 +57,9 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode,
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && role !== requiredRole && role !== 'ROLE_ADMIN' && requiredRole === 'ADMIN') {
+  // Bỏ điều kiện thừa `role !== 'ROLE_ADMIN'` vì AuthContext đã strip prefix ROLE_
+  // Role sau khi decode luôn là 'ADMIN' hoặc 'USER', không bao giờ là 'ROLE_ADMIN'
+  if (requiredRole && role !== requiredRole) {
     return <Navigate to="/dashboard" replace />;
   }
 

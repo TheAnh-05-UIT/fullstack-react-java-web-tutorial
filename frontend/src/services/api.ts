@@ -53,7 +53,8 @@ api.interceptors.response.use(
 
         // Gắn thẻ mới vào yêu cầu cũ và gọi lại
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return axios(originalRequest).then(res => res.data); // Vì dùng axios trực tiếp nên cần bóc .data
+        // Bóc thêm tầng .data bên trong FormatRestResponse (nhất quán với interceptor success)
+        return axios(originalRequest).then(res => res.data?.data ?? res.data);
       } catch (refreshError) {
         // Nếu Refresh Token cũng hết hạn -> Xóa hết thẻ, bắt đăng nhập lại
         localStorage.removeItem('access_token');
