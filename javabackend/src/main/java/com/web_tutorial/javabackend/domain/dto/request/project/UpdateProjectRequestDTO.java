@@ -4,6 +4,7 @@ import com.web_tutorial.javabackend.domain.project.Difficulty;
 import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 public class UpdateProjectRequestDTO {
 
@@ -23,6 +24,7 @@ public class UpdateProjectRequestDTO {
     private String demoUrl;
     private Difficulty difficulty;
     private ProjectStatus status;
+    private List<String> techStack;
     private CategoryDTO category;
 
     public String getTitle() {
@@ -95,6 +97,14 @@ public class UpdateProjectRequestDTO {
 
     public void setStatus(ProjectStatus status) {
         this.status = status;
+    }
+
+    public List<String> getTechStack() {
+        return techStack;
+    }
+
+    public void setTechStack(List<String> techStack) {
+        this.techStack = techStack;
     }
 
     public CategoryDTO getCategory() {

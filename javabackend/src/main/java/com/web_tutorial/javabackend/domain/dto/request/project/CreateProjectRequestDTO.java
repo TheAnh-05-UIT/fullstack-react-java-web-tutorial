@@ -1,8 +1,10 @@
 package com.web_tutorial.javabackend.domain.dto.request.project;
 
 import com.web_tutorial.javabackend.domain.project.Difficulty;
+import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 public class CreateProjectRequestDTO {
 
@@ -21,6 +23,8 @@ public class CreateProjectRequestDTO {
     private String githubUrl;
     private String demoUrl;
     private Difficulty difficulty;
+    private ProjectStatus status;
+    private List<String> techStack;
     private CategoryDTO category;
 
     public String getTitle() {
@@ -85,6 +89,22 @@ public class CreateProjectRequestDTO {
 
     public void setDifficulty(Difficulty difficulty) {
         this.difficulty = difficulty;
+    }
+
+    public ProjectStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ProjectStatus status) {
+        this.status = status;
+    }
+
+    public List<String> getTechStack() {
+        return techStack;
+    }
+
+    public void setTechStack(List<String> techStack) {
+        this.techStack = techStack;
     }
 
     public CategoryDTO getCategory() {
