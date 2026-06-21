@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 
 public interface TutorialService {
+    // Chỉ trả về tutorial chưa bị soft-deleted
     List<Tutorial> getAllTutorials();
 
     Optional<Tutorial> getTutorialById(Long id);
@@ -16,5 +17,10 @@ public interface TutorialService {
 
     Tutorial updateTutorial(Long id, Tutorial tutorialDetails);
 
+    // Soft delete thay vì hard delete
     void deleteTutorial(Long id);
+
+    // Lookup author name – tránh controller truy cập repository trực tiếp
+    String getAuthorNameByEmail(String email);
 }
+

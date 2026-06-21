@@ -7,7 +7,6 @@ import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
-import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
@@ -25,11 +24,10 @@ import java.util.Optional;
 public class TutorialController {
 
     private final TutorialService tutorialService;
-    private final UserRepository userRepository;
 
-    public TutorialController(TutorialService tutorialService, UserRepository userRepository) {
+    // Bỏ UserRepository, controller chỉ giao tiếp với Service
+    public TutorialController(TutorialService tutorialService) {
         this.tutorialService = tutorialService;
-        this.userRepository = userRepository;
     }
 
     @GetMapping
@@ -37,9 +35,10 @@ public class TutorialController {
     public ResponseEntity<List<TutorialResponseDTO>> getAllTutorials() {
         List<Tutorial> listTutorials = this.tutorialService.getAllTutorials();
         List<TutorialResponseDTO> tutorialResponseDTOList = MapperUtils.toTutorialResponseDTOList(listTutorials);
+        // Dùng service.getAuthorNameByEmail thay vì inject UserRepository trực tiếp
         tutorialResponseDTOList.forEach(dto -> {
             if (dto.getCreateBy() != null) {
-                userRepository.findByEmail(dto.getCreateBy()).ifPresent(u -> dto.setAuthorName(u.getUsername()));
+                dto.setAuthorName(this.tutorialService.getAuthorNameByEmail(dto.getCreateBy()));
             }
         });
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTOList);
@@ -54,8 +53,7 @@ public class TutorialController {
         }
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialById.get());
         if (tutorialResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
-                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
@@ -70,8 +68,7 @@ public class TutorialController {
         }
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialBySlug.get());
         if (tutorialResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
-                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
@@ -84,8 +81,7 @@ public class TutorialController {
         Tutorial createdTutorial = this.tutorialService.createTutorial(tutorial);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(createdTutorial);
         if (tutorialResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
-                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(tutorialResponseDTO);
     }
@@ -95,17 +91,13 @@ public class TutorialController {
     public ResponseEntity<TutorialResponseDTO> updateTutorial(
             @PathVariable Long id,
             @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) throws IdInvalidException {
-        Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
-        if (!tutorialById.isPresent()) {
-            throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
-        }
+        // Bỏ double findById – service tự kiểm tra và throw exception nếu không tìm thấy
         Tutorial tutorialDetails = new Tutorial();
         MapperUtils.updateTutorialFromDTO(requestDTO, tutorialDetails);
         Tutorial updatedTutorial = this.tutorialService.updateTutorial(id, tutorialDetails);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(updatedTutorial);
         if (tutorialResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(tutorialResponseDTO.getCreateBy())
-                    .ifPresent(u -> tutorialResponseDTO.setAuthorName(u.getUsername()));
+            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
@@ -113,10 +105,11 @@ public class TutorialController {
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Tutorial")
     public ResponseEntity<Void> deleteTutorial(@PathVariable Long id) throws IdInvalidException {
-        Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
-        if (!tutorialById.isPresent()) {
+        // Kiểm tra tồn tại trước khi xóa
+        if (this.tutorialService.getTutorialById(id).isEmpty()) {
             throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
         }
+        // Service sẽ thực hiện soft delete
         this.tutorialService.deleteTutorial(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
