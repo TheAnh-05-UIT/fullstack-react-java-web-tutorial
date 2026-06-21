@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import MDEditor from '@uiw/react-md-editor';
+import rehypeRaw from 'rehype-raw';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Modal, Input, Button } from '../../../components/ui';
@@ -26,7 +28,7 @@ interface RoadmapFormModalProps {
 }
 
 export function RoadmapFormModal({ isOpen, onClose, roadmap, onSubmit, isLoading }: RoadmapFormModalProps) {
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<RoadmapFormData>({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm<RoadmapFormData>({
     resolver: zodResolver(roadmapSchema),
     defaultValues: {
       title: '',
@@ -146,12 +148,32 @@ export function RoadmapFormModal({ isOpen, onClose, roadmap, onSubmit, isLoading
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">HTML Content</label>
-          <textarea
-            {...register('content')}
-            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 font-mono text-sm"
-            rows={6}
-            placeholder="<h1>Roadmap Details</h1><p>Content here...</p>"
-          />
+          <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-300 dark:border-gray-700">
+            <Controller
+              name="content"
+              control={control}
+              render={({ field }) => (
+                <>
+                  <div data-color-mode="light" className="dark:hidden">
+                    <MDEditor 
+                      value={field.value || ''} 
+                      onChange={field.onChange} 
+                      height={400} 
+                      previewOptions={{ rehypePlugins: [[rehypeRaw]] }}
+                    />
+                  </div>
+                  <div data-color-mode="dark" className="hidden dark:block">
+                    <MDEditor 
+                      value={field.value || ''} 
+                      onChange={field.onChange} 
+                      height={400} 
+                      previewOptions={{ rehypePlugins: [[rehypeRaw]] }}
+                    />
+                  </div>
+                </>
+              )}
+            />
+          </div>
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="secondary" onClick={onClose} type="button" disabled={isLoading}>
