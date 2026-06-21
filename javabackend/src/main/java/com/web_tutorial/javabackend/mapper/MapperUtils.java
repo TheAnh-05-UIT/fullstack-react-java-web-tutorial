@@ -129,7 +129,7 @@ public class MapperUtils {
         project.setSlug(dto.getSlug());
         project.setDescription(dto.getDescription());
         project.setContent(dto.getContent());
-        project.setCoverImage(dto.getCoverImage());
+        project.setCoverImage(dto.getThumbnail());
         project.setGithubUrl(dto.getGithubUrl());
         project.setDemoUrl(dto.getDemoUrl());
         project.setDifficulty(dto.getDifficulty());
@@ -151,7 +151,7 @@ public class MapperUtils {
         project.setSlug(dto.getSlug());
         project.setDescription(dto.getDescription());
         project.setContent(dto.getContent());
-        project.setCoverImage(dto.getCoverImage());
+        project.setCoverImage(dto.getThumbnail());
         project.setGithubUrl(dto.getGithubUrl());
         project.setDemoUrl(dto.getDemoUrl());
         project.setDifficulty(dto.getDifficulty());
@@ -258,6 +258,7 @@ public class MapperUtils {
                 roadmap.getCreatedAt(),
                 roadmap.getCreateBy(),
                 roadmap.getContent(),
+                roadmap.getCoverImage(),
                 roadmap.getIcon(),
                 roadmap.getColor(),
                 steps,

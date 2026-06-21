@@ -19,7 +19,7 @@ public class TutorialResponseDTO {
     private String title;
     private String slug;
     private String description;
-    private String thumbnail;
+    private String coverImage;
     private TutorialStatus status;
     private Long viewCount;
     private Instant createdAt;

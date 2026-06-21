@@ -56,6 +56,12 @@ public class RoadmapServiceImpl implements RoadmapService {
                 roadmap.setCoverImage(roadmapDetails.getCoverImage());
             if (roadmapDetails.getDifficulty() != null)
                 roadmap.setDifficulty(roadmapDetails.getDifficulty());
+            if (roadmapDetails.getContent() != null)
+                roadmap.setContent(roadmapDetails.getContent());
+            if (roadmapDetails.getIcon() != null)
+                roadmap.setIcon(roadmapDetails.getIcon());
+            if (roadmapDetails.getColor() != null)
+                roadmap.setColor(roadmapDetails.getColor());
             return this.roadmapRepository.save(roadmap);
         }).orElseThrow(() -> new RuntimeException("roadmap not found with id " + id));
     }

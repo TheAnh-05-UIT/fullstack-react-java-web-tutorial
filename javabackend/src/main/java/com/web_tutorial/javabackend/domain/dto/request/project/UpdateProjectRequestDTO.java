@@ -19,7 +19,7 @@ public class UpdateProjectRequestDTO {
     @NotBlank(message = "Content cannot be blank")
     private String content;
 
-    private String coverImage;
+    private String thumbnail;
     private String githubUrl;
     private String demoUrl;
     private Difficulty difficulty;
@@ -59,12 +59,12 @@ public class UpdateProjectRequestDTO {
         this.content = content;
     }
 
-    public String getCoverImage() {
-        return coverImage;
+    public String getThumbnail() {
+        return thumbnail;
     }
 
-    public void setCoverImage(String coverImage) {
-        this.coverImage = coverImage;
+    public void setThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
     }
 
     public String getGithubUrl() {

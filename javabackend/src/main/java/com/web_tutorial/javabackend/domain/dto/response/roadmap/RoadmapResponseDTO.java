@@ -24,6 +24,7 @@ public class RoadmapResponseDTO {
     private Instant createdAt;
     private String createBy;
     private String content;
+    private String coverImage;
     private String icon;
     private String color;
     private List<RoadmapStepResponseDTO> steps;
