@@ -4,7 +4,7 @@ import MDEditor from '@uiw/react-md-editor';
 import rehypeRaw from 'rehype-raw';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Modal, Input, Button } from '../../../components/ui';
+import { Modal, Input, Button, ImageUpload } from '../../../components/ui';
 import type { Project } from '../../../types';
 
 const projectSchema = z.object({
@@ -52,7 +52,7 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
           description: project.description || '',
           difficulty: project.difficulty as any || 'BEGINNER',
           status: project.status as any || 'DRAFT',
-          thumbnail: project.thumbnail || '',
+          thumbnail: project.thumbnail || (project as any).coverImage || '',
           techStack: Array.isArray(project.techStack) ? project.techStack.join(', ') : project.techStack || '',
           content: project.content || '',
         });
@@ -83,6 +83,7 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
   const handleFormSubmit = async (data: ProjectFormData) => {
     const submitData = {
       ...data,
+      coverImage: data.thumbnail, // Backward compatibility for older Backend mapping
       techStack: typeof data.techStack === 'string' 
         ? data.techStack.split(',').map((s: string) => s.trim()).filter(Boolean) 
         : data.techStack
@@ -145,6 +146,21 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tech Stack (comma separated)</label>
           <Input {...register('techStack')} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Thumbnail
+          </label>
+          <Controller
+            name="thumbnail"
+            control={control}
+            render={({ field }) => (
+              <ImageUpload value={field.value} onChange={field.onChange} folder="projects" />
+            )}
+          />
+          {errors.thumbnail && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.thumbnail.message}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">HTML Content</label>

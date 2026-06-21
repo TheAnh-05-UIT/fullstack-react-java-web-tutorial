@@ -4,7 +4,7 @@ import MDEditor from '@uiw/react-md-editor';
 import rehypeRaw from 'rehype-raw';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Modal, Input, Button } from '../../../components/ui';
+import { Modal, Input, Button, ImageUpload } from '../../../components/ui';
 import type { Roadmap } from '../../../types';
 
 const roadmapSchema = z.object({
@@ -15,6 +15,7 @@ const roadmapSchema = z.object({
   color: z.string().min(2, 'Color is required'),
   icon: z.string().min(2, 'Icon name is required'),
   content: z.string().optional(),
+  coverImage: z.string().optional(),
 });
 
 type RoadmapFormData = z.infer<typeof roadmapSchema>;
@@ -38,6 +39,7 @@ export function RoadmapFormModal({ isOpen, onClose, roadmap, onSubmit, isLoading
       color: 'primary',
       icon: 'Map',
       content: '',
+      coverImage: '',
     }
   });
 
@@ -52,6 +54,7 @@ export function RoadmapFormModal({ isOpen, onClose, roadmap, onSubmit, isLoading
           color: roadmap.color || 'primary',
           icon: roadmap.icon || 'Map',
           content: roadmap.content || '',
+          coverImage: roadmap.coverImage || '',
         });
       } else {
         reset({
@@ -62,6 +65,7 @@ export function RoadmapFormModal({ isOpen, onClose, roadmap, onSubmit, isLoading
           color: 'primary',
           icon: 'Map',
           content: '',
+          coverImage: '',
         });
       }
     }
@@ -112,6 +116,19 @@ export function RoadmapFormModal({ isOpen, onClose, roadmap, onSubmit, isLoading
             rows={3}
           />
           {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Image URL</label>
+          <Controller
+            name="coverImage"
+            control={control}
+            render={({ field }) => (
+              <ImageUpload value={field.value} onChange={field.onChange} folder="roadmaps" />
+            )}
+          />
+          {errors.coverImage && (
+            <p className="text-red-500 text-xs mt-1">{errors.coverImage.message}</p>
+          )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>

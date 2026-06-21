@@ -28,6 +28,7 @@ export interface Tutorial {
   description: string;
   category: Category;
   coverImage: string;
+  thumbnail?: string;
   author: Author;
   readTime: number;
   views: number;
@@ -74,6 +75,7 @@ export interface Roadmap {
   color: string;
   steps: RoadmapStep[];
   content?: string;
+  coverImage?: string;
   createBy?: string;
   createdAt?: string;
   authorName?: string;
