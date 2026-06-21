@@ -91,7 +91,7 @@ export function DashboardTutorials() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                        <img src={article.coverImage} alt="" className="w-full h-full object-cover" />
+                        <img src={article.coverImage || article.thumbnail} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{article.title}</p>

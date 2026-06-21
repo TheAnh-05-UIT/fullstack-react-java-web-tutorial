@@ -128,7 +128,7 @@ export function DashboardLearning() {
           {tutorials.length > 0 ? tutorials.slice(0, 5).map(tutorial => (
             <div key={tutorial.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group cursor-pointer">
               <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0 relative">
-                <img src={tutorial.coverImage} alt="" className="w-full h-full object-cover" />
+                <img src={tutorial.coverImage || tutorial.thumbnail} alt="" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

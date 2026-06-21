@@ -94,7 +94,7 @@ export function DashboardHome() {
             {tutorials.length > 0 ? tutorials.slice(0, 4).map((tutorial) => (
               <div key={tutorial.id} className="flex items-start gap-4 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
-                  <img src={tutorial.coverImage} alt="" className="w-full h-full object-cover" />
+                  <img src={tutorial.coverImage || tutorial.thumbnail} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

@@ -98,7 +98,7 @@ export function Sidebar({ variant = 'user' }: { variant?: 'user' | 'admin' }) {
         {sidebarOpen && user && (
           <div className="p-4 border-t border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-3">
-              <Avatar alt={user.username || 'User'} size="md" />
+              <Avatar src={user.avatar} alt={user.username || 'User'} size="md" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.username || 'User'}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
