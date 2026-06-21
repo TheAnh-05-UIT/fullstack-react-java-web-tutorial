@@ -6,3 +6,4 @@ export * from './Avatar';
 export * from './BackToTop';
 export { ProgressRing, SimpleBarChart, DonutChart } from './Chart';
 export { Modal } from './Modal';
+export { ImageUpload } from './ImageUpload';
