@@ -10,6 +10,7 @@ const projectSchema = z.object({
   slug: z.string().min(3, 'Slug is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
   thumbnail: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   techStack: z.string().optional(),
   content: z.string().optional(),
@@ -33,6 +34,7 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
       slug: '',
       description: '',
       difficulty: 'BEGINNER',
+      status: 'DRAFT',
       thumbnail: 'https://images.pexels.com/photos/270348/pexels-photo-270348.jpeg?auto=compress&cs=tinysrgb&w=600',
       techStack: '',
       content: '',
@@ -47,6 +49,7 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
           slug: project.slug || '',
           description: project.description || '',
           difficulty: project.difficulty as any || 'BEGINNER',
+          status: project.status as any || 'DRAFT',
           thumbnail: project.thumbnail || '',
           techStack: Array.isArray(project.techStack) ? project.techStack.join(', ') : project.techStack || '',
           content: project.content || '',
@@ -57,6 +60,7 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
           slug: '',
           description: '',
           difficulty: 'BEGINNER',
+          status: 'DRAFT',
           thumbnail: 'https://images.pexels.com/photos/270348/pexels-photo-270348.jpeg?auto=compress&cs=tinysrgb&w=600',
           techStack: '',
           content: '',
@@ -123,6 +127,18 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
             <option value="ADVANCED">Advanced</option>
           </select>
           {errors.difficulty && <p className="text-red-500 text-xs mt-1">{errors.difficulty.message}</p>}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+          <select
+            {...register('status')}
+            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+          {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tech Stack (comma separated)</label>

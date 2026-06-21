@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Github, ExternalLink, ArrowRight } from 'lucide-react';
+import { Github, ExternalLink, ArrowRight, User } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
 import { api } from '../../services/api';
 import type { Project } from '../../types';
@@ -72,8 +72,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </Link>
       
       <div className="p-5 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant={diffColor}>{project.difficulty}</Badge>
+        <div className="flex items-center justify-between mb-3">
+          <Badge variant={diffColor}>{project.difficulty || 'Beginner'}</Badge>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <User className="w-3.5 h-3.5" />
+            <span>{project.authorName || project.createBy || 'Admin'}</span>
+          </div>
         </div>
         <Link to={`/projects/${project.id}`} className="hover:text-primary-600 transition-colors">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
