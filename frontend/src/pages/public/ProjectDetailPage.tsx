@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Github, Globe, ChevronRight, User } from 'lucide-react';
 import { Badge } from '../../components/ui';
+import { marked } from 'marked';
 import { api } from '../../services/api';
 import type { Project } from '../../types';
 
@@ -139,12 +140,25 @@ export function ProjectDetailPage() {
                       <head>
                         <style>
                           body::-webkit-scrollbar { display: none; }
-                          body { -ms-overflow-style: none; scrollbar-width: none; overflow-y: hidden !important; height: auto !important; }
+                          body { 
+                            -ms-overflow-style: none; scrollbar-width: none; 
+                            font-family: ui-sans-serif, system-ui, sans-serif;
+                            line-height: 1.6;
+                            color: #374151;
+                            margin: 0;
+                            padding: 24px;
+                          }
                           html { overflow-y: hidden !important; height: auto !important; }
+                          pre { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+                          code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: ui-monospace, monospace; }
+                          a { color: #4f46e5; text-decoration: none; }
+                          a:hover { text-decoration: underline; }
+                          img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+                          blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; color: #6b7280; font-style: italic; }
                         </style>
                       </head>
                       <body>
-                        ${project.content}
+                        ${marked.parse(project.content)}
                       </body>
                     </html>
                   `}
