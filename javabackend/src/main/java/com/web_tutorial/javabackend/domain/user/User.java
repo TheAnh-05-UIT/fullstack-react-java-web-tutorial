@@ -3,6 +3,11 @@ package com.web_tutorial.javabackend.domain.user;
 import java.time.Instant;
 
 import com.web_tutorial.javabackend.service.security.SecurityService;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -17,9 +22,15 @@ import jakarta.persistence.Table;
 
 /**
  * Model User: Quản lý thông tin tài khoản đăng nhập và phân quyền hệ thống.
+ *
+ * Dùng Lombok thay thế getter/setter thủ công để code ngắn gọn, an toàn hơn
+ * (tránh quên thêm accessor khi thêm field mới).
  */
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
 public class User {
 
     @Id
@@ -40,8 +51,7 @@ public class User {
     private Instant updatedAt;
     private String updateBy;
 
-    // Liên kết với bảng phân quyền Role
-    // user many to one role
+    // Liên kết với bảng phân quyền Role (user many-to-one role)
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
@@ -62,101 +72,4 @@ public class User {
         this.updatedAt = Instant.now();
         this.updateBy = SecurityService.getCurrentUserLogin().orElse("System");
     }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getCreateBy() {
-        return createBy;
-    }
-
-    public void setCreateBy(String createBy) {
-        this.createBy = createBy;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getUpdateBy() {
-        return updateBy;
-    }
-
-    public void setUpdateBy(String updateBy) {
-        this.updateBy = updateBy;
-    }
-
-    public Author getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(Author author) {
-        this.author = author;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
 }
