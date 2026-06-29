@@ -34,4 +34,6 @@ build/
 
 
 ### File Config
-src/main/resources/application.properties
+# application.properties chứa cấu hình production (không gitignore để team dùng chung template)
+# application-local.properties chứa secret local dev – KHÔNG được commit!
+src/main/resources/application-local.properties
