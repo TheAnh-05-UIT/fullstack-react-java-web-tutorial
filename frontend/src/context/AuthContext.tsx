@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { api } from '../services/api';
+import type { AuthUser } from '../types';
 
 interface DecodedToken {
   sub: string;
@@ -9,13 +10,10 @@ interface DecodedToken {
   exp: number;
 }
 
-export interface UserProfile {
-  id: number;
-  username: string;
-  email: string;
-  role?: string;
-  avatar?: string;
-}
+// Dùng AuthUser từ types/index.ts thay vì định nghĩa UserProfile riêng ở đây.
+// Re-export UserProfile = AuthUser để không phải sửa các file đang import UserProfile.
+export type UserProfile = AuthUser;
+
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -27,7 +25,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// OPT-07: Helper extract role từ JWT token – tránh duplicate code
+// Helper extract role từ JWT token – tránh duplicate code
 function extractRoleFromToken(token: string, fallback?: string): string {
   try {
     const decoded = jwtDecode<DecodedToken>(token);
@@ -47,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  // FIX FE-03: Dùng useCallback để tránh stale closure khi dùng logout trong useEffect
+  // Dùng useCallback để tránh stale closure khi dùng logout trong useEffect
   const logout = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -60,15 +58,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('access_token');
+      const refreshToken = localStorage.getItem('refresh_token');
       const userStr = localStorage.getItem('user');
 
-      if (token && userStr) {
+      if (token && refreshToken && userStr) {
         try {
           const parsedUser = JSON.parse(userStr);
-          // Cho dù access_token hết hạn, interceptor vẫn sẽ tự động refresh
-          // Nên cứ tạm coi là có quyền nếu còn thẻ (refresh token sẽ gánh)
+
+          // Kiểm tra refresh token có hết hạn không.
+          // Nếu refresh token còn hạn → cứ tạm coi là đã đăng nhập (interceptor sẽ
+          // tự refresh access token khi cần). Nếu refresh token CŨNG hết hạn → logout
+          // ngay lập tức để tránh UX xấu (user thấy đã đăng nhập nhưng bị redirect
+          // đột ngột khi gọi API đầu tiên).
+          const decodedRefresh = jwtDecode<DecodedToken>(refreshToken);
+          if (decodedRefresh.exp * 1000 < Date.now()) {
+            // Refresh token hết hạn → xóa toàn bộ, bắt đăng nhập lại
+            logout();
+            return;
+          }
+
           setIsAuthenticated(true);
-          // OPT-07: Dùng helper để extract role
+          // Dùng helper để extract role
           const userRole = extractRoleFromToken(token, parsedUser.role);
           setRole(userRole);
           setUser(parsedUser);
@@ -80,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkAuth();
-  }, [logout]); // FIX FE-03: Thêm logout vào deps để tránh stale closure
+  }, [logout]); // Thêm logout vào deps để tránh stale closure
 
   const login = (accessToken: string, refreshToken: string, userData: UserProfile) => {
     localStorage.setItem('access_token', accessToken);
@@ -88,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('user', JSON.stringify(userData));
 
     try {
-      // OPT-07: Dùng helper để extract role
+      // Dùng helper để extract role
       const userRole = extractRoleFromToken(accessToken, userData.role);
       setIsAuthenticated(true);
       setRole(userRole);
