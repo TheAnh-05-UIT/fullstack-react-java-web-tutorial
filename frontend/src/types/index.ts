@@ -30,14 +30,13 @@ export interface Tutorial {
   coverImage: string;
   thumbnail?: string;
   author: Author;
+  // Chuẩn hóa field tên – dùng viewCount (khớp với BE ResponseDTO).
+  // Xóa 'views' trùng lặp; 'publishDate' → dùng 'createdAt' từ BE.
+  viewCount?: number;
+  createdAt?: string;
   readTime: number;
-  views: number;
-  publishDate: string;
   content?: string;
   createBy?: string;
-  createdAt?: string;
-  viewCount?: number;
-  authorName?: string;
 }
 
 export interface Author {
@@ -62,7 +61,6 @@ export interface Project {
   createBy?: string;
   createdAt?: string;
   viewCount?: number;
-  authorName?: string;
 }
 
 export interface Roadmap {
@@ -78,7 +76,6 @@ export interface Roadmap {
   coverImage?: string;
   createBy?: string;
   createdAt?: string;
-  authorName?: string;
 }
 
 export interface RoadmapStep {
@@ -97,12 +94,26 @@ export interface DevOpsPhase {
   tools: string[];
 }
 
-export interface User {
+// Tách thành 2 interface rõ ràng để tránh nhầm lẫn:
+// - AuthUser: dùng trong AuthContext (dữ liệu từ JWT / backend login response)
+// - DisplayUser: dùng để hiển thị profile người dùng trên UI (dữ liệu phong phú hơn)
+//
+// UserProfile trong AuthContext đã được đồng nhất về đây.
+export interface AuthUser {
+  id: number;       // BE trả Long → JSON number
+  username: string; // tên hiển thị
+  email: string;
+  role?: string;    // 'ADMIN' | 'USER' sau khi đã strip prefix 'ROLE_'
+  avatar?: string;
+}
+
+// DisplayUser: dữ liệu mở rộng dùng cho trang profile / dashboard
+export interface DisplayUser {
   id: string;
   name: string;
   email: string;
   avatar: string;
-  role: 'user' | 'admin';
+  role: 'USER' | 'ADMIN'; // uppercase theo convention BE
   joinDate: string;
   coursesCompleted: number;
   articlesRead: number;
