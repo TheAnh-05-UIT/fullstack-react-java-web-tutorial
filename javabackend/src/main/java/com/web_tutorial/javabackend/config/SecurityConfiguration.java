@@ -35,8 +35,8 @@ public class SecurityConfiguration {
     @Value("${javabackend.jwt.base64-secret}")
     private String jwtKey;
 
-    @Value("${javabackend.jwt.access-token-validity-in-seconds}")
-    private String jwtExpiration;
+    // Field jwtExpiration đã được xóa – khai báo nhưng không dùng trong class này.
+    // Giá trị expiration chỉ cần trong SecurityService, nơi nó đã được inject riêng.
 
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
 
