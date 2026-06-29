@@ -24,8 +24,10 @@ api.interceptors.request.use(
 // Interceptor Response: Tự động mồi Refresh Token khi bị lỗi 401
 api.interceptors.response.use(
   (response) => {
-    // Trả về thẳng trường 'data' bên trong chuẩn FormatRestResponse
-    return response.data.data;
+    // Thêm null guard: trả về response.data.data (dữ liệu bên trong FormatRestResponse).
+    // Nếu endpoint nào đó không wrap (file download, health check...), fallback về
+    // response.data để tránh trả về undefined silently.
+    return response.data?.data ?? response.data;
   },
   async (error) => {
     const originalRequest = error.config;
