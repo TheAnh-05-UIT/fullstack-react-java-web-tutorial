@@ -7,6 +7,7 @@ import com.web_tutorial.javabackend.domain.dto.response.user.UpdateUserResponseD
 import com.web_tutorial.javabackend.domain.dto.response.user.UserResponseDTO;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.user.UserService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
@@ -48,12 +49,12 @@ public class UserController {
 
     @GetMapping("/{id}")
     @ApiMessage("Get User by Id")
-    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) throws IdInvalidException {
-        Optional<User> userById = this.userService.getUserById(id);
-        if (!userById.isPresent()) {
-            throw new IdInvalidException("Id " + id + " does not exist");
-        }
-        UserResponseDTO userResponseDTO = MapperUtils.toUserResponseDTO(userById.get());
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
+        // Dùng ResourceNotFoundException (-> 404) thay vì IdInvalidException (-> 400)
+        // vì "id không tồn tại" là lỗi NOT FOUND, không phải BAD REQUEST
+        User user = this.userService.getUserById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User voi id " + id + " khong ton tai."));
+        UserResponseDTO userResponseDTO = MapperUtils.toUserResponseDTO(user);
         return ResponseEntity.status(HttpStatus.OK).body(userResponseDTO);
     }
 
@@ -117,11 +118,11 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a User")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) throws IdInvalidException {
-        Optional<User> deleteUser = this.userService.getUserById(id);
-        if (!deleteUser.isPresent()) {
-            throw new IdInvalidException("Id " + id + " does not exist");
-        }
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        // Dùng ResourceNotFoundException (-> 404) thay vì IdInvalidException (-> 400)
+        // vì "id không tồn tại" là lỗi NOT FOUND, không phải BAD REQUEST
+        this.userService.getUserById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User voi id " + id + " khong ton tai."));
         this.userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
