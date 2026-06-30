@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Clock, Eye, Calendar, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Clock, Eye, Calendar, ChevronRight } from 'lucide-react';
 import { Badge, Avatar } from '../../components/ui';
 import { marked } from 'marked';
 import { api } from '../../services/api';
@@ -22,8 +22,10 @@ export function TutorialDetailPage() {
 
   useEffect(() => {
     const fetchTutorial = async () => {
+      if (!id) return;
       try {
-        const data = await api.get<any, any>(`/tutorials/${id}`);
+        const endpoint = isNaN(Number(id)) ? `/tutorials/slug/${id}` : `/tutorials/${id}`;
+        const data = await api.get<any, any>(endpoint);
         if (data && data.id) {
           setTutorial(data);
         } else {
