@@ -16,7 +16,7 @@ const navLinks = [
 
 export function Navbar() {
   const { isDark, toggle } = useTheme();
-  const { setViewMode } = useApp();
+  useApp();
   const { isAuthenticated, user, role } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -41,7 +41,7 @@ export function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  onClick={(e) => {
+                  onClick={() => {
                     if (isActive(link.path)) {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }

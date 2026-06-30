@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { api } from '../services/api';
 import type { AuthUser } from '../types';
 
 interface DecodedToken {

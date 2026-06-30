@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { Card, Input, Button } from '../../components/ui';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
@@ -16,7 +15,6 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +29,7 @@ export function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await api.post<{ token: string, message: string }>('/auth/register', { 
+      await api.post<{ token: string, message: string }>('/auth/register', { 
         name, 
         email, 
         password 

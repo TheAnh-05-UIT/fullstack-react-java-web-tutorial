@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Edit, Trash2, Eye } from 'lucide-react';
 import { Card, Badge, Button, SearchInput } from '../../components/ui';
 import { api } from '../../services/api';
-import type { PagedResponse, Tutorial } from '../../types';
+import type { Tutorial } from '../../types';
 
 const statusColors = {
   'Published': 'success',
@@ -18,7 +18,7 @@ export function DashboardTutorials() {
   useEffect(() => {
     const fetchTutorials = async () => {
       try {
-        const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=100');
+        const data = await api.get<any, any>('/tutorials?page=0&size=100');
         setTutorials(data?.content || []);
       } catch (error) {
         console.error('Failed to fetch tutorials:', error);
@@ -105,14 +105,14 @@ export function DashboardTutorials() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <Eye className="w-4 h-4" />
-                      {((article.views || 0) / 1000).toFixed(1)}k
+                      {(((article as any).viewCount || (article as any).views || 0) / 1000).toFixed(1)}k
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <Badge variant={statusColors[article.status]}>{article.status}</Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(article.publishDate || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {new Date((article as any).createdAt || (article as any).publishDate || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
