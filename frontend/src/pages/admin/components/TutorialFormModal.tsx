@@ -135,11 +135,10 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
               name="content"
               control={control}
               render={({ field }) => {
-                // FE-06: Dùng 1 MDEditor instance duy nhất, đổi color-mode theo dark mode
+                // Dùng 1 MDEditor instance duy nhất, đổi color-mode theo dark mode
                 // Tránh mount 2 editor cùng lúc (gây double memory + potential desync)
                 const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
                 useEffect(() => {
-                  const mq = window.matchMedia('(prefers-color-scheme: dark)');
                   const isDark = document.documentElement.classList.contains('dark');
                   setColorMode(isDark ? 'dark' : 'light');
                   const observer = new MutationObserver(() => {

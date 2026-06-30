@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { Modal, Input, Button, Avatar } from '../../../components/ui';
 import type { User } from '../../../types';
 import { api } from '../../../services/api';
+import toast from 'react-hot-toast';
 
 const userSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -136,11 +137,11 @@ export function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: Us
                       if (file) {
                         // Validate file size and type
                         if (file.size > 5 * 1024 * 1024) {
-                          alert('File size must be less than 5MB');
+                          toast.error('File size must be less than 5MB');
                           return;
                         }
                         if (!file.type.startsWith('image/')) {
-                          alert('Only image files are allowed');
+                          toast.error('Only image files are allowed');
                           return;
                         }
                         try {
@@ -154,7 +155,7 @@ export function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: Us
                           }
                         } catch (error) {
                           console.error('Failed to upload image', error);
-                          alert('Failed to upload image. Please try again.');
+                          toast.error('Failed to upload image. Please try again.');
                         }
                       }
                     }}

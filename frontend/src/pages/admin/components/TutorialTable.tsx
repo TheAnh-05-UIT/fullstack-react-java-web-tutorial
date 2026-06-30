@@ -47,7 +47,7 @@ export function TutorialTable({ tutorials, onEdit, onDelete }: TutorialTableProp
                     <Badge variant="primary">{typeof tutorial.category === 'object' && tutorial.category ? (tutorial.category as any).name : tutorial.category || 'DevOps'}</Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {tutorial.views?.toLocaleString() || 0}
+                    {(((tutorial as any).viewCount || tutorial.views || 0)).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
                     <button onClick={() => onEdit(tutorial)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-blue-500 transition-colors">
