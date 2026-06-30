@@ -14,7 +14,10 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,16 +35,9 @@ public class TutorialController {
 
     @GetMapping
     @ApiMessage("Get All Tutorials")
-    public ResponseEntity<List<TutorialResponseDTO>> getAllTutorials() {
-        List<Tutorial> listTutorials = this.tutorialService.getAllTutorials();
-        List<TutorialResponseDTO> tutorialResponseDTOList = MapperUtils.toTutorialResponseDTOList(listTutorials);
-        // Dùng service.getAuthorNameByEmail thay vì inject UserRepository trực tiếp
-        tutorialResponseDTOList.forEach(dto -> {
-            if (dto.getCreateBy() != null) {
-                dto.setAuthorName(this.tutorialService.getAuthorNameByEmail(dto.getCreateBy()));
-            }
-        });
-        return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTOList);
+    public ResponseEntity<ResultPaginationDTO> getAllTutorials(Pageable pageable) {
+        ResultPaginationDTO response = this.tutorialService.getAllTutorials(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{id}")
@@ -51,7 +47,9 @@ public class TutorialController {
         if (!tutorialById.isPresent()) {
             throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
         }
+        this.tutorialService.incrementViewCount(tutorialById.get().getId());
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialById.get());
+        tutorialResponseDTO.setViewCount((tutorialResponseDTO.getViewCount() == null ? 0L : tutorialResponseDTO.getViewCount()) + 1);
         if (tutorialResponseDTO.getCreateBy() != null) {
             tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
@@ -66,7 +64,9 @@ public class TutorialController {
         if (!tutorialBySlug.isPresent()) {
             throw new ResourceNotFoundException("Tutorial with slug " + slug + " does not exist");
         }
+        this.tutorialService.incrementViewCount(tutorialBySlug.get().getId());
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialBySlug.get());
+        tutorialResponseDTO.setViewCount((tutorialResponseDTO.getViewCount() == null ? 0L : tutorialResponseDTO.getViewCount()) + 1);
         if (tutorialResponseDTO.getCreateBy() != null) {
             tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
@@ -75,6 +75,7 @@ public class TutorialController {
 
     @PostMapping
     @ApiMessage("Create a Tutorial")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TutorialResponseDTO> createTutorial(
             @RequestBody @Valid CreateTutorialRequestDTO requestDTO) {
         Tutorial tutorial = MapperUtils.toTutorial(requestDTO);
@@ -88,6 +89,7 @@ public class TutorialController {
 
     @PutMapping("/{id}")
     @ApiMessage("Update a Tutorial")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TutorialResponseDTO> updateTutorial(
             @PathVariable Long id,
             @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) throws IdInvalidException {
@@ -104,6 +106,7 @@ public class TutorialController {
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Tutorial")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteTutorial(@PathVariable Long id) throws IdInvalidException {
         // Kiểm tra tồn tại trước khi xóa
         if (this.tutorialService.getTutorialById(id).isEmpty()) {

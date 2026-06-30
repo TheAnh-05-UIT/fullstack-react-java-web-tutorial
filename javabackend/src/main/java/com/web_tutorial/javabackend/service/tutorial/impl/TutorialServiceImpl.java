@@ -13,6 +13,13 @@ import java.util.Optional;
 import java.time.Instant;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
+import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 public class TutorialServiceImpl implements TutorialService {
 
@@ -33,6 +40,18 @@ public class TutorialServiceImpl implements TutorialService {
     @Override
     public List<Tutorial> getAllTutorials() {
         return this.tutorialRepository.findByIsDeletedFalse();
+    }
+
+    @Override
+    public ResultPaginationDTO getAllTutorials(Pageable pageable) {
+        Page<Tutorial> page = this.tutorialRepository.findByIsDeletedFalse(pageable);
+        return MapperUtils.toResultPaginationDTO(page, tutorial -> {
+            TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
+            if (dto.getCreateBy() != null) {
+                dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+            }
+            return dto;
+        });
     }
 
     // Chỉ tìm tutorial chưa bị xóa
@@ -114,13 +133,18 @@ public class TutorialServiceImpl implements TutorialService {
         });
     }
 
-    // Lookup author name trong Service, không để Controller truy cập Repository
     @Override
     public String getAuthorNameByEmail(String email) {
         if (email == null) return null;
         return userRepository.findByEmail(email)
                 .map(u -> u.getUsername())
                 .orElse(email); // fallback về email nếu không tìm thấy user
+    }
+
+    @Override
+    @Transactional
+    public void incrementViewCount(Long id) {
+        this.tutorialRepository.incrementViews(id);
     }
 }
 
