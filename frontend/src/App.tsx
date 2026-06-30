@@ -68,7 +68,7 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode,
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
-  const { viewMode } = useApp();
+  useApp();
 
   return (
     <Routes>
@@ -117,9 +117,12 @@ function AppRoutes() {
   );
 }
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <ScrollToTop />
       <AuthProvider>
         <AppProvider>
