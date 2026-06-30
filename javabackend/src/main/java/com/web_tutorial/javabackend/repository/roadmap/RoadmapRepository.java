@@ -10,4 +10,7 @@ import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 @Repository
 public interface RoadmapRepository extends JpaRepository<Roadmap, Long> {
     Optional<Roadmap> findBySlug(String slug);
+
+    java.util.List<Roadmap> findAllByOrderByIdDesc();
+    org.springframework.data.domain.Page<Roadmap> findAllByOrderByIdDesc(org.springframework.data.domain.Pageable pageable);
 }

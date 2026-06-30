@@ -36,15 +36,15 @@ public class TutorialServiceImpl implements TutorialService {
         this.userRepository = userRepository;
     }
 
-    // Chỉ trả về tutorial chưa bị soft-deleted
+    // Chỉ trả về tutorial chưa bị soft-deleted, ưu thiên hiển thị mới nhất trước
     @Override
     public List<Tutorial> getAllTutorials() {
-        return this.tutorialRepository.findByIsDeletedFalse();
+        return this.tutorialRepository.findByIsDeletedFalseOrderByIdDesc();
     }
 
     @Override
     public ResultPaginationDTO getAllTutorials(Pageable pageable) {
-        Page<Tutorial> page = this.tutorialRepository.findByIsDeletedFalse(pageable);
+        Page<Tutorial> page = this.tutorialRepository.findByIsDeletedFalseOrderByIdDesc(pageable);
         return MapperUtils.toResultPaginationDTO(page, tutorial -> {
             TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
             if (dto.getCreateBy() != null) {

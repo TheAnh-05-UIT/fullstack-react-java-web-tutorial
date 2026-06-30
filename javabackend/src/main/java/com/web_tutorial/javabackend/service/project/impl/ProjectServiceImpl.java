@@ -41,12 +41,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> getAllProjects() {
-        return this.projectRepository.findAll();
+        return this.projectRepository.findAllByOrderByIdDesc();
     }
 
     @Override
     public ResultPaginationDTO getAllProjects(Pageable pageable) {
-        Page<Project> page = this.projectRepository.findAll(pageable);
+        Page<Project> page = this.projectRepository.findAllByOrderByIdDesc(pageable);
         return MapperUtils.toResultPaginationDTO(page, project -> {
             ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
             if (dto.getCreateBy() != null) {

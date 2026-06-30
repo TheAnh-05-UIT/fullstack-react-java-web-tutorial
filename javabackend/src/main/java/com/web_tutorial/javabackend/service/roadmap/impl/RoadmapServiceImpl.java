@@ -37,12 +37,12 @@ public class RoadmapServiceImpl implements RoadmapService {
 
     @Override
     public List<Roadmap> getAllRoadmaps() {
-        return this.roadmapRepository.findAll();
+        return this.roadmapRepository.findAllByOrderByIdDesc();
     }
 
     @Override
     public ResultPaginationDTO getAllRoadmaps(Pageable pageable) {
-        Page<Roadmap> page = this.roadmapRepository.findAll(pageable);
+        Page<Roadmap> page = this.roadmapRepository.findAllByOrderByIdDesc(pageable);
         return MapperUtils.toResultPaginationDTO(page, roadmap -> {
             RoadmapResponseDTO dto = MapperUtils.toRoadmapResponseDTO(roadmap);
             if (dto.getCreateBy() != null) {

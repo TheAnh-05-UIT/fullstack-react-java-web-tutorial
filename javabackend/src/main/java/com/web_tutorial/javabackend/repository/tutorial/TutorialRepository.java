@@ -18,8 +18,8 @@ import org.springframework.data.repository.query.Param;
 public interface TutorialRepository extends JpaRepository<Tutorial, Long> {
     Optional<Tutorial> findBySlug(String slug);
 
-    List<Tutorial> findByIsDeletedFalse();
-    Page<Tutorial> findByIsDeletedFalse(Pageable pageable);
+    List<Tutorial> findByIsDeletedFalseOrderByIdDesc();
+    Page<Tutorial> findByIsDeletedFalseOrderByIdDesc(Pageable pageable);
 
     Optional<Tutorial> findBySlugAndIsDeletedFalse(String slug);
 
