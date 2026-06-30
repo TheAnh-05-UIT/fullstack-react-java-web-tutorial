@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Map, ChevronRight } from 'lucide-react';
-import { Badge, Avatar } from '../../components/ui';
+import { Map, ChevronRight } from 'lucide-react';
 import { marked } from 'marked';
 import { api } from '../../services/api';
-import type { PagedResponse, Roadmap } from '../../types';
+import type { Roadmap } from '../../types';
 import { Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
 
 const iconComponents: Record<string, React.ReactNode> = {
@@ -22,8 +21,10 @@ export function RoadmapDetailPage() {
 
   useEffect(() => {
     const fetchRoadmap = async () => {
+      if (!id) return;
       try {
-        const data = await api.get<any, any>(`/roadmaps/${id}`);
+        const endpoint = isNaN(Number(id)) ? `/roadmaps/slug/${id}` : `/roadmaps/${id}`;
+        const data = await api.get<any, any>(endpoint);
         if (data && data.id) {
           setRoadmap(data);
         } else {
