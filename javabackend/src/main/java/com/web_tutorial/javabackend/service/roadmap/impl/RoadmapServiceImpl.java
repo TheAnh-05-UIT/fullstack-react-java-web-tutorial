@@ -11,18 +11,45 @@ import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
 import java.time.Instant;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 
+import com.web_tutorial.javabackend.repository.user.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
+import com.web_tutorial.javabackend.domain.dto.response.roadmap.RoadmapResponseDTO;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
+
 @Service
 public class RoadmapServiceImpl implements RoadmapService {
 
     private final RoadmapRepository roadmapRepository;
+    private final UserRepository userRepository;
 
-    public RoadmapServiceImpl(RoadmapRepository roadmapRepository) {
+    public RoadmapServiceImpl(RoadmapRepository roadmapRepository, UserRepository userRepository) {
         this.roadmapRepository = roadmapRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public String getAuthorNameByEmail(String email) {
+        if (email == null) return null;
+        return userRepository.findByEmail(email).map(u -> u.getUsername()).orElse(email);
     }
 
     @Override
     public List<Roadmap> getAllRoadmaps() {
         return this.roadmapRepository.findAll();
+    }
+
+    @Override
+    public ResultPaginationDTO getAllRoadmaps(Pageable pageable) {
+        Page<Roadmap> page = this.roadmapRepository.findAll(pageable);
+        return MapperUtils.toResultPaginationDTO(page, roadmap -> {
+            RoadmapResponseDTO dto = MapperUtils.toRoadmapResponseDTO(roadmap);
+            if (dto.getCreateBy() != null) {
+                dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+            }
+            return dto;
+        });
     }
 
     @Override

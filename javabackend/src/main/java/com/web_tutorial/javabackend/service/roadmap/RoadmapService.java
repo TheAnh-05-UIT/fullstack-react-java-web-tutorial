@@ -5,8 +5,13 @@ import java.util.Optional;
 
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 
+import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
+
 public interface RoadmapService {
     List<Roadmap> getAllRoadmaps();
+    ResultPaginationDTO getAllRoadmaps(Pageable pageable);
+    String getAuthorNameByEmail(String email);
 
     Optional<Roadmap> getRoadmapById(Long id);
 
