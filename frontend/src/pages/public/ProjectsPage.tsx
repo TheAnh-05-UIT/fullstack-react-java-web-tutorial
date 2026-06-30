@@ -76,39 +76,11 @@ export function ProjectsPage() {
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project: Project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <Button 
-              variant="secondary" 
-              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-              disabled={currentPage === 0}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Page {currentPage + 1} of {totalPages}
-            </span>
-            <Button 
-              variant="secondary" 
-              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={currentPage >= totalPages - 1}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-
         {isLoading ? (
           <div className="flex justify-center items-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
           </div>
-        ) : filteredProjects.length === 0 && (
+        ) : filteredProjects.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
               <Search className="w-8 h-8 text-gray-400" />
@@ -123,6 +95,36 @@ export function ProjectsPage() {
               Show all projects
             </Button>
           </div>
+        ) : (
+          <>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project: Project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-8">
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                  disabled={currentPage === 0}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Page {currentPage + 1} of {totalPages}
+                </span>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                  disabled={currentPage >= totalPages - 1}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
