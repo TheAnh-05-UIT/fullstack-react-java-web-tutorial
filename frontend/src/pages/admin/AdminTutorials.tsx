@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import type { Tutorial } from '../../types';
 import { TutorialTable } from './components/TutorialTable';
 import { TutorialFormModal } from './components/TutorialFormModal';
+import toast from 'react-hot-toast';
 
 export function AdminTutorials() {
   const queryClient = useQueryClient();
@@ -32,10 +33,11 @@ export function AdminTutorials() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tutorials'] });
       setIsModalOpen(false);
+      toast.success(editingTutorial ? 'Tutorial updated successfully!' : 'Tutorial created successfully!');
     },
     onError: (error) => {
       console.error('Failed to save tutorial:', error);
-      alert(error instanceof Error ? error.message : 'Không thể lưu Tutorial');
+      toast.error(error instanceof Error ? error.message : 'Cannot save Tutorial');
     }
   });
 
@@ -45,9 +47,11 @@ export function AdminTutorials() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tutorials'] });
+      toast.success('Tutorial deleted successfully!');
     },
     onError: (error) => {
       console.error('Failed to delete tutorial:', error);
+      toast.error('Cannot delete Tutorial');
     }
   });
 

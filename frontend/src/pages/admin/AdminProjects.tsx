@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import type { Project } from '../../types';
 import { ProjectTable } from './components/ProjectTable';
 import { ProjectFormModal } from './components/ProjectFormModal';
+import toast from 'react-hot-toast';
 
 export function AdminProjects() {
   const queryClient = useQueryClient();
@@ -32,10 +33,11 @@ export function AdminProjects() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setIsModalOpen(false);
+      toast.success(editingProject ? 'Project updated successfully!' : 'Project created successfully!');
     },
     onError: (error) => {
       console.error('Failed to save project:', error);
-      alert(error instanceof Error ? error.message : 'Không thể lưu Project');
+      toast.error(error instanceof Error ? error.message : 'Cannot save Project');
     }
   });
 
@@ -45,9 +47,11 @@ export function AdminProjects() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Project deleted successfully!');
     },
     onError: (error) => {
       console.error('Failed to delete project:', error);
+      toast.error('Cannot delete Project');
     }
   });
 

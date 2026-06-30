@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import type { Roadmap } from '../../types';
 import { RoadmapTable } from './components/RoadmapTable';
 import { RoadmapFormModal } from './components/RoadmapFormModal';
+import toast from 'react-hot-toast';
 
 export function AdminRoadmaps() {
   const queryClient = useQueryClient();
@@ -32,10 +33,11 @@ export function AdminRoadmaps() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
       setIsModalOpen(false);
+      toast.success(editingRoadmap ? 'Roadmap updated successfully!' : 'Roadmap created successfully!');
     },
     onError: (error) => {
       console.error('Failed to save roadmap:', error);
-      alert(error instanceof Error ? error.message : 'Không thể lưu Roadmap');
+      toast.error(error instanceof Error ? error.message : 'Cannot save Roadmap');
     }
   });
 
@@ -45,9 +47,11 @@ export function AdminRoadmaps() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
+      toast.success('Roadmap deleted successfully!');
     },
     onError: (error) => {
       console.error('Failed to delete roadmap:', error);
+      toast.error('Cannot delete Roadmap');
     }
   });
 

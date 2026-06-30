@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import type { User } from '../../types';
 import { UserTable } from './components/UserTable';
 import { UserFormModal } from './components/UserFormModal';
+import toast from 'react-hot-toast';
 
 export function AdminUsers() {
   const queryClient = useQueryClient();
@@ -33,10 +34,11 @@ export function AdminUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setIsModalOpen(false);
+      toast.success(editingUser ? 'User updated successfully!' : 'User created successfully!');
     },
     onError: (error) => {
       console.error('Failed to save user:', error);
-      alert(error instanceof Error ? error.message : 'Không thể lưu User');
+      toast.error(error instanceof Error ? error.message : 'Cannot save User');
     }
   });
 
@@ -46,9 +48,11 @@ export function AdminUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User deleted successfully!');
     },
     onError: (error) => {
       console.error('Failed to delete user:', error);
+      toast.error('Cannot delete User');
     }
   });
 
