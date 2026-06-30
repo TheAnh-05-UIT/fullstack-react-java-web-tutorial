@@ -26,7 +26,7 @@ export function TutorialsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['tutorials', currentPage],
     queryFn: async () => {
-      const response = await api.get<any, any>(`/tutorials?page=${currentPage}&size=10`);
+      const response = await api.get<any, any>(`/tutorials?page=${currentPage}&size=9`);
       if (Array.isArray(response)) {
         return { content: response, totalPages: 1 };
       }

@@ -35,9 +35,10 @@ export function AdminTutorials() {
       setIsModalOpen(false);
       toast.success(editingTutorial ? 'Tutorial updated successfully!' : 'Tutorial created successfully!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Failed to save tutorial:', error);
-      toast.error(error instanceof Error ? error.message : 'Cannot save Tutorial');
+      const msg = Array.isArray(error?.message) ? error.message.join(', ') : (error?.message || error?.error || 'Cannot save Tutorial');
+      toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   });
 
@@ -49,9 +50,10 @@ export function AdminTutorials() {
       queryClient.invalidateQueries({ queryKey: ['tutorials'] });
       toast.success('Tutorial deleted successfully!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Failed to delete tutorial:', error);
-      toast.error('Cannot delete Tutorial');
+      const msg = Array.isArray(error?.message) ? error.message.join(', ') : (error?.message || error?.error || 'Cannot delete Tutorial');
+      toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   });
 
