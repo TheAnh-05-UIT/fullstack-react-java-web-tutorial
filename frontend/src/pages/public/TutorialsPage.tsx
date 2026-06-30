@@ -139,7 +139,6 @@ export function TutorialsPage() {
               </div>
             </div>
 
-            {/* FE-05: Loading spinner đặt TRƯỚC grid và pagination */}
             {isLoading ? (
               <div className="flex justify-center items-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>

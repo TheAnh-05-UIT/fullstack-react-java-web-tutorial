@@ -3,7 +3,6 @@ import { Activity } from 'lucide-react';
 import { Card, SimpleBarChart, DonutChart, Badge, Button } from '../../components/ui';
 import { api } from '../../services/api';
 
-// FE-04: Chuyển từ useEffect+useState sang React Query để nhất quán với codebase
 export function AdminOverview() {
 
   // Dùng useQueries để fetch song song cả 3 nguồn dữ liệu
