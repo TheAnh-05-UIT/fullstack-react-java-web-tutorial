@@ -1,22 +1,24 @@
 package com.web_tutorial.javabackend.controller.project;
 
 import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.project.UpdateProjectRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
-import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.project.ProjectService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -24,24 +26,16 @@ import java.util.Optional;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final UserRepository userRepository;
 
-    public ProjectController(ProjectService projectService, UserRepository userRepository) {
+    public ProjectController(ProjectService projectService) {
         this.projectService = projectService;
-        this.userRepository = userRepository;
     }
 
     @GetMapping
     @ApiMessage("Get All Projects")
-    public ResponseEntity<List<ProjectResponseDTO>> getAllProjects() {
-        List<Project> lisProjects = this.projectService.getAllProjects();
-        List<ProjectResponseDTO> projectResponseDTO = MapperUtils.toProjectResponseDTOList(lisProjects);
-        projectResponseDTO.forEach(dto -> {
-            if (dto.getCreateBy() != null) {
-                userRepository.findByEmail(dto.getCreateBy()).ifPresent(u -> dto.setAuthorName(u.getUsername()));
-            }
-        });
-        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+    public ResponseEntity<ResultPaginationDTO> getAllProjects(Pageable pageable) {
+        ResultPaginationDTO response = this.projectService.getAllProjects(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{id}")
@@ -51,10 +45,11 @@ public class ProjectController {
         if (!projectById.isPresent()) {
             throw new IdInvalidException("Project with Id " + id + " does not exist");
         }
+        this.projectService.incrementViewCount(projectById.get().getId());
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectById.get());
+        projectResponseDTO.setViewCount((projectResponseDTO.getViewCount() == null ? 0L : projectResponseDTO.getViewCount()) + 1);
         if (projectResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(projectResponseDTO.getCreateBy())
-                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+            projectResponseDTO.setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
@@ -67,48 +62,52 @@ public class ProjectController {
         if (!projectBySlug.isPresent()) {
             throw new ResourceNotFoundException("Project with slug " + slug + " does not exist");
         }
+        this.projectService.incrementViewCount(projectBySlug.get().getId());
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectBySlug.get());
+        projectResponseDTO.setViewCount((projectResponseDTO.getViewCount() == null ? 0L : projectResponseDTO.getViewCount()) + 1);
         if (projectResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(projectResponseDTO.getCreateBy())
-                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+            projectResponseDTO.setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
     @PostMapping
     @ApiMessage("Create a Project")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProjectResponseDTO> createProject(
             @RequestBody @Valid CreateProjectRequestDTO requestDTO) {
         Project project = MapperUtils.toProject(requestDTO);
         Project createdProject = projectService.createProject(project);
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(createdProject);
         if (projectResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(projectResponseDTO.getCreateBy())
-                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+            projectResponseDTO.setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
     }
 
     @PutMapping("/{id}")
     @ApiMessage("Update a Project")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProjectResponseDTO> updateProject(
             @PathVariable Long id,
-            @RequestBody Project projectDetails) throws IdInvalidException {
+            @RequestBody @Valid UpdateProjectRequestDTO requestDTO) throws IdInvalidException {
         Optional<Project> projectById = this.projectService.getProjectById(id);
         if (!projectById.isPresent()) {
             throw new IdInvalidException("Project with Id " + id + " does not exist");
         }
+        Project projectDetails = new Project();
+        MapperUtils.updateProjectFromDTO(requestDTO, projectDetails);
         Project updatedProject = this.projectService.updateProject(id, projectDetails);
         ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(updatedProject);
         if (projectResponseDTO.getCreateBy() != null) {
-            userRepository.findByEmail(projectResponseDTO.getCreateBy())
-                    .ifPresent(u -> projectResponseDTO.setAuthorName(u.getUsername()));
+            projectResponseDTO.setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
     }
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Project")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) throws IdInvalidException {
         Optional<Project> projectById = this.projectService.getProjectById(id);
         if (!projectById.isPresent()) {

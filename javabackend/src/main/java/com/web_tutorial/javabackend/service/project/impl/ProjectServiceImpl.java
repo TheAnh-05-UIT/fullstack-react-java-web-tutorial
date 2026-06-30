@@ -12,20 +12,48 @@ import java.util.Optional;
 import java.time.Instant;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 
+import com.web_tutorial.javabackend.repository.user.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
+import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
+import com.web_tutorial.javabackend.mapper.MapperUtils;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository, CategoryRepository categoryRepository) {
+    public ProjectServiceImpl(ProjectRepository projectRepository, CategoryRepository categoryRepository, UserRepository userRepository) {
         this.projectRepository = projectRepository;
         this.categoryRepository = categoryRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public String getAuthorNameByEmail(String email) {
+        if (email == null) return null;
+        return userRepository.findByEmail(email).map(u -> u.getUsername()).orElse(email);
     }
 
     @Override
     public List<Project> getAllProjects() {
         return this.projectRepository.findAll();
+    }
+
+    @Override
+    public ResultPaginationDTO getAllProjects(Pageable pageable) {
+        Page<Project> page = this.projectRepository.findAll(pageable);
+        return MapperUtils.toResultPaginationDTO(page, project -> {
+            ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
+            if (dto.getCreateBy() != null) {
+                dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+            }
+            return dto;
+        });
     }
 
     @Override
@@ -98,5 +126,11 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public void deleteProject(Long id) {
         this.projectRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void incrementViewCount(Long id) {
+        this.projectRepository.incrementViews(id);
     }
 }

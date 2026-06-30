@@ -7,7 +7,15 @@ import org.springframework.stereotype.Repository;
 
 import com.web_tutorial.javabackend.domain.project.Project;
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findBySlug(String slug);
+
+    @Modifying
+    @Query("UPDATE Project p SET p.views = COALESCE(p.views, 0) + 1 WHERE p.id = :id")
+    void incrementViews(@Param("id") Long id);
 }
