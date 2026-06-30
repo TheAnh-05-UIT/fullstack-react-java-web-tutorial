@@ -69,7 +69,7 @@ public class UploadController {
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            org.slf4j.LoggerFactory.getLogger(UploadController.class).error("Failed to upload file", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to upload file"));
         }

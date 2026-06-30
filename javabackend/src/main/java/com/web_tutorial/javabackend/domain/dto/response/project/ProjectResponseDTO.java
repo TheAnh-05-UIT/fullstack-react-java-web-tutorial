@@ -17,12 +17,6 @@ import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectResponseDTO {
-    public ProjectResponseDTO(Long id2, String title2, String slug2, String description2, String coverImage,
-            String githubUrl, String demoUrl, Long views, Instant createdAt2, String createBy2, String content2,
-            CategoryDTO categoryDTO, Difficulty difficulty2, ProjectStatus status2, List<String> tags, Object object,
-            Object object2) {
-        // TODO Auto-generated constructor stub
-    }
 
     private Long id;
     private String title;
