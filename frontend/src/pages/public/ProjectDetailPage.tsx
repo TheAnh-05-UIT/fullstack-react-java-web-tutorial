@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Github, Globe, ChevronRight, User } from 'lucide-react';
+import { Github, Globe, ChevronRight, User } from 'lucide-react';
 import { Badge } from '../../components/ui';
 import { marked } from 'marked';
 import { api } from '../../services/api';
@@ -13,8 +13,10 @@ export function ProjectDetailPage() {
 
   useEffect(() => {
     const fetchProject = async () => {
+      if (!id) return;
       try {
-        const data = await api.get<any, any>(`/projects/${id}`);
+        const endpoint = isNaN(Number(id)) ? `/projects/slug/${id}` : `/projects/${id}`;
+        const data = await api.get<any, any>(endpoint);
         if (data && data.id) {
           setProject(data);
         } else {
