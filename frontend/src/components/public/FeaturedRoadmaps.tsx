@@ -93,7 +93,7 @@ export function RoadmapCard({ roadmap }: RoadmapCardProps) {
 
   return (
     <Card hover className={`p-6 group ${colors.border}`}>
-      <Link to={`/roadmaps/${roadmap.id}`} className="flex items-start gap-4">
+      <Link to={`/roadmaps/${roadmap.slug || roadmap.id}`} className="flex items-start gap-4">
         <div className={`p-3 rounded-xl ${colors.bg} ${colors.text} transition-colors`}>
           {iconComponents[roadmap.icon] || <Infinity className="w-6 h-6" />}
         </div>

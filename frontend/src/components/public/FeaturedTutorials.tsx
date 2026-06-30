@@ -74,7 +74,7 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
   const color = categoryColors[categoryName] || 'primary';
 
   return (
-    <Link to={`/tutorials/${tutorial.id}`} className={`block group ${featured ? 'md:col-span-2' : ''}`}>
+    <Link to={`/tutorials/${tutorial.slug || tutorial.id}`} className={`block group ${featured ? 'md:col-span-2' : ''}`}>
       <Card hover className="overflow-hidden h-full">
         <div className="relative">
           <img
@@ -113,11 +113,11 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
             </div>
             <div className="flex items-center gap-1">
               <Eye className="w-3.5 h-3.5" />
-              {(tutorial.views || 0) >= 1000 ? ((tutorial.views || 0) / 1000).toFixed(1) + 'K' : (tutorial.views || 0)}
+              {((tutorial.viewCount || tutorial.views || 0)) >= 1000 ? (((tutorial.viewCount || tutorial.views || 0)) / 1000).toFixed(1) + 'K' : ((tutorial.viewCount || tutorial.views || 0))}
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              {new Date(tutorial.publishDate || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {new Date(tutorial.createdAt || tutorial.publishDate || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
           </div>
         </div>

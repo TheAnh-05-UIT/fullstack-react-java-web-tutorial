@@ -62,7 +62,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <Card className="overflow-hidden group flex flex-col h-full">
-      <Link to={`/projects/${project.id}`} className="block relative">
+      <Link to={`/projects/${project.slug || project.id}`} className="block relative">
         <img
           src={project.thumbnail}
           alt={project.title}
@@ -79,7 +79,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <span>{project.authorName || project.createBy || 'Admin'}</span>
           </div>
         </div>
-        <Link to={`/projects/${project.id}`} className="hover:text-primary-600 transition-colors">
+        <Link to={`/projects/${project.slug || project.id}`} className="hover:text-primary-600 transition-colors">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {project.title}
           </h3>
@@ -101,7 +101,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
         <div className="flex gap-2 mt-auto pt-4 border-t border-gray-100 dark:border-gray-800">
           <Link
-            to={`/projects/${project.id}`}
+            to={`/projects/${project.slug || project.id}`}
             className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             Details
