@@ -25,8 +25,22 @@ import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.domain.dto.response.roadmap.RoadmapStepResponseDTO;
 import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
+import org.springframework.data.domain.Page;
+import java.util.function.Function;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 
 public class MapperUtils {
+
+    public static <T, R> ResultPaginationDTO toResultPaginationDTO(Page<T> page, Function<T, R> mapper) {
+        List<R> content = page.getContent().stream().map(mapper).collect(Collectors.toList());
+        return new ResultPaginationDTO(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
 
     // --- User Mapper ---
     public static UserResponseDTO toUserResponseDTO(User user) {
