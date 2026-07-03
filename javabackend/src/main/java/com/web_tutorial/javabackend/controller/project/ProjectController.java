@@ -45,9 +45,10 @@ public class ProjectController {
         if (!projectById.isPresent()) {
             throw new IdInvalidException("Project with Id " + id + " does not exist");
         }
-        this.projectService.incrementViewCount(projectById.get().getId());
-        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectById.get());
-        projectResponseDTO.setViewCount((projectResponseDTO.getViewCount() == null ? 0L : projectResponseDTO.getViewCount()) + 1);
+        Project project = projectById.get();
+        this.projectService.incrementViewCount(project.getId());
+        project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
+        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(project);
         if (projectResponseDTO.getCreateBy() != null) {
             projectResponseDTO.setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
         }
@@ -62,9 +63,10 @@ public class ProjectController {
         if (!projectBySlug.isPresent()) {
             throw new ResourceNotFoundException("Project with slug " + slug + " does not exist");
         }
-        this.projectService.incrementViewCount(projectBySlug.get().getId());
-        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(projectBySlug.get());
-        projectResponseDTO.setViewCount((projectResponseDTO.getViewCount() == null ? 0L : projectResponseDTO.getViewCount()) + 1);
+        Project project = projectBySlug.get();
+        this.projectService.incrementViewCount(project.getId());
+        project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
+        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(project);
         if (projectResponseDTO.getCreateBy() != null) {
             projectResponseDTO.setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
         }

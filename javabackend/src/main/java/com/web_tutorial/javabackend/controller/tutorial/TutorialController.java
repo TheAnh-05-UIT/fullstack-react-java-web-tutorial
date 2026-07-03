@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -47,11 +46,13 @@ public class TutorialController {
         if (!tutorialById.isPresent()) {
             throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
         }
-        this.tutorialService.incrementViewCount(tutorialById.get().getId());
-        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialById.get());
-        tutorialResponseDTO.setViewCount((tutorialResponseDTO.getViewCount() == null ? 0L : tutorialResponseDTO.getViewCount()) + 1);
+        Tutorial tutorial = tutorialById.get();
+        this.tutorialService.incrementViewCount(tutorial.getId());
+        tutorial.setViews((tutorial.getViews() == null ? 0L : tutorial.getViews()) + 1);
+        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorial);
         if (tutorialResponseDTO.getCreateBy() != null) {
-            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
+            tutorialResponseDTO
+                    .setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
@@ -64,11 +65,13 @@ public class TutorialController {
         if (!tutorialBySlug.isPresent()) {
             throw new ResourceNotFoundException("Tutorial with slug " + slug + " does not exist");
         }
-        this.tutorialService.incrementViewCount(tutorialBySlug.get().getId());
-        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorialBySlug.get());
-        tutorialResponseDTO.setViewCount((tutorialResponseDTO.getViewCount() == null ? 0L : tutorialResponseDTO.getViewCount()) + 1);
+        Tutorial tutorial = tutorialBySlug.get();
+        this.tutorialService.incrementViewCount(tutorial.getId());
+        tutorial.setViews((tutorial.getViews() == null ? 0L : tutorial.getViews()) + 1);
+        TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(tutorial);
         if (tutorialResponseDTO.getCreateBy() != null) {
-            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
+            tutorialResponseDTO
+                    .setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
@@ -82,7 +85,8 @@ public class TutorialController {
         Tutorial createdTutorial = this.tutorialService.createTutorial(tutorial);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(createdTutorial);
         if (tutorialResponseDTO.getCreateBy() != null) {
-            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
+            tutorialResponseDTO
+                    .setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(tutorialResponseDTO);
     }
@@ -93,13 +97,15 @@ public class TutorialController {
     public ResponseEntity<TutorialResponseDTO> updateTutorial(
             @PathVariable Long id,
             @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) throws IdInvalidException {
-        // Bỏ double findById – service tự kiểm tra và throw exception nếu không tìm thấy
+        // Bỏ double findById – service tự kiểm tra và throw exception nếu không tìm
+        // thấy
         Tutorial tutorialDetails = new Tutorial();
         MapperUtils.updateTutorialFromDTO(requestDTO, tutorialDetails);
         Tutorial updatedTutorial = this.tutorialService.updateTutorial(id, tutorialDetails);
         TutorialResponseDTO tutorialResponseDTO = MapperUtils.toTutorialResponseDTO(updatedTutorial);
         if (tutorialResponseDTO.getCreateBy() != null) {
-            tutorialResponseDTO.setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
+            tutorialResponseDTO
+                    .setAuthorName(this.tutorialService.getAuthorNameByEmail(tutorialResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(tutorialResponseDTO);
     }
