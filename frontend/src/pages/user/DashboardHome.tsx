@@ -4,6 +4,7 @@ import { Card, StatCard, DonutChart, Button, Badge } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import type { PagedResponse, Tutorial } from '../../types';
+import { formatReadTime } from '../../utils/format';
 
 export function DashboardHome() {
   const { user } = useAuth();
@@ -99,7 +100,7 @@ export function DashboardHome() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="primary" className="text-xs">{typeof tutorial.category === 'object' && tutorial.category ? (tutorial.category as any).name : tutorial.category || 'DevOps'}</Badge>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{tutorial.readTime} min</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatReadTime(tutorial.readTime, tutorial.content, tutorial.description)} min</span>
                   </div>
                   <h4 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{tutorial.title}</h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{tutorial.description}</p>

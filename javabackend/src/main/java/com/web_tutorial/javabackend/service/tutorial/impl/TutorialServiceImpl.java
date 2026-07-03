@@ -84,7 +84,26 @@ public class TutorialServiceImpl implements TutorialService {
             tutorial.setCategory(category);
         }
 
+        if (tutorial.getReadTime() == null || tutorial.getReadTime() <= 0 || tutorial.getReadTime() > 30) {
+            tutorial.setReadTime(calculateCleanReadTime(tutorial.getContent(), tutorial.getDescription()));
+        }
+        if (tutorial.getViews() == null) {
+            tutorial.setViews(0L);
+        }
+
         return this.tutorialRepository.save(tutorial);
+    }
+
+    private int calculateCleanReadTime(String content, String description) {
+        String rawText = (content != null && !content.isEmpty()) ? content : (description != null ? description : "");
+        if (rawText.isEmpty()) return 5;
+        String cleanText = rawText.replaceAll("data:image/[^;]+;base64,[a-zA-Z0-9+/=]+", "")
+                                  .replaceAll("<[^>]+>", " ")
+                                  .replaceAll("```[\\s\\S]*?```", " ")
+                                  .replaceAll("[^a-zA-Z0-9À-ỹ\\s]", " ");
+        int wordCount = cleanText.trim().split("\\s+").length;
+        int minutes = (int) Math.ceil((double) wordCount / 250);
+        return Math.max(3, Math.min(20, minutes));
     }
 
     @Override
@@ -103,6 +122,11 @@ public class TutorialServiceImpl implements TutorialService {
                 tutorial.setCoverImage(tutorialDetails.getCoverImage());
             if (tutorialDetails.getStatus() != null)
                 tutorial.setStatus(tutorialDetails.getStatus());
+            if (tutorialDetails.getReadTime() != null && tutorialDetails.getReadTime() > 0 && tutorialDetails.getReadTime() <= 30) {
+                tutorial.setReadTime(tutorialDetails.getReadTime());
+            } else if (tutorialDetails.getContent() != null || tutorial.getReadTime() == null || tutorial.getReadTime() <= 0 || tutorial.getReadTime() > 30) {
+                tutorial.setReadTime(calculateCleanReadTime(tutorial.getContent(), tutorial.getDescription()));
+            }
 
             // Cập nhật audit field
             String currentUser = SecurityService.getCurrentUserLogin().orElse("System");

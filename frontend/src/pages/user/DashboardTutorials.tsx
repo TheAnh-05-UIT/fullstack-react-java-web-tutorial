@@ -3,6 +3,7 @@ import { Edit, Trash2, Eye } from 'lucide-react';
 import { Card, Badge, Button, SearchInput } from '../../components/ui';
 import { api } from '../../services/api';
 import type { Tutorial } from '../../types';
+import { formatReadTime, formatViews } from '../../utils/format';
 
 const statusColors = {
   'Published': 'success',
@@ -95,7 +96,7 @@ export function DashboardTutorials() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1">{article.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{article.readTime} min read</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{formatReadTime(article.readTime, article.content, article.description)} min read</p>
                       </div>
                     </div>
                   </td>
@@ -109,7 +110,7 @@ export function DashboardTutorials() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <Eye className="w-4 h-4" />
-                      {((article.viewCount || article.views || 0) / 1000).toFixed(1)}k
+                      {formatViews(article.views, article.viewCount)}
                     </div>
                   </td>
                   <td className="px-6 py-4">

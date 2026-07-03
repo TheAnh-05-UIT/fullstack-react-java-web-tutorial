@@ -5,6 +5,7 @@ import { Badge, Avatar } from '../../components/ui';
 import { marked } from 'marked';
 import { api } from '../../services/api';
 import type { Tutorial } from '../../types';
+import { formatReadTime, formatViews } from '../../utils/format';
 
 export function TutorialDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -102,11 +103,11 @@ export function TutorialDetailPage() {
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {tutorial.readTime} min read
+                  {formatReadTime(tutorial.readTime, tutorial.content, tutorial.description)} min read
                 </div>
                 <div className="flex items-center gap-1">
                   <Eye className="w-4 h-4" />
-                  {(((tutorial.viewCount ?? tutorial.views) || 0) / 1000).toFixed(1)}k views
+                  {formatViews(tutorial.views, tutorial.viewCount)} views
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { ArrowRight, Clock, Eye, Calendar } from 'lucide-react';
 import { Card, Badge, Button, Avatar } from '../ui';
 import { api } from '../../services/api';
 import type { Tutorial } from '../../types';
+import { formatReadTime, formatViews } from '../../utils/format';
 
 const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error'> = {
   'DevOps': 'primary',
@@ -109,11 +110,11 @@ export function TutorialCard({ tutorial, featured = false }: TutorialCardProps) 
           <div className="mt-4 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {tutorial.readTime} min
+              {formatReadTime(tutorial.readTime, tutorial.content, tutorial.description)} min
             </div>
             <div className="flex items-center gap-1">
               <Eye className="w-3.5 h-3.5" />
-              {((tutorial.viewCount || tutorial.views || 0)) >= 1000 ? (((tutorial.viewCount || tutorial.views || 0)) / 1000).toFixed(1) + 'K' : ((tutorial.viewCount || tutorial.views || 0))}
+              {formatViews(tutorial.views, tutorial.viewCount)}
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
