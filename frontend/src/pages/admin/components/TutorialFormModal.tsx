@@ -12,7 +12,7 @@ const tutorialSchema = z.object({
   slug: z.string().min(3, 'Slug is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(2, 'Category is required'),
-  coverImage: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  coverImage: z.string().optional(),
   content: z.string().optional(),
 });
 

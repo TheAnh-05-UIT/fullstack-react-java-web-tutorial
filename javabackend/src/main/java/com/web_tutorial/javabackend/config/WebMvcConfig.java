@@ -14,9 +14,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Expose the 'uploads' directory statically
         Path uploadDir = Paths.get("uploads");
-        String uploadPath = uploadDir.toFile().getAbsolutePath().replace("\\", "/");
-
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:///" + uploadPath + "/");
+                .addResourceLocations(uploadDir.toUri().toString(), "file:./uploads/");
     }
 }

@@ -13,7 +13,7 @@ const userSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
   role: z.enum(['user', 'admin']),
-  avatar: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  avatar: z.string().optional(),
 });
 
 type UserFormData = z.infer<typeof userSchema>;

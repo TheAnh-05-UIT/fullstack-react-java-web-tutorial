@@ -60,10 +60,8 @@ public class UploadController {
             Path filepath = Paths.get(uploadDir, uniqueFilename);
             Files.copy(file.getInputStream(), filepath);
 
-            // Construct the public URL dynamically based on the request URL
-            String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder
-                    .fromCurrentContextPath().build().toUriString();
-            String fileUrl = baseUrl + "/" + uploadDir + uniqueFilename;
+            // Return relative URL so it works seamlessly in Docker (behind Nginx proxy) and Local environment
+            String fileUrl = "/" + uploadDir + uniqueFilename;
 
             Map<String, String> response = new HashMap<>();
             response.put("url", fileUrl);

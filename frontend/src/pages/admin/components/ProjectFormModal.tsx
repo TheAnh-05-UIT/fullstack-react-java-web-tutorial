@@ -13,7 +13,7 @@ const projectSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
-  thumbnail: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  thumbnail: z.string().optional(),
   techStack: z.string().optional(),
   content: z.string().optional(),
 });
