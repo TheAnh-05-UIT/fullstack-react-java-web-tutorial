@@ -6,17 +6,17 @@ export const tutorialService = {
     const response = await api.get<any, any>(`/tutorials?page=${page}&size=${size}`);
     return Array.isArray(response) ? response : (response?.content || []);
   },
-  getByIdOrSlug: async (idOrSlug: string) => {
+  getByIdOrSlug: async (idOrSlug: string | number) => {
     const endpoint = isNaN(Number(idOrSlug)) ? `/tutorials/slug/${idOrSlug}` : `/tutorials/${idOrSlug}`;
     return api.get<any, Tutorial>(endpoint);
   },
   create: async (data: Partial<Tutorial>) => {
     return api.post<any, Tutorial>('/tutorials', data);
   },
-  update: async (id: string, data: Partial<Tutorial>) => {
+  update: async (id: string | number, data: Partial<Tutorial>) => {
     return api.put<any, Tutorial>(`/tutorials/${id}`, data);
   },
-  delete: async (id: string) => {
+  delete: async (id: string | number) => {
     return api.delete(`/tutorials/${id}`);
   }
 };

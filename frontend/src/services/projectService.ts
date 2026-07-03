@@ -6,17 +6,17 @@ export const projectService = {
     const response = await api.get<any, any>(`/projects?page=${page}&size=${size}`);
     return Array.isArray(response) ? response : (response?.content || []);
   },
-  getByIdOrSlug: async (idOrSlug: string) => {
+  getByIdOrSlug: async (idOrSlug: string | number) => {
     const endpoint = isNaN(Number(idOrSlug)) ? `/projects/slug/${idOrSlug}` : `/projects/${idOrSlug}`;
     return api.get<any, Project>(endpoint);
   },
   create: async (data: Partial<Project>) => {
     return api.post<any, Project>('/projects', data);
   },
-  update: async (id: string, data: Partial<Project>) => {
+  update: async (id: string | number, data: Partial<Project>) => {
     return api.put<any, Project>(`/projects/${id}`, data);
   },
-  delete: async (id: string) => {
+  delete: async (id: string | number) => {
     return api.delete(`/projects/${id}`);
   }
 };

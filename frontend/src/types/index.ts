@@ -22,63 +22,69 @@ export type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 export type ProjectStatus = 'Planned' | 'In Progress' | 'Review' | 'Completed';
 
 export interface Tutorial {
-  id: string;
+  id: string | number;
   title: string;
   slug?: string;
   description: string;
-  category: Category;
+  category: Category | { id?: number; name?: string; slug?: string; description?: string };
   coverImage: string;
   thumbnail?: string;
-  author: Author;
+  author?: Author;
   authorName?: string;
   viewCount?: number;
   views?: number;
   createdAt?: string;
   publishDate?: string;
-  readTime: number;
+  readTime?: number;
   content?: string;
   createBy?: string;
+  status?: string;
 }
 
 export interface Author {
-  id: string;
+  id: string | number;
   name: string;
   avatar: string;
   role?: string;
 }
 
 export interface Project {
-  id: string;
+  id: string | number;
   title: string;
   slug?: string;
   description: string;
-  thumbnail: string;
-  techStack: string[];
-  difficulty: Difficulty;
-  githubUrl: string;
+  thumbnail?: string;
+  coverImage?: string;
+  techStack?: string[];
+  difficulty?: Difficulty | string;
+  githubUrl?: string;
+  githubLink?: string;
   demoUrl?: string;
-  status?: ProjectStatus;
+  liveLink?: string;
+  status?: ProjectStatus | string;
   content?: string;
   createBy?: string;
   authorName?: string;
   createdAt?: string;
   viewCount?: number;
+  views?: number;
 }
 
 export interface Roadmap {
-  id: string;
+  id: string | number;
   title: string;
   slug?: string;
   description: string;
   difficulty?: Difficulty | string;
-  icon: string;
-  color: string;
-  steps: RoadmapStep[];
+  icon?: string;
+  color?: string;
+  steps?: RoadmapStep[];
   content?: string;
   coverImage?: string;
   createBy?: string;
   authorName?: string;
   createdAt?: string;
+  isActive?: boolean;
 }
 
 export interface RoadmapStep {
