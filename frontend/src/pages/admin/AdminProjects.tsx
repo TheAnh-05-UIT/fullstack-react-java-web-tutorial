@@ -42,7 +42,7 @@ export function AdminProjects() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string | number) => {
       return api.delete(`/projects/${id}`);
     },
     onSuccess: () => {
@@ -60,7 +60,7 @@ export function AdminProjects() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string | number) => {
     if (!confirm('Are you sure you want to delete this project?')) return;
     deleteMutation.mutate(id);
   };

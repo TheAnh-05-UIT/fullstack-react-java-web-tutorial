@@ -43,7 +43,7 @@ export function AdminTutorials() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string | number) => {
       return api.delete(`/tutorials/${id}`);
     },
     onSuccess: () => {
@@ -62,7 +62,7 @@ export function AdminTutorials() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string | number) => {
     if (!confirm('Are you sure you want to delete this tutorial?')) return;
     deleteMutation.mutate(id);
   };

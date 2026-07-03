@@ -5,7 +5,7 @@ import type { Project } from '../../../types';
 interface ProjectTableProps {
   projects: Project[];
   onEdit: (project: Project) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string | number) => void;
 }
 
 export function ProjectTable({ projects, onEdit, onDelete }: ProjectTableProps) {

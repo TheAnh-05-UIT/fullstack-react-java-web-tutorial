@@ -5,7 +5,7 @@ import type { Tutorial } from '../../../types';
 interface TutorialTableProps {
   tutorials: Tutorial[];
   onEdit: (tutorial: Tutorial) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string | number) => void;
 }
 
 export function TutorialTable({ tutorials, onEdit, onDelete }: TutorialTableProps) {

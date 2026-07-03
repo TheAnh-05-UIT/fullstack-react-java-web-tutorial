@@ -5,7 +5,7 @@ import type { Roadmap } from '../../../types';
 interface RoadmapTableProps {
   roadmaps: Roadmap[];
   onEdit: (roadmap: Roadmap) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string | number) => void;
 }
 
 const iconComponents: Record<string, React.ReactNode> = {

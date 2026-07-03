@@ -100,12 +100,16 @@ export function DashboardTutorials() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="primary">{article.category}</Badge>
+                    <Badge variant="primary">
+                      {typeof article.category === 'object' && article.category
+                        ? (article.category.name || 'DevOps')
+                        : (typeof article.category === 'string' ? article.category : 'DevOps')}
+                    </Badge>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <Eye className="w-4 h-4" />
-                      {(((article as any).viewCount || (article as any).views || 0) / 1000).toFixed(1)}k
+                      {((article.viewCount || article.views || 0) / 1000).toFixed(1)}k
                     </div>
                   </td>
                   <td className="px-6 py-4">
