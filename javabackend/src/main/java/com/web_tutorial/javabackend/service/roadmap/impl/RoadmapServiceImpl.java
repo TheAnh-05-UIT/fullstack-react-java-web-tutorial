@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.repository.roadmap.RoadmapRepository;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import java.time.Instant;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 
@@ -90,7 +91,7 @@ public class RoadmapServiceImpl implements RoadmapService {
             if (roadmapDetails.getColor() != null)
                 roadmap.setColor(roadmapDetails.getColor());
             return this.roadmapRepository.save(roadmap);
-        }).orElseThrow(() -> new RuntimeException("roadmap not found with id " + id));
+        }).orElseThrow(() -> new ResourceNotFoundException("Roadmap not found with id " + id));
     }
 
     @Override

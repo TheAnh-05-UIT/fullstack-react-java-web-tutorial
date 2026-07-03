@@ -5,6 +5,7 @@ import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
 import com.web_tutorial.javabackend.service.project.ProjectService;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -120,7 +121,7 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             return this.projectRepository.save(project);
-        }).orElseThrow(() -> new RuntimeException("Project not found with id " + id));
+        }).orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + id));
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.repository.tutorial.TutorialRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -120,7 +121,7 @@ public class TutorialServiceImpl implements TutorialService {
             }
 
             return this.tutorialRepository.save(tutorial);
-        }).orElseThrow(() -> new RuntimeException("Tutorial not found with id " + id));
+        }).orElseThrow(() -> new ResourceNotFoundException("Tutorial not found with id " + id));
     }
 
     // Soft delete thay vì xóa cứng khỏi DB
