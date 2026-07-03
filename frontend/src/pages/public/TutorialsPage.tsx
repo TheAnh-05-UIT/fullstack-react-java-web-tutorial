@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Filter, X } from 'lucide-react';
 import { TutorialCard } from '../../components/public';
@@ -23,41 +23,56 @@ export function TutorialsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['tutorials', currentPage],
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage, selectedCategory]);
+
+  // Fetch all tutorials so we can compute exact category counts and filter globally across all pages
+  const { data: allTutorials = [], isLoading } = useQuery({
+    queryKey: ['tutorials-all'],
     queryFn: async () => {
-      const response = await api.get<any, any>(`/tutorials?page=${currentPage}&size=9`);
-      if (Array.isArray(response)) {
-        return { content: response, totalPages: 1 };
-      }
-      return { content: response?.content || [], totalPages: response?.totalPages || 1 };
+      const response = await api.get<any, any>(`/tutorials?page=0&size=1000`);
+      return Array.isArray(response) ? response : (response?.content || []);
     }
   });
 
-  const tutorials = data?.content || [];
-  const totalPages = data?.totalPages || 1;
+  // Calculate global category counts across ALL tutorials
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    allTutorials.forEach((tutorial: Tutorial) => {
+      const rawCat = typeof tutorial.category === 'object' && tutorial.category 
+        ? (tutorial.category as any).name 
+        : tutorial.category || 'Other';
+      const catName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
+      counts.set(catName, (counts.get(catName) || 0) + 1);
+    });
+    return counts;
+  }, [allTutorials]);
+
+  const dynamicCategories = useMemo(() => {
+    return Array.from(categoryCounts.entries()).sort((a, b) => b[1] - a[1]);
+  }, [categoryCounts]);
 
   const filteredTutorials = useMemo(() => {
-    return tutorials.filter((tutorial: Tutorial) => {
+    return allTutorials.filter((tutorial: Tutorial) => {
       const rawCat = typeof tutorial.category === 'object' && tutorial.category 
         ? (tutorial.category as any).name 
         : tutorial.category || 'Other';
       const categoryName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
       
-      const matchesCategory = selectedCategory === 'all' || categoryName === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || categoryName.toLowerCase() === selectedCategory.toLowerCase();
       const matchesSearch = (tutorial.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (tutorial.description || '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [tutorials, selectedCategory, searchQuery]);
+  }, [allTutorials, selectedCategory, searchQuery]);
 
-  const categoryCounts = new Map<string, number>();
-  tutorials.forEach((t: { category: any; }) => {
-    const rawCat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
-    const catName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
-    categoryCounts.set(catName, (categoryCounts.get(catName) || 0) + 1);
-  });
-  const dynamicCategories = Array.from(categoryCounts.entries()).sort((a, b) => b[1] - a[1]); // Sort by count descending
+  // Client-side pagination for filtered results
+  const pageSize = 9;
+  const totalPages = Math.ceil(filteredTutorials.length / pageSize) || 1;
+  const paginatedTutorials = useMemo(() => {
+    return filteredTutorials.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+  }, [filteredTutorials, currentPage]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -83,9 +98,9 @@ export function TutorialsPage() {
                 </div>
                 <div className="flex flex-wrap lg:flex-col gap-2">
                   <button
-                    onClick={() => setSelectedCategory('all')}
+                    onClick={() => { setSelectedCategory('all'); setCurrentPage(0); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === 'all'
-                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium'
                         : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                       }`}
                   >
@@ -94,9 +109,9 @@ export function TutorialsPage() {
                   {dynamicCategories.map(([category, count]) => (
                     <button
                       key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${selectedCategory === category
-                          ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+                      onClick={() => { setSelectedCategory(category); setCurrentPage(0); }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between ${selectedCategory.toLowerCase() === category.toLowerCase()
+                          ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400 font-medium'
                           : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
                         }`}
                     >
@@ -154,14 +169,14 @@ export function TutorialsPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Try adjusting your search or filter criteria
                 </p>
-                <Button variant="secondary" onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}>
+                <Button variant="secondary" onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setCurrentPage(0); }}>
                   Clear filters
                 </Button>
               </div>
             ) : (
               <>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTutorials.map((tutorial: Tutorial) => (
+                  {paginatedTutorials.map((tutorial: Tutorial) => (
                     <TutorialCard key={tutorial.id} tutorial={tutorial} />
                   ))}
                 </div>
