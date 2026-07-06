@@ -26,8 +26,9 @@ export interface Tutorial {
   title: string;
   slug?: string;
   description: string;
+  // category có thể là string hoặc object tùy API endpoint
   category: Category | { id?: number; name?: string; slug?: string; description?: string };
-  coverImage: string;
+  coverImage?: string;
   thumbnail?: string;
   author?: Author;
   authorName?: string;
@@ -53,14 +54,12 @@ export interface Project {
   title: string;
   slug?: string;
   description: string;
-  thumbnail?: string;
   coverImage?: string;
+  thumbnail?: string;
   techStack?: string[];
   difficulty?: Difficulty | string;
   githubUrl?: string;
-  githubLink?: string;
   demoUrl?: string;
-  liveLink?: string;
   status?: ProjectStatus | string;
   content?: string;
   createBy?: string;
@@ -81,6 +80,7 @@ export interface Roadmap {
   steps?: RoadmapStep[];
   content?: string;
   coverImage?: string;
+  thumbnail?: string;
   createBy?: string;
   authorName?: string;
   createdAt?: string;
