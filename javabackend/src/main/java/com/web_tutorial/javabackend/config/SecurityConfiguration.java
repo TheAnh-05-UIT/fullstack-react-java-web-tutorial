@@ -37,9 +37,6 @@ public class SecurityConfiguration {
     @Value("${javabackend.jwt.base64-secret}")
     private String jwtKey;
 
-    // Field jwtExpiration đã được xóa – khai báo nhưng không dùng trong class này.
-    // Giá trị expiration chỉ cần trong SecurityService, nơi nó đã được inject riêng.
-
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
 
     // Lấy secret key từ file cấu hình để mã hóa/giải mã JWT
@@ -56,7 +53,6 @@ public class SecurityConfiguration {
     // Tạo JWT Decoder để xác thực token
     @Bean
     public JwtDecoder jwtDecoder() {
-        // Xóa bỏ try-catch vô nghĩa (catch rồi throw lại y hệt không làm gì thêm)
         return NimbusJwtDecoder.withSecretKey(getSecretKey())
                 .macAlgorithm(JWT_ALGORITHM).build();
     }
@@ -75,13 +71,17 @@ public class SecurityConfiguration {
                                 "/api/v1/roadmaps/**", "/uploads/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/upload").authenticated()
+                        // /api/v1/logout yêu cầu phải đăng nhập (có Access Token hợp lệ)
+                        .requestMatchers("/api/v1/logout").authenticated()
                         // Yêu cầu token cho các request khác
                         .anyRequest().authenticated())
                 // Không sử dụng Session
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Kích hoạt tính năng kiểm tra bằng jwt oauth2 resource server, map chính xác ROLE_ADMIN
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+                // Kích hoạt tính năng kiểm tra bằng jwt oauth2 resource server, map chính xác
+                // ROLE_ADMIN
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();
     }

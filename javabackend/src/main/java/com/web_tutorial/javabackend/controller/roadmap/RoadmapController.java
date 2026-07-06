@@ -5,7 +5,6 @@ import com.web_tutorial.javabackend.domain.dto.request.roadmap.UpdateRoadmapRequ
 import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 import com.web_tutorial.javabackend.domain.dto.response.roadmap.RoadmapResponseDTO;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
-import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.roadmap.RoadmapService;
@@ -40,14 +39,16 @@ public class RoadmapController {
 
     @GetMapping("/{id}")
     @ApiMessage("Get Roadmap by Id")
-    public ResponseEntity<RoadmapResponseDTO> getRoadmapById(@PathVariable Long id) throws IdInvalidException {
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapById(@PathVariable Long id) {
         Optional<Roadmap> roadmapById = this.roadmapService.getRoadmapById(id);
         if (!roadmapById.isPresent()) {
-            throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
+            // ResourceNotFoundException → 404 NOT FOUND
+            throw new ResourceNotFoundException("Roadmap with Id " + id + " does not exist");
         }
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(roadmapById.get());
         if (roadmapResponseDTO.getCreateBy() != null) {
-            roadmapResponseDTO.setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
+            roadmapResponseDTO
+                    .setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
@@ -62,52 +63,57 @@ public class RoadmapController {
         }
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(roadmapBySlug.get());
         if (roadmapResponseDTO.getCreateBy() != null) {
-            roadmapResponseDTO.setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
+            roadmapResponseDTO
+                    .setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
     @PostMapping
     @ApiMessage("Create a Roadmap")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<RoadmapResponseDTO> createRoadmap(
             @RequestBody @Valid CreateRoadmapRequestDTO requestDTO) {
         Roadmap roadmap = MapperUtils.toRoadmap(requestDTO);
         Roadmap createdRoadmap = roadmapService.createRoadmap(roadmap);
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(createdRoadmap);
         if (roadmapResponseDTO.getCreateBy() != null) {
-            roadmapResponseDTO.setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
+            roadmapResponseDTO
+                    .setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(roadmapResponseDTO);
     }
 
     @PutMapping("/{id}")
     @ApiMessage("Update a Roadmap")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<RoadmapResponseDTO> updateRoadmap(
             @PathVariable Long id,
-            @RequestBody @Valid UpdateRoadmapRequestDTO requestDTO) throws IdInvalidException {
+            @RequestBody @Valid UpdateRoadmapRequestDTO requestDTO) {
         Optional<Roadmap> roadmapById = this.roadmapService.getRoadmapById(id);
         if (!roadmapById.isPresent()) {
-            throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
+            // ResourceNotFoundException → 404 NOT FOUND
+            throw new ResourceNotFoundException("Roadmap with Id " + id + " does not exist");
         }
         Roadmap roadmapDetails = new Roadmap();
         MapperUtils.updateRoadmapFromDTO(requestDTO, roadmapDetails);
         Roadmap updatedRoadmap = this.roadmapService.updateRoadmap(id, roadmapDetails);
         RoadmapResponseDTO roadmapResponseDTO = MapperUtils.toRoadmapResponseDTO(updatedRoadmap);
         if (roadmapResponseDTO.getCreateBy() != null) {
-            roadmapResponseDTO.setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
+            roadmapResponseDTO
+                    .setAuthorName(this.roadmapService.getAuthorNameByEmail(roadmapResponseDTO.getCreateBy()));
         }
         return ResponseEntity.status(HttpStatus.OK).body(roadmapResponseDTO);
     }
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Roadmap")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteRoadmap(@PathVariable Long id) throws IdInvalidException {
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteRoadmap(@PathVariable Long id) {
         Optional<Roadmap> roadmapById = this.roadmapService.getRoadmapById(id);
         if (!roadmapById.isPresent()) {
-            throw new IdInvalidException("Roadmap with Id " + id + " does not exist");
+            // ResourceNotFoundException → 404 NOT FOUND
+            throw new ResourceNotFoundException("Roadmap with Id " + id + " does not exist");
         }
         this.roadmapService.deleteRoadmap(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

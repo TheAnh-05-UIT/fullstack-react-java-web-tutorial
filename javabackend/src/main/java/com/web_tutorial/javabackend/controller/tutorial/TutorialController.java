@@ -4,7 +4,6 @@ import com.web_tutorial.javabackend.domain.dto.request.tutorial.CreateTutorialRe
 import com.web_tutorial.javabackend.domain.dto.request.tutorial.UpdateTutorialRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
-import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
@@ -27,7 +26,6 @@ public class TutorialController {
 
     private final TutorialService tutorialService;
 
-    // Bỏ UserRepository, controller chỉ giao tiếp với Service
     public TutorialController(TutorialService tutorialService) {
         this.tutorialService = tutorialService;
     }
@@ -41,10 +39,11 @@ public class TutorialController {
 
     @GetMapping("/{id}")
     @ApiMessage("Get Tutorial by Id")
-    public ResponseEntity<TutorialResponseDTO> getTutorialById(@PathVariable Long id) throws IdInvalidException {
+    public ResponseEntity<TutorialResponseDTO> getTutorialById(@PathVariable Long id) {
         Optional<Tutorial> tutorialById = this.tutorialService.getTutorialById(id);
         if (!tutorialById.isPresent()) {
-            throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
+            // ResourceNotFoundException → 404 NOT FOUND
+            throw new ResourceNotFoundException("Tutorial with Id " + id + " does not exist");
         }
         Tutorial tutorial = tutorialById.get();
         this.tutorialService.incrementViewCount(tutorial.getId());
@@ -78,7 +77,7 @@ public class TutorialController {
 
     @PostMapping
     @ApiMessage("Create a Tutorial")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<TutorialResponseDTO> createTutorial(
             @RequestBody @Valid CreateTutorialRequestDTO requestDTO) {
         Tutorial tutorial = MapperUtils.toTutorial(requestDTO);
@@ -93,10 +92,10 @@ public class TutorialController {
 
     @PutMapping("/{id}")
     @ApiMessage("Update a Tutorial")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<TutorialResponseDTO> updateTutorial(
             @PathVariable Long id,
-            @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) throws IdInvalidException {
+            @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) {
         // Bỏ double findById – service tự kiểm tra và throw exception nếu không tìm
         // thấy
         Tutorial tutorialDetails = new Tutorial();
@@ -112,11 +111,12 @@ public class TutorialController {
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Tutorial")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteTutorial(@PathVariable Long id) throws IdInvalidException {
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteTutorial(@PathVariable Long id) {
         // Kiểm tra tồn tại trước khi xóa
         if (this.tutorialService.getTutorialById(id).isEmpty()) {
-            throw new IdInvalidException("Tutorial with Id " + id + " does not exist");
+            // ResourceNotFoundException → 404 NOT FOUND
+            throw new ResourceNotFoundException("Tutorial with Id " + id + " does not exist");
         }
         // Service sẽ thực hiện soft delete
         this.tutorialService.deleteTutorial(id);

@@ -16,31 +16,30 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-import com.web_tutorial.javabackend.repository.user.RoleRepository;
-import com.web_tutorial.javabackend.domain.user.Role;
-
 import java.util.List;
-import java.util.Optional;
 
+// Tất cả endpoint /api/v1/users yêu cầu role ADMIN.
+// @PreAuthorize kiểm tra authority từ JWT claim "scope" sau khi strip prefix ROLE_.
+// Nếu user không đủ quyền, SecurityConfiguration sẽ trả 403 Forbidden.
 @RestController
 @RequestMapping("/api/v1/users")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class UserController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
-    private final RoleRepository roleRepository;
 
-    public UserController(UserService userService, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
+    public UserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
     }
 
     @GetMapping
-    @ApiMessage("Get All User")
+    @ApiMessage("Get All Users")
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<User> listUser = this.userService.getAllUsers();
         List<UserResponseDTO> listUserResponseDTOs = MapperUtils.toUserResponseDTOList(listUser);
@@ -50,10 +49,10 @@ public class UserController {
     @GetMapping("/{id}")
     @ApiMessage("Get User by Id")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
-        // Dùng ResourceNotFoundException (-> 404) thay vì IdInvalidException (-> 400)
-        // vì "id không tồn tại" là lỗi NOT FOUND, không phải BAD REQUEST
+        // ResourceNotFoundException → 404 NOT FOUND
+        // IdInvalidException → 400 BAD REQUEST
         User user = this.userService.getUserById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User voi id " + id + " khong ton tai."));
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found."));
         UserResponseDTO userResponseDTO = MapperUtils.toUserResponseDTO(user);
         return ResponseEntity.status(HttpStatus.OK).body(userResponseDTO);
     }
@@ -63,24 +62,24 @@ public class UserController {
     public ResponseEntity<CreateUserResponseDTO> createUser(
             @RequestBody @Valid CreateUserRequestDTO requestDTO)
             throws IdInvalidException {
-        boolean isEmailExist = this.userService.existsUserByEmail(requestDTO.getEmail());
-        if (isEmailExist) {
+        // Kiểm tra email trùng trước khi tạo
+        if (this.userService.existsUserByEmail(requestDTO.getEmail())) {
             throw new IdInvalidException(
                     "Email " + requestDTO.getEmail() + " already exists, please use another email.");
         }
+
         User user = MapperUtils.toUser(requestDTO);
         user.setPassword(this.passwordEncoder.encode(requestDTO.getPassword()));
 
+        // Gán role qua UserService thay vì truy cập RoleRepository trực tiếp
         if (requestDTO.getRole() != null) {
-            String roleName = requestDTO.getRole().toUpperCase();
-            Optional<Role> roleOpt = this.roleRepository.findByName(roleName);
-            if (roleOpt.isPresent()) {
-                user.setRole(roleOpt.get());
-            } else {
-                user.setRole(this.roleRepository.findByName("USER").orElse(null));
+            // Nếu role không tồn tại trong DB → fallback về USER
+            boolean assigned = this.userService.assignRoleByName(user, requestDTO.getRole());
+            if (!assigned) {
+                this.userService.assignRoleByName(user, "USER");
             }
         } else {
-            user.setRole(this.roleRepository.findByName("USER").orElse(null));
+            this.userService.assignRoleByName(user, "USER");
         }
 
         if (requestDTO.getAvatar() != null && !requestDTO.getAvatar().isEmpty()) {
@@ -100,18 +99,13 @@ public class UserController {
         User userDetails = new User();
         MapperUtils.updateUserFromDTO(requestDTO, userDetails);
 
+        // Gán role qua UserService nếu có cung cấp
         if (requestDTO.getRole() != null) {
-            String roleName = requestDTO.getRole().toUpperCase();
-            Optional<Role> roleOpt = this.roleRepository.findByName(roleName);
-            if (roleOpt.isPresent()) {
-                userDetails.setRole(roleOpt.get());
-            }
+            this.userService.assignRoleByName(userDetails, requestDTO.getRole());
         }
 
+        // updateUser ném ResourceNotFoundException (404) nếu không tìm thấy user
         User userUpdate = this.userService.updateUser(id, userDetails);
-        if (userUpdate == null) {
-            throw new IdInvalidException("User with Id " + id + " is invalid");
-        }
         UpdateUserResponseDTO updateUserResponseDTO = MapperUtils.toUpdateUserResponseDTO(userUpdate);
         return ResponseEntity.status(HttpStatus.OK).body(updateUserResponseDTO);
     }
@@ -119,10 +113,9 @@ public class UserController {
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a User")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        // Dùng ResourceNotFoundException (-> 404) thay vì IdInvalidException (-> 400)
-        // vì "id không tồn tại" là lỗi NOT FOUND, không phải BAD REQUEST
+        // Kiểm tra tồn tại trước khi xóa → 404 nếu không tìm thấy
         this.userService.getUserById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User voi id " + id + " khong ton tai."));
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found."));
         this.userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
