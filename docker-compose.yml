@@ -6,8 +6,8 @@ services:
     container_name: devops-mysql
     restart: always
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-webtutorial}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword123}
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-webtutorial}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}"
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
       - "3307:3306"
@@ -15,7 +15,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD:-rootpassword123}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,11 +33,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-webtutorial}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
-      DB_USERNAME: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword123}
-      JWT_SECRET: ${JWT_SECRET:-9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:80,http://localhost:3000,http://localhost:5173}
+      DB_URL: "jdbc:mysql://db:3306/${MYSQL_DATABASE:-webtutorial}?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8"
+      DB_USERNAME: "${DB_USERNAME:?DB_USERNAME is required}"
+      DB_PASSWORD: "${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}"
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET is required}"
+      CORS_ALLOWED_ORIGINS: "${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:80,http://localhost:3000,http://localhost:5173}"
+      ADMIN_DEFAULT_EMAIL: "${ADMIN_DEFAULT_EMAIL:?ADMIN_DEFAULT_EMAIL is required}"
+      ADMIN_DEFAULT_PASSWORD: "${ADMIN_DEFAULT_PASSWORD:?ADMIN_DEFAULT_PASSWORD is required}"
     ports:
       - "8080:8080"
     volumes:
