@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Map, ChevronRight } from 'lucide-react';
 import { marked } from 'marked';
-import { api } from '../../services/api';
+import { roadmapService } from '../../services';
 import type { Roadmap } from '../../types';
 import { Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
 
@@ -23,8 +23,8 @@ export function RoadmapDetailPage() {
     const fetchRoadmap = async () => {
       if (!id) return;
       try {
-        const endpoint = isNaN(Number(id)) ? `/roadmaps/slug/${id}` : `/roadmaps/${id}`;
-        const data = await api.get<any, any>(endpoint);
+        // Gọi qua roadmapService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+        const data = await roadmapService.getByIdOrSlug(id);
         if (data && data.id) {
           setRoadmap(data);
         } else {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, SearchInput } from '../../components/ui';
-import { api } from '../../services/api';
+import { roadmapService } from '../../services';
 import type { Roadmap } from '../../types';
 import { RoadmapTable } from './components/RoadmapTable';
 import { RoadmapFormModal } from './components/RoadmapFormModal';
@@ -17,18 +17,17 @@ export function AdminRoadmaps() {
 
   const { data: roadmaps = [], isLoading } = useQuery({
     queryKey: ['roadmaps'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/roadmaps?page=0&size=100');
-      return Array.isArray(response) ? response : (response?.content || []);
-    }
+    // Gọi qua roadmapService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+    queryFn: () => roadmapService.getAll()
   });
 
   const saveMutation = useMutation({
+    // Gọi qua roadmapService thay vì api trực tiếp
     mutationFn: async (data: any) => {
       if (editingRoadmap?.id) {
-        return api.put(`/roadmaps/${editingRoadmap.id}`, data);
+        return roadmapService.update(editingRoadmap.id, data);
       }
-      return api.post('/roadmaps', data);
+      return roadmapService.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
@@ -42,8 +41,9 @@ export function AdminRoadmaps() {
   });
 
   const deleteMutation = useMutation({
+    // Gọi qua roadmapService thay vì api trực tiếp
     mutationFn: async (id: string | number) => {
-      return api.delete(`/roadmaps/${id}`);
+      return roadmapService.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roadmaps'] });

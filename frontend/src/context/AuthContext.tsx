@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import type { AuthUser } from '../types';
+import { authService } from '../services/authService';
 
 interface DecodedToken {
   sub: string;
@@ -9,8 +10,6 @@ interface DecodedToken {
   exp: number;
 }
 
-// Dùng AuthUser từ types/index.ts thay vì định nghĩa UserProfile riêng ở đây.
-// Re-export UserProfile = AuthUser để không phải sửa các file đang import UserProfile.
 export type UserProfile = AuthUser;
 
 
@@ -24,7 +23,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper extract role từ JWT token – tránh duplicate code
+// Helper extract role từ JWT token
 function extractRoleFromToken(token: string, fallback?: string): string {
   try {
     const decoded = jwtDecode<DecodedToken>(token);
@@ -45,13 +44,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
 
   // Dùng useCallback để tránh stale closure khi dùng logout trong useEffect
-  const logout = useCallback(() => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setRole(null);
-    setUser(null);
+  const logout = useCallback(async () => {
+    try {
+      // Gọi API để revoke Refresh Token trong DB trước khi xóa localStorage
+      // Nếu API thất bại (token hết hạn, mạng lỗi), vẫn xóa local state bình thường
+      await authService.logout();
+    } catch {
+      // Ignore lỗi API – user vẫn được logout khỏi frontend
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+      setRole(null);
+      setUser(null);
+    }
   }, []);
 
   useEffect(() => {

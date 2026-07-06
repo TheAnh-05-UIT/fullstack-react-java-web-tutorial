@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Clock, Eye, Calendar, ChevronRight } from 'lucide-react';
 import { Badge, Avatar } from '../../components/ui';
 import { marked } from 'marked';
-import { api } from '../../services/api';
+import { tutorialService } from '../../services';
 import type { Tutorial } from '../../types';
 import { formatReadTime, formatViews } from '../../utils/format';
 
@@ -25,8 +25,8 @@ export function TutorialDetailPage() {
     const fetchTutorial = async () => {
       if (!id) return;
       try {
-        const endpoint = isNaN(Number(id)) ? `/tutorials/slug/${id}` : `/tutorials/${id}`;
-        const data = await api.get<any, any>(endpoint);
+        // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+        const data = await tutorialService.getByIdOrSlug(id);
         if (data && data.id) {
           setTutorial(data);
         } else {

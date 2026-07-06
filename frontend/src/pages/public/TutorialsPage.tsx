@@ -4,7 +4,7 @@ import { Search, Filter, X } from 'lucide-react';
 import { TutorialCard } from '../../components/public';
 import { Button, SearchInput, Badge } from '../../components/ui';
 import type { Category, Tutorial } from '../../types';
-import { api } from '../../services/api';
+import { tutorialService } from '../../services';
 
 const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error'> = {
   'DevOps': 'primary',
@@ -30,10 +30,8 @@ export function TutorialsPage() {
   // Fetch all tutorials so we can compute exact category counts and filter globally across all pages
   const { data: allTutorials = [], isLoading } = useQuery({
     queryKey: ['tutorials-all'],
-    queryFn: async () => {
-      const response = await api.get<any, any>(`/tutorials?page=0&size=1000`);
-      return Array.isArray(response) ? response : (response?.content || []);
-    }
+    // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+    queryFn: () => tutorialService.getAll(0, 1000)
   });
 
   // Calculate global category counts across ALL tutorials

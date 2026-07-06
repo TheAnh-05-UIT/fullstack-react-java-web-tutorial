@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Github, Globe, ChevronRight, User } from 'lucide-react';
 import { Badge } from '../../components/ui';
 import { marked } from 'marked';
-import { api } from '../../services/api';
+import { projectService } from '../../services';
 import type { Project } from '../../types';
 
 export function ProjectDetailPage() {
@@ -15,8 +15,8 @@ export function ProjectDetailPage() {
     const fetchProject = async () => {
       if (!id) return;
       try {
-        const endpoint = isNaN(Number(id)) ? `/projects/slug/${id}` : `/projects/${id}`;
-        const data = await api.get<any, any>(endpoint);
+        // Gọi qua projectService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+        const data = await projectService.getByIdOrSlug(id);
         if (data && data.id) {
           setProject(data);
         } else {

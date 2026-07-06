@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, SearchInput } from '../../components/ui';
-import { api } from '../../services/api';
+import { userService } from '../../services';
 import type { User } from '../../types';
 import { UserTable } from './components/UserTable';
 import { UserFormModal } from './components/UserFormModal';
@@ -18,18 +18,17 @@ export function AdminUsers() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/users?page=0&size=100');
-      return Array.isArray(response) ? response : (response?.content || []);
-    }
+    // Gọi qua userService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+    queryFn: () => userService.getAll()
   });
 
   const saveMutation = useMutation({
+    // Gọi qua userService thay vì api trực tiếp
     mutationFn: async (data: any) => {
       if (editingUser?.id) {
-        return api.put(`/users/${editingUser.id}`, data);
+        return userService.update(String(editingUser.id), data);
       }
-      return api.post('/users', data);
+      return userService.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -43,8 +42,9 @@ export function AdminUsers() {
   });
 
   const deleteMutation = useMutation({
+    // Gọi qua userService thay vì api trực tiếp
     mutationFn: async (id: string) => {
-      return api.delete(`/users/${id}`);
+      return userService.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });

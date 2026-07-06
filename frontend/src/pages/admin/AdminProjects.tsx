@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, SearchInput } from '../../components/ui';
-import { api } from '../../services/api';
+import { projectService } from '../../services';
 import type { Project } from '../../types';
 import { ProjectTable } from './components/ProjectTable';
 import { ProjectFormModal } from './components/ProjectFormModal';
@@ -17,18 +17,17 @@ export function AdminProjects() {
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/projects?page=0&size=100');
-      return Array.isArray(response) ? response : (response?.content || []);
-    }
+    // Gọi qua projectService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+    queryFn: () => projectService.getAll()
   });
 
   const saveMutation = useMutation({
+    // Gọi qua projectService thay vì api trực tiếp
     mutationFn: async (data: any) => {
       if (editingProject?.id) {
-        return api.put(`/projects/${editingProject.id}`, data);
+        return projectService.update(editingProject.id, data);
       }
-      return api.post('/projects', data);
+      return projectService.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -42,8 +41,9 @@ export function AdminProjects() {
   });
 
   const deleteMutation = useMutation({
+    // Gọi qua projectService thay vì api trực tiếp
     mutationFn: async (id: string | number) => {
-      return api.delete(`/projects/${id}`);
+      return projectService.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });

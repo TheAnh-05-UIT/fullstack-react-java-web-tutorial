@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, SearchInput } from '../../components/ui';
-import { api } from '../../services/api';
+import { tutorialService } from '../../services';
 import type { Tutorial } from '../../types';
 import { TutorialTable } from './components/TutorialTable';
 import { TutorialFormModal } from './components/TutorialFormModal';
@@ -17,18 +17,17 @@ export function AdminTutorials() {
 
   const { data: tutorials = [], isLoading } = useQuery({
     queryKey: ['tutorials'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/tutorials?page=0&size=100');
-      return Array.isArray(response) ? response : (response?.content || []);
-    }
+    // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+    queryFn: () => tutorialService.getAll()
   });
 
   const saveMutation = useMutation({
+    // Gọi qua tutorialService thay vì api trực tiếp
     mutationFn: async (data: any) => {
       if (editingTutorial?.id) {
-        return api.put(`/tutorials/${editingTutorial.id}`, data);
+        return tutorialService.update(editingTutorial.id, data);
       }
-      return api.post('/tutorials', data);
+      return tutorialService.create(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tutorials'] });
@@ -43,8 +42,9 @@ export function AdminTutorials() {
   });
 
   const deleteMutation = useMutation({
+    // Gọi qua tutorialService thay vì api trực tiếp
     mutationFn: async (id: string | number) => {
-      return api.delete(`/tutorials/${id}`);
+      return tutorialService.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tutorials'] });
