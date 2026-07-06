@@ -5,6 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class LoginResponseDTO {
     private String accessToken;
     private String refreshToken;
@@ -21,38 +25,5 @@ public class LoginResponseDTO {
         private String email;
         private String role;
         private String avatar;
-    }
-
-    public LoginResponseDTO() {
-    }
-
-    public LoginResponseDTO(String accessToken, String refreshToken, UserLogin userLogin) {
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.userLogin = userLogin;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public UserLogin getUserLogin() {
-        return userLogin;
-    }
-
-    public void setUserLogin(UserLogin userLogin) {
-        this.userLogin = userLogin;
     }
 }

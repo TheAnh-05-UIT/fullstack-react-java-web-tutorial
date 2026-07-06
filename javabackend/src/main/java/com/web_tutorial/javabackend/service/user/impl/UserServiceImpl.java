@@ -1,8 +1,10 @@
 package com.web_tutorial.javabackend.service.user.impl;
 
 import com.web_tutorial.javabackend.domain.user.User;
+import com.web_tutorial.javabackend.repository.user.RoleRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.user.UserService;
+import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +14,11 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -52,9 +56,8 @@ public class UserServiceImpl implements UserService {
                 userUpdate.setRole(userDetails.getRole());
             return this.userRepository.save(userUpdate);
         }
-        // Throw exception thay vì trả null – tránh NullPointerException ở controller
-        throw new com.web_tutorial.javabackend.exception.ResourceNotFoundException(
-                "User with id " + id + " not found");
+        // Throw ResourceNotFoundException (404 Not Found) thay vì trả null – tránh NullPointerException ở controller
+        throw new ResourceNotFoundException("User with id " + id + " not found");
     }
 
     @Override
@@ -85,5 +88,27 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> getUserByRefreshToken(String refreshToken) {
         return this.userRepository.findByRefreshToken(refreshToken);
+    }
+
+    @Override
+    public void revokeRefreshToken(String email) {
+        // Xóa Refresh Token trong DB khi user logout
+        // Access Token vẫn còn hiệu lực cho đến khi hết hạn (stateless JWT)
+        // nhưng Refresh Token đã bị vô hiệu hóa nên không thể gia hạn thêm
+        Optional<User> userOptional = this.userRepository.findByEmail(email);
+        userOptional.ifPresent(user -> {
+            user.setRefreshToken(null);
+            this.userRepository.save(user);
+        });
+    }
+
+    @Override
+    public boolean assignRoleByName(User user, String roleName) {
+        // Gán role cho user theo tên – trả về false nếu role không tồn tại trong DB
+        String normalizedName = roleName.toUpperCase();
+        return roleRepository.findByName(normalizedName).map(role -> {
+            user.setRole(role);
+            return true;
+        }).orElse(false);
     }
 }

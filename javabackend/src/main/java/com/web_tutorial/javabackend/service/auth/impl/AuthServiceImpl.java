@@ -14,11 +14,9 @@ import com.web_tutorial.javabackend.domain.dto.request.auth.LoginRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.auth.RefreshTokenRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.auth.RegisterRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.auth.LoginResponseDTO;
-import com.web_tutorial.javabackend.domain.user.Role;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.InvalidRefreshTokenException;
-import com.web_tutorial.javabackend.repository.user.RoleRepository;
 import com.web_tutorial.javabackend.service.auth.AuthService;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 import com.web_tutorial.javabackend.service.user.UserService;
@@ -31,19 +29,16 @@ public class AuthServiceImpl implements AuthService {
     private final SecurityService securityService;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
-    private final RoleRepository roleRepository;
 
     public AuthServiceImpl(
             AuthenticationManagerBuilder authManagerBuilder,
             SecurityService securityService,
             UserService userService,
-            PasswordEncoder passwordEncoder,
-            RoleRepository roleRepository) {
+            PasswordEncoder passwordEncoder) {
         this.authManagerBuilder = authManagerBuilder;
         this.securityService = securityService;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -54,14 +49,14 @@ public class AuthServiceImpl implements AuthService {
                     "Email " + registerDTO.getEmail() + " already exists, please use another email.");
         }
 
-        // Tạo user mới với role mặc định là USER
+        // Tạo user mới
         User newUser = new User();
         newUser.setUsername(registerDTO.getName());
         newUser.setEmail(registerDTO.getEmail());
         newUser.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
 
-        Optional<Role> defaultRole = roleRepository.findByName("USER");
-        defaultRole.ifPresent(newUser::setRole);
+        // Gọi qua UserService thay vì RoleRepository trực tiếp để đảm bảo tính đóng gói tầng Service
+        userService.assignRoleByName(newUser, "USER");
 
         User savedUser = userService.createUser(newUser);
 
