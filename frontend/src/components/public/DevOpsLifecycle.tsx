@@ -1,110 +1,151 @@
-import { ClipboardList, Code, Hammer, FlaskConical, Package, Rocket, Settings, Activity } from 'lucide-react';
-import { Card } from '../ui';
+import { ClipboardList, Code, Hammer, FlaskConical, Package, Rocket, Settings, Activity, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface DevOpsPhase {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  tools: string[];
-}
-
-const devOpsPhases: DevOpsPhase[] = [
-  { id: '1', name: 'Plan', description: 'Define requirements, estimate resources, and plan project milestones.', icon: 'clipboard-list', tools: ['Jira', 'Confluence', 'Trello'] },
-  { id: '2', name: 'Code', description: 'Write, review, and manage source code with version control.', icon: 'code', tools: ['Git', 'GitHub', 'GitLab'] },
-  { id: '3', name: 'Build', description: 'Compile source code and create deployable artifacts.', icon: 'hammer', tools: ['Maven', 'Gradle', 'npm'] },
-  { id: '4', name: 'Test', description: 'Run automated tests to ensure code quality and functionality.', icon: 'flask-conical', tools: ['Jest', 'Selenium', 'JUnit'] },
-  { id: '5', name: 'Release', description: 'Package and version applications for deployment.', icon: 'package', tools: ['Semantic Release', 'Docker', 'Artifactory'] },
-  { id: '6', name: 'Deploy', description: 'Release applications to production environments.', icon: 'rocket', tools: ['Docker', 'Kubernetes', 'Terraform', 'ArgoCD'] },
-  { id: '7', name: 'Operate', description: 'Manage and maintain production systems and infrastructure.', icon: 'settings', tools: ['Ansible', 'Kubernetes', 'AWS'] },
-  { id: '8', name: 'Monitor', description: 'Track system performance and detect issues proactively.', icon: 'activity', tools: ['Prometheus', 'Grafana', 'Datadog'] },
+const devOpsPhases = [
+  {
+    id: '1', slug: 'plan', name: 'Plan', icon: 'clipboard-list',
+    goal: 'Define project requirements, set roadmaps, and establish milestones based on business values.',
+    keyActivities: 'Managing product backlogs, planning sprints, and creating user stories.',
+    tools: ['Jira', 'Trello', 'Azure Boards', 'Confluence']
+  },
+  {
+    id: '2', slug: 'code', name: 'Code', icon: 'code',
+    goal: 'Design and write the application logic according to the planning blueprints.',
+    keyActivities: 'Writing source code, managing code repositories, and conducting peer reviews.',
+    tools: ['Git', 'GitHub', 'GitLab', 'Bitbucket']
+  },
+  {
+    id: '3', slug: 'build', name: 'Build', icon: 'hammer',
+    goal: 'Compile the raw code into deployable, functional artifacts.',
+    keyActivities: 'Fetching source code from repositories, managing dependencies, and packing code into executables or Docker images.',
+    tools: ['Maven', 'Gradle', 'Jenkins']
+  },
+  {
+    id: '4', slug: 'test', name: 'Test', icon: 'flask-conical',
+    goal: 'Ensure code stability, functionality, and security before releasing it.',
+    keyActivities: 'Executing automated unit, functional, security, and performance tests.',
+    tools: ['Selenium', 'JUnit', 'Cucumber', 'SonarQube']
+  },
+  {
+    id: '5', slug: 'release', name: 'Release', icon: 'package',
+    goal: 'Finalize and package verified builds for application staging or environments.',
+    keyActivities: 'Creating release notes, validating build approvals, and readying artifacts.',
+    tools: ['Jenkins', 'Spinnaker', 'AWS CodePipeline']
+  },
+  {
+    id: '6', slug: 'deploy', name: 'Deploy', icon: 'rocket',
+    goal: 'Distribute software builds to target production servers or hosting platforms.',
+    keyActivities: 'Executing automated scripts to push updates to public servers or staging platforms without interrupting runtime.',
+    tools: ['Kubernetes', 'Docker', 'Ansible', 'Terraform']
+  },
+  {
+    id: '7', slug: 'operate', name: 'Operate', icon: 'settings',
+    goal: 'Maintain system stability and manage live production infrastructure.',
+    keyActivities: 'Configuring runtime environments, scaling server nodes, and applying system patches.',
+    tools: ['Ansible', 'Chef', 'Puppet', 'OpenShift']
+  },
+  {
+    id: '8', slug: 'monitor', name: 'Monitor', icon: 'activity',
+    goal: 'Analyze performance data and user trends to optimize the active application.',
+    keyActivities: 'Reviewing logs, tracking real-time error logs, measuring uptime, and monitoring server metrics.',
+    tools: ['Prometheus', 'Grafana', 'Datadog', 'Splunk', 'New Relic']
+  },
 ];
+
 const iconMap: Record<string, React.ReactNode> = {
   'clipboard-list': <ClipboardList className="w-6 h-6" />,
-  'code': <Code className="w-6 h-6" />,
-  'hammer': <Hammer className="w-6 h-6" />,
-  'flask-conical': <FlaskConical className="w-6 h-6" />,
-  'package': <Package className="w-6 h-6" />,
-  'rocket': <Rocket className="w-6 h-6" />,
-  'settings': <Settings className="w-6 h-6" />,
-  'activity': <Activity className="w-6 h-6" />,
+  'code':           <Code className="w-6 h-6" />,
+  'hammer':         <Hammer className="w-6 h-6" />,
+  'flask-conical':  <FlaskConical className="w-6 h-6" />,
+  'package':        <Package className="w-6 h-6" />,
+  'rocket':         <Rocket className="w-6 h-6" />,
+  'settings':       <Settings className="w-6 h-6" />,
+  'activity':       <Activity className="w-6 h-6" />,
 };
 
 const colorMap: Record<string, string> = {
-  'Plan': 'from-blue-500 to-blue-600',
-  'Code': 'from-indigo-500 to-indigo-600',
-  'Build': 'from-violet-500 to-violet-600',
-  'Test': 'from-purple-500 to-purple-600',
-  'Release': 'from-pink-500 to-pink-600',
-  'Deploy': 'from-orange-500 to-orange-600',
-  'Operate': 'from-yellow-500 to-yellow-600',
-  'Monitor': 'from-green-500 to-green-600',
+  Plan:    'from-blue-500 to-blue-600',
+  Code:    'from-indigo-500 to-purple-600',
+  Build:   'from-violet-500 to-violet-600',
+  Test:    'from-purple-500 to-fuchsia-600',
+  Release: 'from-pink-500 to-rose-600',
+  Deploy:  'from-orange-500 to-orange-600',
+  Operate: 'from-amber-500 to-yellow-500',
+  Monitor: 'from-emerald-500 to-teal-600',
 };
 
 export function DevOpsLifecycle() {
+  const navigate = useNavigate();
+
   return (
     <section className="py-20 bg-white dark:bg-gray-950">
       <div className="container-app">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            The DevOps Lifecycle
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
+            The DevOps Lifecycle & Specialized Tools
           </h2>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Master each phase of the DevOps infinity loop. From planning to monitoring,
-            learn the tools and practices that modern teams use.
+          <p className="mt-4 text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+            Master each phase of the DevOps infinity loop. Explore exact goals, key activities, and specialized automation tools used across industry-leading teams.
           </p>
         </div>
 
-        <div className="relative">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {devOpsPhases.map((phase) => (
-              <Card
-                key={phase.id}
-                hover
-                className="p-6 group cursor-pointer transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorMap[phase.name]} flex items-center justify-center text-white mb-4`}>
-                  {iconMap[phase.icon]}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  {phase.name}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  {phase.description}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {phase.tools.slice(0, 3).map(tool => (
-                    <span
-                      key={tool}
-                      className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                    >
-                      {tool}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-sm font-medium text-primary-600 dark:text-primary-400 flex items-center gap-1">
-                    Learn {phase.name}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {devOpsPhases.map((phase) => (
+            <button
+              key={phase.id}
+              onClick={() => navigate(`/devops/${phase.slug}`)}
+              className="group text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 flex flex-col justify-between hover:border-gray-300 dark:hover:border-gray-700 hover:-translate-y-1.5 transition-all duration-300 shadow-sm hover:shadow-xl"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorMap[phase.name]} flex items-center justify-center text-white shadow-md`}>
+                    {iconMap[phase.icon]}
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-mono uppercase tracking-wider">
+                    Stage {phase.id.padStart(2, '0')}
                   </span>
                 </div>
-              </Card>
-            ))}
-          </div>
 
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 -translate-y-1/2 pointer-events-none">
-            <svg className="w-full h-32 opacity-10" viewBox="0 0 1200 100">
-              <path
-                d="M100,50 C300,0 400,100 600,50 C800,0 900,100 1100,50"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-primary-600"
-              />
-            </svg>
-          </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                  {phase.name}
+                </h3>
+
+                <div className="space-y-3 mb-5">
+                  <div>
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Goal</span>
+                    <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                      {phase.goal}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Key Activities</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {phase.keyActivities}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-800/80 mb-4">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">Specialized Tools</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {phase.tools.map(tool => (
+                      <span key={tool} className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300">
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs font-bold text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform pt-2">
+                  <span>Explore {phase.name} Phase</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </section>

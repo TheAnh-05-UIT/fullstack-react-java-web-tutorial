@@ -38,6 +38,15 @@ import {
   AboutPage 
 } from './pages/public';
 
+import { PlanPhasePage } from './features/devops/pages/PlanPhasePage';
+import { CodePhasePage } from './features/devops/pages/CodePhasePage';
+import { BuildPhasePage } from './features/devops/pages/BuildPhasePage';
+import { TestPhasePage } from './features/devops/pages/TestPhasePage';
+import { ReleasePhasePage } from './features/devops/pages/ReleasePhasePage';
+import { DeployPhasePage } from './features/devops/pages/DeployPhasePage';
+import { OperatePhasePage } from './features/devops/pages/OperatePhasePage';
+import { MonitorPhasePage } from './features/devops/pages/MonitorPhasePage';
+
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
@@ -84,6 +93,16 @@ function AppRoutes() {
       <Route path="/roadmaps" element={<PublicLayout><RoadmapsPage /></PublicLayout>} />
       <Route path="/roadmaps/:id" element={<PublicLayout><RoadmapDetailPage /></PublicLayout>} />
       <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+
+      {/* DevOps Lifecycle Phase Pages (wrapped inside PublicLayout for Navbar and Footer) */}
+      <Route path="/devops/plan" element={<PublicLayout><PlanPhasePage /></PublicLayout>} />
+      <Route path="/devops/code" element={<PublicLayout><CodePhasePage /></PublicLayout>} />
+      <Route path="/devops/build" element={<PublicLayout><BuildPhasePage /></PublicLayout>} />
+      <Route path="/devops/test" element={<PublicLayout><TestPhasePage /></PublicLayout>} />
+      <Route path="/devops/release" element={<PublicLayout><ReleasePhasePage /></PublicLayout>} />
+      <Route path="/devops/deploy" element={<PublicLayout><DeployPhasePage /></PublicLayout>} />
+      <Route path="/devops/operate" element={<PublicLayout><OperatePhasePage /></PublicLayout>} />
+      <Route path="/devops/monitor" element={<PublicLayout><MonitorPhasePage /></PublicLayout>} />
       
       {/* Dashboard Dành Cho Người Dùng Đã Đăng Nhập */}
       <Route path="/dashboard" element={
