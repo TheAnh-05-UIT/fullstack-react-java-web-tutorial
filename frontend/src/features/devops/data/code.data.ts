@@ -1,0 +1,324 @@
+import type { PhaseData } from '../types/devops.types';
+
+export const codePhaseData: PhaseData = {
+  id: 'code',
+  name: 'Code',
+  slug: 'code',
+  stageNumber: 2,
+  tagline: 'Write clean, maintainable, version-controlled source code collaboratively while catching syntax and architectural flaws instantly.',
+  summary: 'You have mastered the Code stage of the DevOps lifecycle—from enforcing Trunk-Based Development and robust Git branching strategies to automating pre-commit linting and executing rigorous peer code reviews.',
+  heroSnippetTitle: 'git-workflow & branch-protection.yml · GitHub / GitLab / Bitbucket',
+  heroSnippet: `# Git & GitHub/GitLab/Bitbucket · Peer Review & Trunk-Based Development
+$ git checkout main && git pull origin main
+$ git checkout -b feat/user-auth-jwt-service
+
+# Commit using Conventional Commits standard verified by Pre-commit hooks
+$ git add src/auth/JwtProvider.ts
+$ git commit -m "feat(auth): add RSA-256 JWT token generation & verification
+
+- Implements automated token refresh and rotation logic
+- Passes all ESLint static analysis and peer review checks
+Fixes: JIRA-101"
+
+# Push to GitHub/GitLab/Bitbucket repository & trigger automated PR check
+$ git push -u origin feat/user-auth-jwt-service
+Total 4 delta, reused 0 (delta 0)
+To github.com:DevOpsBuilder/cloud-enterprise.git
+ * [new branch]      feat/user-auth-jwt-service -> feat/user-auth-jwt-service
+Note: Branch protection requires 2 peer approvals & passing SonarQube quality checks before merge.`,
+  theme: {
+    gradient: 'from-purple-900 via-indigo-950 to-slate-900',
+    iconBg: 'bg-indigo-600',
+    badgeBg: 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800',
+    badgeText: 'text-indigo-700 dark:text-indigo-300',
+    borderColor: 'border-indigo-500',
+    accentColor: 'text-indigo-600 dark:text-indigo-400',
+    ctaBg: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700',
+    ctaText: 'text-indigo-600 dark:text-indigo-400'
+  },
+  curriculum: [
+    {
+      id: 'code-1',
+      title: 'Git Version Control Mastery & Distributed Workflows',
+      category: 'Core Fundamentals',
+      duration: '4.0 Hours',
+      level: 'Beginner',
+      description: 'Understand the internal graph structure of Git, master everyday terminal commands (commit, branch, rebase vs merge, cherry-pick), and resolve complex merge conflicts cleanly.',
+      tags: ['Git CLI', 'Rebase vs Merge', 'Conflict Resolution', 'Commit History'],
+      objectives: [
+        'Navigate working directory, staging area (index), and local repository history',
+        'Execute clean interactive rebases (`git rebase -i`) to squash noisy commits before pushing',
+        'Diagnose and untangle multi-branch merge conflicts using 3-way diff tools'
+      ]
+    },
+    {
+      id: 'code-2',
+      title: 'Branching Strategies: Trunk-Based Development vs GitFlow',
+      category: 'Core Fundamentals',
+      duration: '3.5 Hours',
+      level: 'Intermediate',
+      description: 'Compare high-velocity Trunk-Based Development against traditional release-heavy GitFlow. Learn why elite DevOps teams prefer short-lived feature branches branching directly off main.',
+      tags: ['Trunk-Based Development', 'GitFlow', 'Feature Branches', 'Release Management'],
+      objectives: [
+        'Structure short-lived branches (`feat/`, `fix/`, `chore/`) that live less than 24 hours',
+        'Eliminate "merge hell" by continuously integrating daily with the main branch',
+        'Use Feature Flags (Toggles) to merge incomplete code safely without breaking production'
+      ]
+    },
+    {
+      id: 'code-3',
+      title: 'Peer Code Reviews & Pull Request (PR) Etiquette',
+      category: 'Core Fundamentals',
+      duration: '3.0 Hours',
+      level: 'Intermediate',
+      description: 'Establish rigorous peer review standards. Learn how to write comprehensive PR descriptions, conduct empathetic code critiques, and catch logic flaws before CI/CD kicks in.',
+      tags: ['Pull Requests', 'Code Review Etiquette', 'GitHub Flow', 'Peer Feedback'],
+      objectives: [
+        'Craft self-documenting PRs with screenshots, test results, and clear architectural context',
+        'Provide actionable, non-blocking suggestions using constructive comment prefixes (`Nit:`, `Suggestion:`, `Blocking:`)',
+        'Enforce branch protection rules requiring at least 2 approvals and status checks'
+      ]
+    },
+    {
+      id: 'code-4',
+      title: 'Conventional Commits & Semantic Versioning Hookup',
+      category: 'Core Fundamentals',
+      duration: '2.0 Hours',
+      level: 'Beginner',
+      description: 'Standardize commit messages across the engineering team (`feat:`, `fix:`, `refactor:`, `docs:`) to enable automated changelog generation and automated semantic release bumping.',
+      tags: ['Conventional Commits', 'Semantic Versioning', 'Changelogs', 'CommitLint'],
+      objectives: [
+        'Structure commit messages according to the Conventional Commits specification',
+        'Link commit prefixes directly to major.minor.patch Semantic Version increments',
+        'Configure Git hooks (`Husky`, `commitlint`) to reject malformed commit messages'
+      ]
+    },
+    {
+      id: 'code-5',
+      title: 'Static Code Analysis, Linters & Formatting Automation',
+      category: 'Advanced Practices',
+      duration: '3.5 Hours',
+      level: 'Advanced',
+      description: 'Eliminate code style debates completely by automating code formatting (Prettier) and catching potential runtime bugs early with static linters (ESLint, SonarQube, Biome).',
+      tags: ['Static Analysis', 'ESLint', 'Prettier', 'SonarQube', 'Pre-commit Hooks'],
+      objectives: [
+        'Integrate Prettier and ESLint rules shared across all developer IDEs',
+        'Execute pre-commit hooks using `lint-staged` to only check modified files for lightning speed',
+        'Monitor code smells, cognitive complexity, and technical debt indices via SonarQube'
+      ]
+    },
+    {
+      id: 'code-6',
+      title: 'AI-Assisted Pair Programming & Copilot Governance',
+      category: 'Advanced Practices',
+      duration: '3.0 Hours',
+      level: 'Enterprise',
+      description: 'Leverage modern agentic coding assistants safely while maintaining intellectual property compliance and verifying generated code against enterprise security policies.',
+      tags: ['AI Coding Assistants', 'Pair Programming', 'Code Quality', 'Prompt Engineering'],
+      objectives: [
+        'Integrate agentic AI tools into daily IDE workflows for boilerplate generation and refactoring',
+        'Audit AI-generated algorithms for security blind spots, memory leaks, and licensing conflicts',
+        'Practice structured pair programming methodologies (Driver-Navigator model)'
+      ]
+    }
+  ],
+  tools: [
+    {
+      name: 'Git & GitHub Enterprise',
+      category: 'Version Control',
+      description: 'The world\'s premier distributed version control system and cloud collaboration platform hosting source code, pull requests, and automated branch protections.',
+      industryStandard: true,
+      documentationUrl: 'https://git-scm.com/doc',
+      internalLink: '/tutorials/git-github-mastery'
+    },
+    {
+      name: 'GitLab & Bitbucket',
+      category: 'Version Control',
+      description: 'Enterprise all-in-one DevOps platforms providing integrated repository management, merge request reviews, and built-in CI runners.',
+      industryStandard: true,
+      documentationUrl: 'https://docs.gitlab.com/'
+    },
+    {
+      name: 'SonarQube & ESLint',
+      category: 'Testing & QA',
+      description: 'Static analysis platforms inspecting source code for security vulnerabilities, code smells, duplication ratios, and strict coding standard adherence.',
+      industryStandard: true,
+      documentationUrl: 'https://docs.sonarsource.com/sonarqube/latest/'
+    },
+    {
+      name: 'Husky & Lint-Staged',
+      category: 'Version Control',
+      description: 'Git hook managers that execute automated linting, type-checking, and commit message verification locally before code ever leaves the developer machine.',
+      industryStandard: true,
+      documentationUrl: 'https://typicode.github.io/husky/'
+    }
+  ],
+  learningPath: [
+    {
+      stepNumber: 1,
+      title: 'Configure Local Git Workspace with SSH & Husky Hooks',
+      duration: '1 Day',
+      category: 'Core Fundamentals',
+      description: 'Set up secure SSH keys, configure global `.gitconfig` identities, and initialize Husky pre-commit hooks inside your project directory.',
+      keyTakeaway: 'Automate verification on the developer machine to keep broken code out of remote repositories.'
+    },
+    {
+      stepNumber: 2,
+      title: 'Adopt Trunk-Based Development with Feature Flags',
+      duration: '3 Days',
+      category: 'Core Fundamentals',
+      description: 'Create short-lived branches directly from `main`. Use feature flags (`LaunchDarkly` or local env toggles) so work-in-progress code can be merged safely.',
+      keyTakeaway: 'Continuous integration requires merging code to trunk at least once every single day.'
+    },
+    {
+      stepNumber: 3,
+      title: 'Enforce Conventional Commits for Semantic Release',
+      duration: '1 Day',
+      category: 'Core Fundamentals',
+      description: 'Use standardized prefixes (`feat:`, `fix:`, `chore:`). Configure `commitlint` to block non-conforming commits automatically.',
+      keyTakeaway: 'A clean commit log is the backbone of automated changelogs and zero-touch release versioning.'
+    },
+    {
+      stepNumber: 4,
+      title: 'Establish rigorous Pull Request Review & Approval Gates',
+      duration: '2 Days',
+      category: 'Advanced Practices',
+      description: 'Configure GitHub branch protection rules (`Require PR before merging`, `Require status checks to pass`, `Require 2 code approvals`).',
+      keyTakeaway: 'Code reviews are not about criticism; they are collaborative learning and architectural safety nets.'
+    },
+    {
+      stepNumber: 5,
+      title: 'Connect SonarQube Static Analysis & Quality Profiles',
+      duration: '2 Days',
+      category: 'Advanced Practices',
+      description: 'Scan all pull requests automatically for cognitive complexity, duplicated blocks, and OWASP Top 10 security code smells before merge authorization.',
+      keyTakeaway: 'Quality gates must fail automated PRs if technical debt or security vulnerabilities are introduced.'
+    }
+  ],
+  quiz: [
+    {
+      question: 'Why do high-performing DevOps teams favor Trunk-Based Development over traditional multi-month GitFlow branching?',
+      options: [
+        'Because Trunk-Based Development does not require Git installed on developer laptops',
+        'Short-lived branches merged daily to trunk minimize painful merge conflicts, keep code fresh, and enable true Continuous Integration',
+        'GitFlow forbids writing automated unit tests',
+        'Trunk-Based Development allows developers to push directly to production without any code reviews'
+      ],
+      correctIndex: 1,
+      explanation: 'Continuous Integration means continuously integrating code. When feature branches diverge from main for weeks (as in traditional GitFlow), integrating them becomes a high-risk nightmare ("merge hell"). Trunk-Based Development keeps branches under 24h, ensuring smooth, low-risk merges.',
+      difficulty: 'Intermediate'
+    },
+    {
+      question: 'According to the Conventional Commits specification, what happens to the Semantic Version when a commit message contains `BREAKING CHANGE:` or `feat!:`?',
+      options: [
+        'The Patch version is incremented (e.g., 1.2.3 -> 1.2.4)',
+        'The Minor version is incremented (e.g., 1.2.3 -> 1.3.0)',
+        'The Major version is incremented (e.g., 1.2.3 -> 2.0.0), signaling backwards-incompatible API changes to consumers',
+        'The repository automatically locks itself until an administrator approves'
+      ],
+      correctIndex: 2,
+      explanation: 'In Semantic Versioning (SemVer: Major.Minor.Patch), breaking API changes require bumping the Major version (`MAJOR`). Conventional Commits links `feat:` to Minor (`MINOR`), `fix:` to Patch (`PATCH`), and `BREAKING CHANGE:` / `!` to Major (`MAJOR`).',
+      difficulty: 'Intermediate'
+    },
+    {
+      question: 'What is the primary purpose of a Git pre-commit hook (`Husky` / `lint-staged`) on a developer\'s machine?',
+      options: [
+        'To automatically deploy code to Kubernetes production pods as soon as `git commit` is typed',
+        'To inspect and format staged files (`git add`) locally before the commit is created, preventing syntax/lint errors from polluting the repository',
+        'To encrypt passwords stored in plain text source files before pushing to GitHub',
+        'To automatically write all unit tests using artificial intelligence'
+      ],
+      correctIndex: 1,
+      explanation: 'Pre-commit hooks intercept the local `git commit` command. By running `lint-staged` and `Prettier` during this hook, developers catch syntax errors, trailing whitespace, and formatting violations instantaneously before code is pushed to remote branches.',
+      difficulty: 'Beginner'
+    }
+  ],
+  handsOnLabs: [
+    {
+      id: 'code-lab-basic',
+      title: 'Trunk-Based Git Workflow & Conventional Commits Lab',
+      tabTitle: '📌 Basic Lab: Git & PR Flow',
+      level: 'Beginner',
+      duration: '1.5 Hours',
+      difficulty: 'Beginner Fundamental',
+      prerequisites: 'Basic command-line familiarity (`cd`, `ls`) and Git installed.',
+      desc: 'Practice the exact daily workflow of an elite DevOps engineer. Initialize a local repository, create a short-lived feature branch off `main`, craft a valid Conventional Commit message, and simulate an interactive code review.',
+      objectives: [
+        'Create a feature branch `feat/user-jwt-auth` branching cleanly off `main`',
+        'Stage and commit code using strict `feat(auth): ...` Conventional Commit syntax',
+        'Configure local `.husky/pre-commit` script to execute Prettier formatting',
+        'Simulate resolving a 3-way merge conflict cleanly without losing commit history'
+      ],
+      snippetLabel: 'git-daily-workflow.sh',
+      codeSnippet: `#!/usr/bin/env bash
+# Step 1: Ensure main branch is clean and up to date
+git checkout main
+git pull origin main --rebase
+
+# Step 2: Create short-lived feature branch (< 24h lifespan)
+git checkout -b feat/add-jwt-token-refresh
+
+# Step 3: Make edits, verify formatting locally via pre-commit hook
+echo "export function refreshToken() { /* logic */ }" >> src/auth.ts
+git add src/auth.ts
+
+# Step 4: Commit with Conventional Commits syntax
+git commit -m "feat(auth): implement automatic JWT token refresh
+
+- Intercepts 401 Unauthorized API responses
+- Refreshes access token silently using HTTP-only cookie
+Closes #JIRA-4092"
+
+# Step 5: Push and create Pull Request
+git push -u origin feat/add-jwt-token-refresh`
+    },
+    {
+      id: 'code-lab-advanced',
+      title: 'Husky Pre-commit Automation & SonarQube Quality Gate Lab',
+      tabTitle: '⚡ Advanced Lab: Quality Gates',
+      level: 'Advanced',
+      duration: '2.5 Hours',
+      difficulty: 'Advanced Static Analysis',
+      prerequisites: 'Node.js installed (`npm`) and familiarity with JSON/YAML configurations.',
+      desc: 'Set up an enterprise-grade automated pre-commit hook pipeline using Husky, lint-staged, and ESLint. Then, configure a SonarQube Quality Gate threshold that blocks pull requests if code complexity or bug ratios exceed strict limits.',
+      objectives: [
+        'Install and initialize `husky` and `lint-staged` in `package.json`',
+        'Configure `lint-staged` to execute ESLint --fix only on staged `.ts/.tsx` files',
+        'Write custom ESLint rules blocking `console.log()` and implicit `any` types in production code',
+        'Construct `sonar-project.properties` specifying 80% minimum test coverage requirement'
+      ],
+      snippetLabel: 'package.json & sonar-project.properties',
+      codeSnippet: `{
+  "name": "devops-enterprise-service",
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "eslint src/**/*.ts --max-warnings=0"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
+}
+---
+# sonar-project.properties
+sonar.projectKey=enterprise-auth-service
+sonar.sources=src
+sonar.tests=tests
+sonar.sourceEncoding=UTF-8
+sonar.typescript.lcov.reportPaths=coverage/lcov.info
+sonar.qualitygate.wait=true # Block pipeline until Quality Gate passes`
+    }
+  ],
+  prevNav: {
+    slug: 'plan',
+    label: 'Plan Phase',
+    sublabel: 'Stage 01 of 08'
+  },
+  nextNav: {
+    slug: 'build',
+    label: 'Build Phase',
+    sublabel: 'Stage 03 of 08'
+  }
+};
