@@ -1,7 +1,5 @@
 package com.web_tutorial.javabackend.service.auth.impl;
 
-import java.util.Optional;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -9,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.web_tutorial.javabackend.domain.dto.request.auth.LoginRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.auth.RefreshTokenRequestDTO;
@@ -23,6 +22,7 @@ import com.web_tutorial.javabackend.service.user.UserService;
 import com.web_tutorial.javabackend.service.user.impl.UserDetailsImpl;
 
 @Service
+@Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManagerBuilder authManagerBuilder;
@@ -42,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponseDTO register(RegisterRequestDTO registerDTO) throws IdInvalidException {
         // Kiểm tra email đã tồn tại chưa
         if (userService.existsUserByEmail(registerDTO.getEmail())) {
@@ -55,7 +56,8 @@ public class AuthServiceImpl implements AuthService {
         newUser.setEmail(registerDTO.getEmail());
         newUser.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
 
-        // Gọi qua UserService thay vì RoleRepository trực tiếp để đảm bảo tính đóng gói tầng Service
+        // Gọi qua UserService thay vì RoleRepository trực tiếp để đảm bảo tính đóng gói
+        // tầng Service
         userService.assignRoleByName(newUser, "USER");
 
         User savedUser = userService.createUser(newUser);
@@ -73,6 +75,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponseDTO login(LoginRequestDTO loginDTO) {
         // Xác thực thông tin đăng nhập
         Authentication authentication = authenticate(loginDTO.getEmail(), loginDTO.getPassword());
@@ -91,6 +94,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponseDTO refreshToken(RefreshTokenRequestDTO request) {
         String incomingRefreshToken = request.getRefreshToken();
 

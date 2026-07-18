@@ -22,9 +22,6 @@ import jakarta.persistence.Table;
 
 /**
  * Model User: Quản lý thông tin tài khoản đăng nhập và phân quyền hệ thống.
- *
- * Dùng Lombok thay thế getter/setter thủ công để code ngắn gọn, an toàn hơn
- * (tránh quên thêm accessor khi thêm field mới).
  */
 @Entity
 @Table(name = "users")
@@ -51,8 +48,9 @@ public class User {
     private Instant updatedAt;
     private String updateBy;
 
-    // Liên kết với bảng phân quyền Role (user many-to-one role)
-    @ManyToOne
+    // Liên kết với bảng phân quyền Role (chuyển từ EAGER mặc định sang LAZY theo
+    // Phase 2C)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id")
     private Role role;
 
