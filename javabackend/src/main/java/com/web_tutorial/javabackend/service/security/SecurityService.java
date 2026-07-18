@@ -30,9 +30,6 @@ public class SecurityService {
 
     // Tiêm các cài đặt từ file application.properties
 
-    @Value("${javabackend.jwt.base64-secret}")
-    private String jwtKey;
-
     @Value("${javabackend.jwt.access-token-validity-in-seconds}")
     private Long jwtExpiration;
 

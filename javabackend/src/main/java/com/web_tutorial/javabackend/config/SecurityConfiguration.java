@@ -41,7 +41,18 @@ public class SecurityConfiguration {
 
     // Lấy secret key từ file cấu hình để mã hóa/giải mã JWT
     private SecretKey getSecretKey() {
-        byte[] keyBytes = Base64.from(jwtKey).decode();
+        if (jwtKey == null || jwtKey.trim().isEmpty() || "${JWT_SECRET}".equals(jwtKey.trim())) {
+            throw new IllegalStateException("FATAL: JWT_SECRET environment variable is missing or empty! The application cannot start without a valid JWT secret key.");
+        }
+        byte[] keyBytes;
+        try {
+            keyBytes = Base64.from(jwtKey).decode();
+        } catch (Exception e) {
+            throw new IllegalStateException("FATAL: JWT_SECRET is not a valid Base64 string!");
+        }
+        if (keyBytes.length < 64) {
+            throw new IllegalStateException("FATAL: JWT_SECRET must decode to at least 64 bytes (512 bits) for HS512 algorithm!");
+        }
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
     }
 
@@ -69,6 +80,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/tutorials/**", "/api/v1/projects/**",
                                 "/api/v1/roadmaps/**", "/uploads/**")
+                        .permitAll()
+                        // DevOps: GET phases & simulations công khai cho học viên
+                        // Admin endpoints (/admin/**) yêu cầu ROLE_ADMIN qua @PreAuthorize
+                        .requestMatchers(HttpMethod.GET, "/api/v1/devops/phases/**",
+                                "/api/v1/devops/simulations/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/upload").authenticated()
                         // /api/v1/logout yêu cầu phải đăng nhập (có Access Token hợp lệ)
