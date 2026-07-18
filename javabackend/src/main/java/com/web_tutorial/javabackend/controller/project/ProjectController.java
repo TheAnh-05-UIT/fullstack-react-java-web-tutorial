@@ -4,9 +4,6 @@ import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequ
 import com.web_tutorial.javabackend.domain.dto.request.project.UpdateProjectRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
-import com.web_tutorial.javabackend.domain.project.Project;
-import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
-import com.web_tutorial.javabackend.mapper.MapperUtils;
 import com.web_tutorial.javabackend.service.project.ProjectService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
@@ -17,8 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -40,39 +35,13 @@ public class ProjectController {
     @GetMapping("/{id}")
     @ApiMessage("Get All by Id")
     public ResponseEntity<ProjectResponseDTO> getProjectById(@PathVariable Long id) {
-        Optional<Project> projectById = this.projectService.getProjectById(id);
-        if (!projectById.isPresent()) {
-            // ResourceNotFoundException → 404 NOT FOUND
-            throw new ResourceNotFoundException("Project with Id " + id + " does not exist");
-        }
-        Project project = projectById.get();
-        this.projectService.incrementViewCount(project.getId());
-        project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
-        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(project);
-        if (projectResponseDTO.getCreateBy() != null) {
-            projectResponseDTO
-                    .setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(this.projectService.getProjectResponseById(id));
     }
 
     @GetMapping("/slug/{slug}")
     @ApiMessage("Get Project by slug")
-    public ResponseEntity<ProjectResponseDTO> getProjectBySlug(@PathVariable String slug)
-            throws ResourceNotFoundException {
-        Optional<Project> projectBySlug = this.projectService.getProjectBySlug(slug);
-        if (!projectBySlug.isPresent()) {
-            throw new ResourceNotFoundException("Project with slug " + slug + " does not exist");
-        }
-        Project project = projectBySlug.get();
-        this.projectService.incrementViewCount(project.getId());
-        project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
-        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(project);
-        if (projectResponseDTO.getCreateBy() != null) {
-            projectResponseDTO
-                    .setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+    public ResponseEntity<ProjectResponseDTO> getProjectBySlug(@PathVariable String slug) {
+        return ResponseEntity.status(HttpStatus.OK).body(this.projectService.getProjectResponseBySlug(slug));
     }
 
     @PostMapping
@@ -80,14 +49,7 @@ public class ProjectController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ProjectResponseDTO> createProject(
             @RequestBody @Valid CreateProjectRequestDTO requestDTO) {
-        Project project = MapperUtils.toProject(requestDTO);
-        Project createdProject = projectService.createProject(project);
-        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(createdProject);
-        if (projectResponseDTO.getCreateBy() != null) {
-            projectResponseDTO
-                    .setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectResponseDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.projectService.createProjectFromDTO(requestDTO));
     }
 
     @PutMapping("/{id}")
@@ -96,31 +58,13 @@ public class ProjectController {
     public ResponseEntity<ProjectResponseDTO> updateProject(
             @PathVariable Long id,
             @RequestBody @Valid UpdateProjectRequestDTO requestDTO) {
-        Optional<Project> projectById = this.projectService.getProjectById(id);
-        if (!projectById.isPresent()) {
-            // ResourceNotFoundException → 404 NOT FOUND
-            throw new ResourceNotFoundException("Project with Id " + id + " does not exist");
-        }
-        Project projectDetails = new Project();
-        MapperUtils.updateProjectFromDTO(requestDTO, projectDetails);
-        Project updatedProject = this.projectService.updateProject(id, projectDetails);
-        ProjectResponseDTO projectResponseDTO = MapperUtils.toProjectResponseDTO(updatedProject);
-        if (projectResponseDTO.getCreateBy() != null) {
-            projectResponseDTO
-                    .setAuthorName(this.projectService.getAuthorNameByEmail(projectResponseDTO.getCreateBy()));
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(projectResponseDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(this.projectService.updateProjectFromDTO(id, requestDTO));
     }
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Project")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
-        Optional<Project> projectById = this.projectService.getProjectById(id);
-        if (!projectById.isPresent()) {
-            // ResourceNotFoundException → 404 NOT FOUND
-            throw new ResourceNotFoundException("Project with Id " + id + " does not exist");
-        }
         this.projectService.deleteProject(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

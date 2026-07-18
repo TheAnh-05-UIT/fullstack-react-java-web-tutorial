@@ -4,24 +4,32 @@ import com.web_tutorial.javabackend.domain.tutorial.Category;
 import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
+import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.service.project.ProjectService;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.time.Instant;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.request.project.CreateProjectRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.project.UpdateProjectRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -48,10 +56,33 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public ResultPaginationDTO getAllProjects(Pageable pageable) {
         Page<Project> page = this.projectRepository.findAllByOrderByIdDesc(pageable);
+        List<Project> projects = page.getContent();
+
+        // Thu thập danh sách email tác giả (loại bỏ null/rỗng và trùng lặp)
+        Set<String> emails = projects.stream()
+                .map(Project::getCreateBy)
+                .filter(email -> email != null && !email.trim().isEmpty())
+                .collect(Collectors.toSet());
+
+        // Batch query 1 lần duy nhất bằng IN thay vì N query trong vòng lặp
+        Map<String, String> authorMap;
+        if (emails.isEmpty()) {
+            authorMap = Collections.emptyMap();
+        } else {
+            authorMap = userRepository.findAllByEmailIn(emails).stream()
+                    .filter(u -> u.getEmail() != null && u.getUsername() != null)
+                    .collect(Collectors.toMap(
+                            User::getEmail,
+                            User::getUsername,
+                            (existing, replacement) -> existing
+                    ));
+        }
+
         return MapperUtils.toResultPaginationDTO(page, project -> {
             ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
             if (dto.getCreateBy() != null) {
-                dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+                String authorName = authorMap.getOrDefault(dto.getCreateBy(), dto.getCreateBy());
+                dto.setAuthorName(authorName);
             }
             return dto;
         });
@@ -68,6 +99,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public Project createProject(Project project) {
         String currentUser = SecurityService.getCurrentUserLogin().orElse("System");
         project.setCreateBy(currentUser);
@@ -88,6 +120,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public Project updateProject(Long id, Project projectDetails) {
         return this.projectRepository.findById(id).map(project -> {
             if (projectDetails.getTitle() != null)
@@ -125,7 +158,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public void deleteProject(Long id) {
+        if (!this.projectRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Project with Id " + id + " does not exist");
+        }
         this.projectRepository.deleteById(id);
     }
 
@@ -133,5 +170,58 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public void incrementViewCount(Long id) {
         this.projectRepository.incrementViews(id);
+    }
+
+    @Override
+    @Transactional
+    public ProjectResponseDTO getProjectResponseById(Long id) {
+        Project project = this.getProjectById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project with Id " + id + " does not exist"));
+        this.incrementViewCount(project.getId());
+        project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
+        ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public ProjectResponseDTO getProjectResponseBySlug(String slug) {
+        Project project = this.getProjectBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Project with slug " + slug + " does not exist"));
+        this.incrementViewCount(project.getId());
+        project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
+        ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public ProjectResponseDTO createProjectFromDTO(CreateProjectRequestDTO requestDTO) {
+        Project project = MapperUtils.toProject(requestDTO);
+        Project createdProject = this.createProject(project);
+        ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(createdProject);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public ProjectResponseDTO updateProjectFromDTO(Long id, UpdateProjectRequestDTO requestDTO) {
+        Project projectDetails = new Project();
+        MapperUtils.updateProjectFromDTO(requestDTO, projectDetails);
+        Project updatedProject = this.updateProject(id, projectDetails);
+        ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(updatedProject);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
     }
 }
