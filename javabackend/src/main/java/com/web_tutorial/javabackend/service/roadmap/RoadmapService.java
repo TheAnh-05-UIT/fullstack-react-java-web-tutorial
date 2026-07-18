@@ -3,10 +3,13 @@ package com.web_tutorial.javabackend.service.roadmap;
 import java.util.List;
 import java.util.Optional;
 
+import com.web_tutorial.javabackend.domain.dto.request.roadmap.CreateRoadmapRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.roadmap.UpdateRoadmapRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
+import com.web_tutorial.javabackend.domain.dto.response.roadmap.RoadmapResponseDTO;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 
 import org.springframework.data.domain.Pageable;
-import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 
 public interface RoadmapService {
     List<Roadmap> getAllRoadmaps();
@@ -22,4 +25,13 @@ public interface RoadmapService {
     Roadmap updateRoadmap(Long id, Roadmap roadmapDetails);
 
     void deleteRoadmap(Long id);
+
+    // DTO response methods cho Phase 3
+    RoadmapResponseDTO getRoadmapResponseById(Long id);
+
+    RoadmapResponseDTO getRoadmapResponseBySlug(String slug);
+
+    RoadmapResponseDTO createRoadmapFromDTO(CreateRoadmapRequestDTO requestDTO);
+
+    RoadmapResponseDTO updateRoadmapFromDTO(Long id, UpdateRoadmapRequestDTO requestDTO);
 }
