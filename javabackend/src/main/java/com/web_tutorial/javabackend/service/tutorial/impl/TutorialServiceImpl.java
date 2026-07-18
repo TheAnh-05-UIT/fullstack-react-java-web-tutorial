@@ -5,23 +5,31 @@ import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.repository.tutorial.TutorialRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
+import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.service.tutorial.TutorialService;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.time.Instant;
 import com.web_tutorial.javabackend.service.security.SecurityService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.web_tutorial.javabackend.domain.dto.request.tutorial.CreateTutorialRequestDTO;
+import com.web_tutorial.javabackend.domain.dto.request.tutorial.UpdateTutorialRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class TutorialServiceImpl implements TutorialService {
 
     private final TutorialRepository tutorialRepository;
@@ -46,10 +54,33 @@ public class TutorialServiceImpl implements TutorialService {
     @Override
     public ResultPaginationDTO getAllTutorials(Pageable pageable) {
         Page<Tutorial> page = this.tutorialRepository.findByIsDeletedFalseOrderByIdDesc(pageable);
+        List<Tutorial> tutorials = page.getContent();
+
+        // Thu thập danh sách email tác giả (loại bỏ null/rỗng và trùng lặp)
+        Set<String> emails = tutorials.stream()
+                .map(Tutorial::getCreateBy)
+                .filter(email -> email != null && !email.trim().isEmpty())
+                .collect(Collectors.toSet());
+
+        // Batch query 1 lần duy nhất bằng IN thay vì N query trong vòng lặp
+        Map<String, String> authorMap;
+        if (emails.isEmpty()) {
+            authorMap = Collections.emptyMap();
+        } else {
+            authorMap = userRepository.findAllByEmailIn(emails).stream()
+                    .filter(u -> u.getEmail() != null && u.getUsername() != null)
+                    .collect(Collectors.toMap(
+                            User::getEmail,
+                            User::getUsername,
+                            (existing, replacement) -> existing
+                    ));
+        }
+
         return MapperUtils.toResultPaginationDTO(page, tutorial -> {
             TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
             if (dto.getCreateBy() != null) {
-                dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+                String authorName = authorMap.getOrDefault(dto.getCreateBy(), dto.getCreateBy());
+                dto.setAuthorName(authorName);
             }
             return dto;
         });
@@ -68,6 +99,7 @@ public class TutorialServiceImpl implements TutorialService {
     }
 
     @Override
+    @Transactional
     public Tutorial createTutorial(Tutorial tutorial) {
         String currentUser = SecurityService.getCurrentUserLogin().orElse("System");
         tutorial.setCreateBy(currentUser);
@@ -107,6 +139,7 @@ public class TutorialServiceImpl implements TutorialService {
     }
 
     @Override
+    @Transactional
     public Tutorial updateTutorial(Long id, Tutorial tutorialDetails) {
         // Dùng findByIdAndIsDeletedFalse để không xử lý tutorial đã xóa
         return this.tutorialRepository.findByIdAndIsDeletedFalse(id).map(tutorial -> {
@@ -150,12 +183,13 @@ public class TutorialServiceImpl implements TutorialService {
 
     // Soft delete thay vì xóa cứng khỏi DB
     @Override
+    @Transactional
     public void deleteTutorial(Long id) {
-        this.tutorialRepository.findByIdAndIsDeletedFalse(id).ifPresent(tutorial -> {
-            tutorial.setDeleted(true);
-            tutorial.setUpdatedAt(Instant.now());
-            this.tutorialRepository.save(tutorial);
-        });
+        Tutorial tutorial = this.tutorialRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tutorial with Id " + id + " does not exist"));
+        tutorial.setDeleted(true);
+        tutorial.setUpdatedAt(Instant.now());
+        this.tutorialRepository.save(tutorial);
     }
 
     @Override
@@ -171,5 +205,57 @@ public class TutorialServiceImpl implements TutorialService {
     public void incrementViewCount(Long id) {
         this.tutorialRepository.incrementViews(id);
     }
-}
 
+    @Override
+    @Transactional
+    public TutorialResponseDTO getTutorialResponseById(Long id) {
+        Tutorial tutorial = this.getTutorialById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tutorial with Id " + id + " does not exist"));
+        this.incrementViewCount(tutorial.getId());
+        tutorial.setViews((tutorial.getViews() == null ? 0L : tutorial.getViews()) + 1);
+        TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public TutorialResponseDTO getTutorialResponseBySlug(String slug) {
+        Tutorial tutorial = this.getTutorialBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tutorial with slug " + slug + " does not exist"));
+        this.incrementViewCount(tutorial.getId());
+        tutorial.setViews((tutorial.getViews() == null ? 0L : tutorial.getViews()) + 1);
+        TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public TutorialResponseDTO createTutorialFromDTO(CreateTutorialRequestDTO requestDTO) {
+        Tutorial tutorial = MapperUtils.toTutorial(requestDTO);
+        Tutorial createdTutorial = this.createTutorial(tutorial);
+        TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(createdTutorial);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional
+    public TutorialResponseDTO updateTutorialFromDTO(Long id, UpdateTutorialRequestDTO requestDTO) {
+        Tutorial tutorialDetails = new Tutorial();
+        MapperUtils.updateTutorialFromDTO(requestDTO, tutorialDetails);
+        Tutorial updatedTutorial = this.updateTutorial(id, tutorialDetails);
+        TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(updatedTutorial);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+}
