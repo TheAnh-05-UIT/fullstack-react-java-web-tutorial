@@ -15,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findBySlug(String slug);
 
+    boolean existsBySlug(String slug);
+
     java.util.List<Project> findAllByOrderByIdDesc();
     org.springframework.data.domain.Page<Project> findAllByOrderByIdDesc(org.springframework.data.domain.Pageable pageable);
 

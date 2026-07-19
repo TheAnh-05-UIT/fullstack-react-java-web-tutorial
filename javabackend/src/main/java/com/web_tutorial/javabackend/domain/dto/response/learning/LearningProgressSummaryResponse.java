@@ -5,6 +5,7 @@ public class LearningProgressSummaryResponse {
     private long completedCount;
     private long inProgressCount;
     private long totalTracked;
+    private double completionRate;
 
     public long getCompletedCount() {
         return completedCount;
@@ -28,5 +29,13 @@ public class LearningProgressSummaryResponse {
 
     public void setTotalTracked(long totalTracked) {
         this.totalTracked = totalTracked;
+    }
+
+    public double getCompletionRate() {
+        return completionRate;
+    }
+
+    public void setCompletionRate(double completionRate) {
+        this.completionRate = completionRate;
     }
 }

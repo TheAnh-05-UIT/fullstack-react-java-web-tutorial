@@ -3,13 +3,13 @@ package com.web_tutorial.javabackend.domain.dto.response.learning;
 import java.time.Instant;
 
 import com.web_tutorial.javabackend.domain.learning.LearningContentType;
-import com.web_tutorial.javabackend.domain.learning.LearningProgressStatus;
+
 
 public class LearningProgressResponse {
 
     private LearningContentType contentType;
     private String contentKey;
-    private LearningProgressStatus status;
+    private LearningProgressResponseStatus status;
     private Integer progressPercent;
     private Instant lastAccessedAt;
     private Instant completedAt;
@@ -33,11 +33,11 @@ public class LearningProgressResponse {
         this.contentKey = contentKey;
     }
 
-    public LearningProgressStatus getStatus() {
+    public LearningProgressResponseStatus getStatus() {
         return status;
     }
 
-    public void setStatus(LearningProgressStatus status) {
+    public void setStatus(LearningProgressResponseStatus status) {
         this.status = status;
     }
 

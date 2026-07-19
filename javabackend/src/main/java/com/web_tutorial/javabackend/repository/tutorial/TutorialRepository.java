@@ -23,6 +23,8 @@ public interface TutorialRepository extends JpaRepository<Tutorial, Long> {
 
     Optional<Tutorial> findBySlugAndIsDeletedFalse(String slug);
 
+    boolean existsBySlugAndIsDeletedFalse(String slug);
+
     Optional<Tutorial> findByIdAndIsDeletedFalse(Long id);
 
     @Modifying
