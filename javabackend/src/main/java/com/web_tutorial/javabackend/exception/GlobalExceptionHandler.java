@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.web_tutorial.javabackend.domain.dto.response.RestResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // Xử lý Exception toàn cục – thứ tự handler quan trọng: cụ thể trước, tổng quát sau
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // lỗi 400 Bad Request – nghiệp vụ không hợp lệ (id không tồn tại, email trùng, ...)
     @ExceptionHandler(value = {
@@ -108,10 +111,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RestResponse<Object>> handleGlobalException(
             Exception ex, HttpServletRequest request) {
 
+        log.error("Unhandled exception occurred at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+
         RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         res.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
-        res.setMessage(ex.getMessage());
+        res.setMessage("Đã xảy ra lỗi nội bộ máy chủ. Vui lòng thử lại sau.");
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
