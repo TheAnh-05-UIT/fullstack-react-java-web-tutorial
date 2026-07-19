@@ -1,15 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
-import { api } from '../../services/api';
+import { uploadService } from '../../services/uploadService';
 
 interface ImageUploadProps {
   value?: string;
   onChange: (url: string) => void;
   className?: string;
-  folder?: 'tutorials' | 'projects' | 'roadmaps' | 'users' | 'general';
+  folder?: string;
 }
 
-export function ImageUpload({ value, onChange, className = '', folder = 'general' }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, className = '', folder }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,13 +37,8 @@ export function ImageUpload({ value, onChange, className = '', folder = 'general
       const formData = new FormData();
       formData.append('file', file);
 
-      // Use the pre-configured api instance to handle tokens and response wrapping
-      const endpoint = folder ? `/upload?folder=${folder}` : '/upload';
-      const data: any = await api.post(endpoint, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Use uploadService to handle tokens and response wrapping
+      const data = await uploadService.uploadFile(formData, folder);
 
       if (data && data.url) {
         onChange(data.url);
