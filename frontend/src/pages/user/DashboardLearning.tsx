@@ -1,34 +1,28 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Clock, CheckCircle, TrendingUp, Award, Target, ChevronRight } from 'lucide-react';
-import { Card, Badge, Button, ProgressRing } from '../../components/ui';
+import { BookOpen, Award } from 'lucide-react';
+import { Card, Badge, Button } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { tutorialService } from '../../services/tutorialService';
-import { roadmapService } from '../../services/roadmapService';
-import type { Tutorial, Roadmap } from '../../types';
+import type { Tutorial } from '../../types';
 import { formatReadTime } from '../../utils/format';
+import { LearningProgressSummaryCard } from '../../features/learning-progress/components/LearningProgressSummaryCard';
+import { ContinueLearningCard } from '../../features/learning-progress/components/ContinueLearningCard';
 
 export function DashboardLearning() {
   const { user } = useAuth();
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-  const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tutorialsData, roadmapsData] = await Promise.all([
-          tutorialService.getAll(0, 100),
-          roadmapService.getAll(0, 100),
-        ]);
+        const tutorialsData = await tutorialService.getAll(0, 100);
         setTutorials(tutorialsData || []);
-        setRoadmaps(roadmapsData || []);
       } catch (error) {
         console.error('Failed to fetch learning data:', error);
       }
     };
     fetchData();
   }, []);
-
-  const currentRoadmap = roadmaps.length > 0 ? roadmaps[0] : null;
 
   return (
     <div className="space-y-6">
@@ -47,75 +41,12 @@ export function DashboardLearning() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <Card className="p-6 lg:col-span-2">
-          <div className="flex items-center gap-2 mb-6">
-            <Target className="w-5 h-5 text-primary-600" />
-            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Current Roadmap</h2>
-          </div>
-          {currentRoadmap ? (
-            <div className="flex items-start gap-6">
-              <ProgressRing progress={currentRoadmap.steps?.length ? Math.round((1 / currentRoadmap.steps.length) * 100) : 0} size={100} />
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{currentRoadmap.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{currentRoadmap.description}</p>
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-500 dark:text-gray-400">Step 1 of {currentRoadmap.steps?.length || 0}</span>
-                    <span className="font-medium text-primary-600 dark:text-primary-400">{currentRoadmap.steps?.[0]?.title || ''}</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
-                      style={{ width: `${currentRoadmap.steps?.length ? (1 / currentRoadmap.steps.length) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-                <Button size="sm" className="mt-4">
-                  Continue Learning
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400">No roadmaps available yet. Check back later!</p>
-          )}
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-success-500" />
-            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Learning Stats</h2>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                  <BookOpen className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Tutorials Completed</span>
-              </div>
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{(user as any)?.coursesCompleted || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-secondary-100 dark:bg-secondary-900/30">
-                  <Clock className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
-                </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Articles Read</span>
-              </div>
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{(user as any)?.articlesRead || 0}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-success-100 dark:bg-success-900/30">
-                  <CheckCircle className="w-4 h-4 text-success-600 dark:text-success-400" />
-                </div>
-                <span className="text-sm text-gray-600 dark:text-gray-400">Projects Finished</span>
-              </div>
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{(user as any)?.projectsFinished || 0}</span>
-            </div>
-          </div>
-        </Card>
+        <div className="lg:col-span-2">
+          <LearningProgressSummaryCard />
+        </div>
+        <div>
+          <ContinueLearningCard />
+        </div>
       </div>
 
       <Card className="p-6">
