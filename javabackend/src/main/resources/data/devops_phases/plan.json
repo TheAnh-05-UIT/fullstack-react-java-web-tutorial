@@ -1,0 +1,296 @@
+{
+  "id": "plan",
+  "name": "Plan",
+  "slug": "plan",
+  "stageNumber": 1,
+  "tagline": "Before writing a single line of code, teams must align on product vision, user needs, and architectural boundaries.",
+  "summary": "You have mastered the foundational Plan stage of the DevOps lifecycle—from structuring Epics and User Stories in Product Backlogs to defining Service Level Objectives (SLOs) and Error Budgets for production resilience.",
+  "heroSnippetTitle": "jira-azure-boards-backlog.yaml · Agile Planning & User Stories",
+  "heroSnippet": "# Jira & Azure Boards · Sprint Backlog & Acceptance Criteria\nepic: \"EPIC-404: Global Zero-Downtime DevOps Automation\"\nsprint: \"Sprint 24 · Goal: Establish Business Value Roadmaps\"\ntooling_ecosystem: [\"Jira Software\", \"Trello Kanban\", \"Azure Boards\", \"Confluence PRDs\"]\nsprint_metrics:\n  velocity_target: 64 story_points\n  error_budget_allocated: \"21.6 minutes / month (99.95% SLO)\"\nuser_stories:\n  - issue_id: \"JIRA-101\"\n    summary: \"As a DevOps engineer, I want automated CI/CD pipeline gating\"\n    story_points: 8\n    priority: \"High\"\n    acceptance_criteria:\n      - \"Build must fail if SonarQube quality gate scores below A\"\n      - \"Confluence documentation page auto-links to Jira ticket upon merge\"",
+  "theme": {
+    "gradient": "from-blue-900 via-indigo-950 to-slate-900",
+    "iconBg": "bg-blue-600",
+    "badgeBg": "bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800",
+    "badgeText": "text-blue-700 dark:text-blue-300",
+    "borderColor": "border-blue-500",
+    "accentColor": "text-blue-600 dark:text-blue-400",
+    "ctaBg": "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
+    "ctaText": "text-blue-600 dark:text-blue-400"
+  },
+  "curriculum": [
+    {
+      "id": "plan-1",
+      "title": "Requirements Gathering & User Needs Analysis",
+      "category": "Core Fundamentals",
+      "duration": "3.5 Hours",
+      "level": "Beginner",
+      "description": "Learn how to translate vague business goals and customer feedback into concrete, technical requirements and actionable product features without ambiguity.",
+      "tags": [
+        "Requirements",
+        "Stakeholder Alignment",
+        "Problem Discovery"
+      ],
+      "objectives": [
+        "Conduct stakeholder interviews and user research workshops",
+        "Distinguish between functional and non-functional requirements (NFRs)",
+        "Document clear scope boundaries to prevent scope creep during sprints"
+      ]
+    },
+    {
+      "id": "plan-2",
+      "title": "Epics, User Stories & Acceptance Criteria (INVEST)",
+      "category": "Core Fundamentals",
+      "duration": "4.0 Hours",
+      "level": "Beginner",
+      "description": "Master the art of breaking down large Epics into bite-sized User Stories adhering to the INVEST criteria, complete with testable Acceptance Criteria using Given-When-Then.",
+      "tags": [
+        "User Stories",
+        "INVEST Model",
+        "Acceptance Criteria",
+        "Given-When-Then"
+      ],
+      "objectives": [
+        "Write user stories focused on customer value (\"As a user, I want... so that...\")",
+        "Apply the INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)",
+        "Formulate unambiguous Behavior-Driven Acceptance Criteria (BDD)"
+      ]
+    },
+    {
+      "id": "plan-3",
+      "title": "Product Backlog Refinement & Sprint Planning",
+      "category": "Core Fundamentals",
+      "duration": "3.0 Hours",
+      "level": "Intermediate",
+      "description": "Organize and prioritize product backlogs using value vs risk frameworks, conduct story point estimation with Planning Poker, and execute high-velocity Sprint Planning sessions.",
+      "tags": [
+        "Backlog Grooming",
+        "Sprint Planning",
+        "Planning Poker",
+        "Story Points"
+      ],
+      "objectives": [
+        "Prioritize backlog items using MoSCoW and Weighted Shortest Job First (WSJF)",
+        "Estimate technical effort using Fibonacci story points and Planning Poker",
+        "Establish sprint goals and calculate realistic team capacity and velocity"
+      ]
+    },
+    {
+      "id": "plan-4",
+      "title": "Definition of Ready (DoR) & Definition of Done (DoD)",
+      "category": "Core Fundamentals",
+      "duration": "2.5 Hours",
+      "level": "Intermediate",
+      "description": "Establish quality gates that govern when a task can enter a sprint (DoR) and when code is truly ready for customer release (DoD), eliminating technical debt.",
+      "tags": [
+        "Quality Gates",
+        "Definition of Done",
+        "Definition of Ready",
+        "Agile Governance"
+      ],
+      "objectives": [
+        "Define mandatory DoR checkpoints before developers begin coding",
+        "Construct comprehensive DoD checklists including unit tests, code review, and CI build pass",
+        "Align cross-functional QA, DevOps, and Dev teams on shared completion standards"
+      ]
+    },
+    {
+      "id": "plan-5",
+      "title": "SRE Reliability Engineering: SLOs, SLIs & Error Budgets",
+      "category": "Advanced Practices",
+      "duration": "5.0 Hours",
+      "level": "Advanced",
+      "description": "Bridge software engineering and operational resilience by defining quantitative Service Level Indicators (SLIs), realistic Service Level Objectives (SLOs), and Error Budgets.",
+      "tags": [
+        "Site Reliability Engineering",
+        "SLO",
+        "SLI",
+        "Error Budgets"
+      ],
+      "objectives": [
+        "Select meaningful SLIs (latency, availability, error rate, throughput)",
+        "Calculate mathematically sound SLO targets (e.g., 99.9% vs 99.99%)",
+        "Use Error Budget burn rates to dynamically balance feature velocity against reliability work"
+      ]
+    },
+    {
+      "id": "plan-6",
+      "title": "STRIDE Threat Modeling & DevSecOps Architecture",
+      "category": "Advanced Practices",
+      "duration": "4.5 Hours",
+      "level": "Enterprise",
+      "description": "Shift security left into the Plan phase by identifying potential security vulnerabilities during architectural design using Microsoft STRIDE threat modeling framework.",
+      "tags": [
+        "STRIDE Framework",
+        "Threat Modeling",
+        "DevSecOps",
+        "Architecture Decision Records"
+      ],
+      "objectives": [
+        "Analyze system diagrams for Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege",
+        "Write Architecture Decision Records (ADRs) to document security tradeoffs",
+        "Embed security verification tasks directly into sprint backlogs"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "Jira Software",
+      "category": "Agile Planning",
+      "description": "The industry standard tool for Agile issue tracking, Kanban/Scrum boards, sprint backlog management, and release velocity reporting.",
+      "industryStandard": true,
+      "documentationUrl": "https://www.atlassian.com/software/jira",
+      "internalLink": "/tutorials/jira-agile-mastery"
+    },
+    {
+      "name": "Confluence",
+      "category": "Agile Planning",
+      "description": "Collaborative knowledge workspace used by engineering teams to write product requirements documents (PRDs), system architecture notes, and ADRs.",
+      "industryStandard": true,
+      "documentationUrl": "https://www.atlassian.com/software/confluence"
+    },
+    {
+      "name": "Azure Boards",
+      "category": "Agile Planning",
+      "description": "Enterprise-grade work item tracking integrated with Azure DevOps pipelines for full traceability from user story to production deployment.",
+      "industryStandard": false,
+      "documentationUrl": "https://azure.microsoft.com/en-us/products/devops/boards"
+    },
+    {
+      "name": "Trello",
+      "category": "Agile Planning",
+      "description": "Visual Kanban board software designed for straightforward, flexible project planning and task prioritization across teams.",
+      "industryStandard": true,
+      "documentationUrl": "https://trello.com/"
+    },
+    {
+      "name": "OpenTelemetry & Prometheus (SLO Planning)",
+      "category": "Observability & SRE",
+      "description": "Used during the planning phase to define standardized metric schemas and SLI measurement queries before code is deployed.",
+      "industryStandard": true,
+      "documentationUrl": "https://opentelemetry.io/"
+    }
+  ],
+  "learningPath": [
+    {
+      "stepNumber": 1,
+      "title": "Conduct User Needs Discovery & Define Product Scope",
+      "duration": "2 Days",
+      "category": "Core Fundamentals",
+      "description": "Meet with stakeholders to map out customer journeys, identify core pain points, and define functional boundary limits.",
+      "keyTakeaway": "Always ground technical tasks in tangible end-user value."
+    },
+    {
+      "stepNumber": 2,
+      "title": "Construct the Product Backlog with INVEST User Stories",
+      "duration": "3 Days",
+      "category": "Core Fundamentals",
+      "description": "Write atomic user stories with clear acceptance criteria. Group related stories under strategic Epics within Jira or Azure Boards.",
+      "keyTakeaway": "A story must be testable—if you cannot verify it with Given-When-Then, it is not ready."
+    },
+    {
+      "stepNumber": 3,
+      "title": "Establish Team Velocity, DoR & DoD Quality Gates",
+      "duration": "1 Day",
+      "category": "Core Fundamentals",
+      "description": "Run Planning Poker to assign story points. Formulate strict Definition of Ready and Definition of Done contracts across developers and QA.",
+      "keyTakeaway": "DoD prevents unfinished code from masquerading as complete features."
+    },
+    {
+      "stepNumber": 4,
+      "title": "Define Production SLO Targets and Error Budgets",
+      "duration": "2 Days",
+      "category": "Advanced Practices",
+      "description": "Define exact availability and latency thresholds for core user journeys. Establish error budget policies for freezing new features when stability drops.",
+      "keyTakeaway": "100% availability is impossible and prohibitively expensive; aim for what keeps users happy."
+    },
+    {
+      "stepNumber": 5,
+      "title": "Perform STRIDE Threat Modeling & Finalize Roadmap",
+      "duration": "2 Days",
+      "category": "Advanced Practices",
+      "description": "Review architecture diagrams for security risks before writing code. Lock in the sprint backlog and launch Sprint 01.",
+      "keyTakeaway": "Fixing a security flaw in the planning phase costs 100x less than fixing it after production breach."
+    }
+  ],
+  "quiz": [
+    {
+      "question": "What is the primary difference between an Epic and a User Story in Agile DevOps planning?",
+      "options": [
+        "An Epic is written by developers, while User Stories are written by customers",
+        "An Epic is a large strategic body of work spanning multiple sprints, which is broken down into smaller, bite-sized User Stories",
+        "An Epic represents technical bugs, whereas User Stories represent new features",
+        "There is no difference; they are exact synonyms in Scrum"
+      ],
+      "correctIndex": 1,
+      "explanation": "Epics represent major business initiatives or large features that require several sprints to complete. During backlog grooming, teams decompose Epics into individual User Stories that can be designed, coded, and tested within a single sprint.",
+      "difficulty": "Beginner"
+    },
+    {
+      "question": "Which of the following describes the \"T\" in the INVEST criteria for high-quality User Stories?",
+      "options": [
+        "Time-bound: Must take exactly 8 hours to complete",
+        "Technical: Must contain database schema definitions",
+        "Testable: Must have clear acceptance criteria so QA or automated tests can verify its completion",
+        "Traceable: Must be linked to a specific git commit ID before coding begins"
+      ],
+      "correctIndex": 2,
+      "explanation": "Testable means the user story provides unambiguous criteria (usually Behavior-Driven Given-When-Then format) so the team can verify whether the code meets the exact requirements.",
+      "difficulty": "Intermediate"
+    },
+    {
+      "question": "In Site Reliability Engineering (SRE), what happens when a team exhausts its \"Error Budget\" for the month?",
+      "options": [
+        "The team receives a financial bonus for deploying high amounts of code",
+        "Feature releases are temporarily halted or slowed down to focus 100% engineering effort on bug fixes, reliability, and technical debt",
+        "The production servers are automatically shut down until next month",
+        "The DevOps lead deletes the CI/CD pipeline"
+      ],
+      "correctIndex": 1,
+      "explanation": "An Error Budget is `100% - SLO`. For example, if the SLO is 99.9%, the Error Budget is 0.1% of downtime/errors. When exhausted, the governance policy dictates shifting focus entirely to reliability improvements until the system stabilizes.",
+      "difficulty": "Advanced"
+    }
+  ],
+  "handsOnLabs": [
+    {
+      "id": "plan-lab-basic",
+      "title": "Agile Backlog Setup & INVEST Story Crafting Lab",
+      "tabTitle": "📌 Basic Lab: Backlog Setup",
+      "level": "Beginner",
+      "duration": "1.5 Hours",
+      "difficulty": "Beginner Fundamental",
+      "prerequisites": "No prerequisite coding skills required; familiarity with web browsers.",
+      "desc": "Create a production-ready Product Backlog structure from scratch. You will take a high-level e-commerce requirement, formulate 3 INVEST-compliant user stories, and construct unambiguous Given-When-Then acceptance criteria.",
+      "objectives": [
+        "Initialize a clean Scrum sprint structure with Epics and Stories",
+        "Decompose \"User Checkout\" into 3 independent, testable user stories",
+        "Draft Definition of Ready (DoR) and Definition of Done (DoD) agreements",
+        "Assign Fibonacci story points based on technical complexity"
+      ],
+      "snippetLabel": "user-story-acceptance-criteria.md",
+      "codeSnippet": "### User Story: EP-104 - Secure Cart Checkout\n**As a** registered customer,\n**I want to** select my saved credit card and complete checkout with one click,\n**So that I** can purchase items quickly without re-typing shipping details every time.\n\n#### Acceptance Criteria (Given-When-Then):\n- **Scenario 1: Successful One-Click Checkout**\n  - **Given** the user is logged in with a valid saved Visa card ending in 4242\n  - **When** the user clicks \"Pay & Place Order\" inside the shopping cart\n  - **Then** the system authorizes the payment within 2 seconds\n  - **And** generates an order confirmation number and sends an email invoice.\n\n- **Scenario 2: Expired Card Handling**\n  - **Given** the user's default saved card has expired\n  - **When** the user clicks \"Pay & Place Order\"\n  - **Then** the system blocks submission and displays a red badge: \"Card Expired. Please update payment method.\""
+    },
+    {
+      "id": "plan-lab-advanced",
+      "title": "Production SLO & Error Budget Calculation Lab",
+      "tabTitle": "⚡ Advanced Lab: SLOs & SRE",
+      "level": "Advanced",
+      "duration": "2.5 Hours",
+      "difficulty": "Advanced SRE Practice",
+      "prerequisites": "Basic math/percentage calculations and understanding of HTTP error codes.",
+      "desc": "Construct a quantitative SRE Service Level Objective configuration for a high-traffic microservice. Calculate exact monthly downtime thresholds and configure automated alert rules when error budgets burn too rapidly.",
+      "objectives": [
+        "Formulate SLI equations for Availability and P99 Latency",
+        "Calculate exact monthly downtime allowance for a 99.95% availability target",
+        "Write Prometheus alert rules for Multi-Window Multi-Burn-Rate alerting",
+        "Establish governance runbooks for frozen sprint deployments upon budget exhaustion"
+      ],
+      "snippetLabel": "sre-slo-contract.yaml",
+      "codeSnippet": "apiVersion: sre.google.com/v1alpha1\nkind: ServiceLevelObjective\nmetadata:\n  name: payment-gateway-latency-slo\n  namespace: production\nspec:\n  service: payment-gateway-svc\n  target: 99.95 # 99.95% of requests must succeed fast\n  timeWindow: 30d\n  errorBudgetAllowanceMinutes: 21.6 # 30 days * 24h * 60m * 0.0005\n  serviceLevelIndicator:\n    requestLatency:\n      threshold: 250ms # P99 latency must be under 250ms\n      metricQuery: |\n        sum(rate(http_request_duration_seconds_bucket{service=\"payment-gateway\",le=\"0.25\"}[5m]))\n        /\n        sum(rate(http_request_duration_seconds_count{service=\"payment-gateway\"}[5m]))\n  alertingPolicies:\n    - burnRate: 14.4 # Burn 2% of budget in 1 hour\n      severity: CRITICAL\n      notificationChannel: \"#sre-alerts-paging\""
+    }
+  ],
+  "nextNav": {
+    "slug": "code",
+    "label": "Code Phase",
+    "sublabel": "Stage 02 of 08"
+  }
+}
