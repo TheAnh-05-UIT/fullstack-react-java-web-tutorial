@@ -66,7 +66,7 @@ export function LabsSection({ data }: { data: PhaseData }) {
 
               <div className="space-y-2">
                 <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Lab Objectives:</p>
-                {lab?.objectives.map((obj, i) => (
+                {(lab?.objectives || []).map((obj, i) => (
                   <div key={i} className="flex items-start gap-2.5 text-sm text-white/90">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span>{obj}</span>

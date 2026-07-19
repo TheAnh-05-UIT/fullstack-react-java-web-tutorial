@@ -41,12 +41,12 @@ export function LearningPathSection({ data }: Props) {
           <div className={`inline-flex items-center gap-2 ${t.badgeBg} ${t.badgeText} text-xs font-bold px-3 py-1 rounded-full mb-4 border`}>
             <TrendingUp className="w-3.5 h-3.5" /> Learning Path
           </div>
-          <h2 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-4">
             Step-by-Step Roadmap
           </h2>
           <p className="text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
             A verified <strong className="text-slate-700 dark:text-slate-300">{totalSteps}-step</strong> curriculum to master the{' '}
-            <strong className="text-slate-700 dark:text-slate-300">{data.name}</strong> phase — structured from fundamentals to advanced production practices.
+            <strong className="text-slate-700 dark:text-slate-300">{data.title}</strong> phase — structured from fundamentals to advanced production practices.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export function LearningPathSection({ data }: Props) {
             <div key={colIdx} className="space-y-5">
               {column.map((step, localIdx) => {
                 const globalIdx = colIdx === 0 ? localIdx : half + localIdx;
-                const cat = CATEGORY_CONFIG[step.category];
+                const cat = CATEGORY_CONFIG[step.category as keyof typeof CATEGORY_CONFIG] || CATEGORY_CONFIG['Core Fundamentals'];
                 const CatIcon = cat.icon;
                 const isLast = globalIdx === totalSteps - 1;
 

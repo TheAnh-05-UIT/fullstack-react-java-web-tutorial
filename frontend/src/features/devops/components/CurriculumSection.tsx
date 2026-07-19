@@ -50,7 +50,7 @@ export function CurriculumSection({ data }: { data: PhaseData }) {
                   <Clock className="w-3.5 h-3.5" /> {item.duration}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {item.tags.slice(0, 3).map(tag => (
+                  {(item.tags || []).slice(0, 3).map(tag => (
                     <span key={tag} className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium">
                       {tag}
                     </span>

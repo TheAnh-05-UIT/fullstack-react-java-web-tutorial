@@ -30,13 +30,13 @@ export function PhaseNavFooter({ data }: { data: PhaseData }) {
               </div>
             </button>
           ) : (
-            <div className="py-3.5 sm:pr-6 flex items-center gap-3 opacity-30">
+            <div className="py-3.5 sm:pr-6 flex items-center gap-3 opacity-50 select-none">
               <div className="w-8 h-8 rounded-lg border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0">
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </div>
               <div className="min-w-0">
-                <span className="block text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5">Start of Cycle</span>
-                <span className="font-bold text-sm truncate block">Plan Stage</span>
+                <span className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-none mb-0.5">Start of Cycle</span>
+                <span className="font-bold text-slate-900 dark:text-white text-sm truncate block">Plan Stage</span>
               </div>
             </div>
           )}
