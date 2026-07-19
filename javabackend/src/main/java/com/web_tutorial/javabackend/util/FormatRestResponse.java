@@ -52,7 +52,7 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
         }
 
         // Dữ liệu này đã được GlobalExceptionHandler xử lý
-        if (statusCode >= 400) {
+        if (statusCode >= 400 || statusCode == 204) {
             return body;
         }
         // Gọi API Thành công
