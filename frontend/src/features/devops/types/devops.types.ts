@@ -69,6 +69,7 @@ export interface PhaseNavInfo {
 export interface PhaseData {
   id: string;
   name: string;
+  title?: string;
   slug: string;
   stageNumber: number;
   tagline: string;
