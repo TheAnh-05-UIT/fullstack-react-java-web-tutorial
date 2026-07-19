@@ -104,27 +104,39 @@ export interface DevOpsPhase {
 }
 
 export interface AuthUser {
-  id: number;
-  username: string;
+  id: number | string;
+  username?: string;
+  name?: string;
   email: string;
-  role?: string;
+  role?: string | { id?: number; name?: string };
   avatar?: string;
 }
 
 export interface DisplayUser {
-  id: string;
-  name: string;
+  id: string | number;
+  name?: string;
+  username?: string;
   email: string;
-  avatar: string;
-  role: 'USER' | 'ADMIN';
-  joinDate: string;
-  coursesCompleted: number;
-  articlesRead: number;
-  projectsFinished: number;
-  learningStreak: number;
+  avatar?: string;
+  role?: string | { id?: number; name?: string };
+  joinDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  coursesCompleted?: number;
+  articlesRead?: number;
+  projectsFinished?: number;
+  learningStreak?: number;
 }
 
 export type User = DisplayUser & { status?: string };
+
+export function getRoleName(role?: User['role']): string {
+  if (typeof role === 'string') return role;
+  if (role && typeof role === 'object' && 'name' in role && typeof role.name === 'string') {
+    return role.name;
+  }
+  return 'USER';
+}
 
 export interface Stats {
   tutorials: number;
@@ -136,4 +148,40 @@ export interface Stats {
 export interface ActivityData {
   date: string;
   value: number;
+}
+
+export interface ErrorResponse {
+  status?: string | number;
+  message?: string;
+  error?: string;
+  path?: string;
+  timestamp?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  userLogin: AuthUser;
+}
+
+export interface SettingItem {
+  key: string;
+  value: string;
+}
+
+export interface UploadResponse {
+  url: string;
+  fileName?: string;
+  size?: number;
 }

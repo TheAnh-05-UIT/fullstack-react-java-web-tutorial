@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Clock, Eye, Calendar, ChevronRight } from 'lucide-react';
-import { Badge, Avatar } from '../../components/ui';
+import { Badge, Avatar, LoadingSpinner, EmptyState, ErrorState } from '../../components/ui';
 import { marked } from 'marked';
 import { tutorialService } from '../../services';
 import type { Tutorial } from '../../types';
@@ -11,6 +11,7 @@ export function TutorialDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [tutorial, setTutorial] = useState<Tutorial | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
 
   const formatAuthorName = (emailOrName?: string) => {
     if (!emailOrName) return null;
@@ -21,41 +22,59 @@ export function TutorialDetailPage() {
     return emailOrName;
   };
 
-  useEffect(() => {
-    const fetchTutorial = async () => {
-      if (!id) return;
-      try {
-        // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
-        const data = await tutorialService.getByIdOrSlug(id);
-        if (data && data.id) {
-          setTutorial(data);
-        } else {
-          setTutorial(null);
-        }
-      } catch (error) {
-        console.error('Failed to fetch tutorial details:', error);
-      } finally {
-        setLoading(false);
+  const fetchTutorial = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
+      const data = await tutorialService.getByIdOrSlug(id);
+      if (data && data.id) {
+        setTutorial(data);
+      } else {
+        setTutorial(null);
       }
-    };
-    fetchTutorial();
+    } catch (err) {
+      console.error('Failed to fetch tutorial details:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchTutorial();
+  }, [fetchTutorial]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
-        <p className="text-gray-500">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <LoadingSpinner text="Loading tutorial details..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <ErrorState 
+          title="Cannot Load Tutorial" 
+          error={error} 
+          onRetry={fetchTutorial} 
+        />
       </div>
     );
   }
 
   if (!tutorial) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center dark:bg-gray-900">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tutorial Not Found</h2>
-        <Link to="/tutorials" className="mt-4 text-primary-600 hover:underline">
-          Back to Tutorials
-        </Link>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <EmptyState
+          title="Tutorial Not Found"
+          description="The tutorial you are trying to view does not exist or may have been removed."
+          actionLabel="Back to Tutorials"
+          onAction={() => window.location.assign('/tutorials')}
+        />
       </div>
     );
   }
@@ -65,7 +84,7 @@ export function TutorialDetailPage() {
       {/* Sticky Breadcrumb */}
       <div className="sticky top-16 z-40 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 py-3 mb-8">
         <div className="max-w-4xl mx-auto">
-          <nav className="flex text-sm font-medium text-gray-500 dark:text-gray-400">
+          <nav aria-label="Breadcrumb" className="flex text-sm font-medium text-gray-500 dark:text-gray-400">
             <ol className="flex items-center space-x-2 whitespace-nowrap overflow-x-auto hide-scrollbar">
               <li>
                 <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Trang chủ</Link>
@@ -99,7 +118,11 @@ export function TutorialDetailPage() {
           
           <div className="p-8 md:p-12">
             <div className="flex items-center gap-4 mb-6">
-              <Badge variant="primary">{typeof tutorial.category === 'object' && tutorial.category ? (tutorial.category as any).name : tutorial.category || 'DevOps'}</Badge>
+              <Badge variant="primary">
+                {typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category
+                  ? String((tutorial.category as Record<string, unknown>).name || 'DevOps')
+                  : typeof tutorial.category === 'string' ? tutorial.category : 'DevOps'}
+              </Badge>
               <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />

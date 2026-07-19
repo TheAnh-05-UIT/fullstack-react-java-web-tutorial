@@ -23,18 +23,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper type guard & extractor để lấy string role từ union string | object
+function getRoleString(roleProp?: string | { id?: number; name?: string }): string | undefined {
+  if (typeof roleProp === 'string') {
+    return roleProp;
+  }
+  if (roleProp && typeof roleProp === 'object' && 'name' in roleProp && typeof roleProp.name === 'string') {
+    return roleProp.name;
+  }
+  return undefined;
+}
+
 // Helper extract role từ JWT token
-function extractRoleFromToken(token: string, fallback?: string): string {
+function extractRoleFromToken(token: string, fallback?: string | { id?: number; name?: string }): string {
+  const fallbackStr = getRoleString(fallback);
   try {
     const decoded = jwtDecode<DecodedToken>(token);
-    let role = decoded.scope || decoded.role || fallback || 'USER';
+    let role = decoded.scope || decoded.role || fallbackStr || 'USER';
     // Spring Boot Security đặt role dạng "ROLE_ADMIN", strip prefix để lấy "ADMIN"
     if (role.startsWith('ROLE_')) {
       role = role.substring(5);
     }
     return role;
   } catch {
-    return fallback || 'USER';
+    return fallbackStr || 'USER';
   }
 }
 

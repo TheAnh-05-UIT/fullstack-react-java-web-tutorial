@@ -1,7 +1,9 @@
 import { useQueries } from '@tanstack/react-query';
 import { Activity } from 'lucide-react';
 import { Card, SimpleBarChart, DonutChart, Badge, Button } from '../../components/ui';
-import { api } from '../../services/api';
+import { userService } from '../../services/userService';
+import { tutorialService } from '../../services/tutorialService';
+import { projectService } from '../../services/projectService';
 
 export function AdminOverview() {
 
@@ -10,20 +12,17 @@ export function AdminOverview() {
     queries: [
       {
         queryKey: ['admin-users'],
-        queryFn: () => api.get<any, any>('/users?page=0&size=100').then(res =>
-          Array.isArray(res) ? res : (res?.content || [])),
+        queryFn: () => userService.getAll(0, 100),
         staleTime: 30000,
       },
       {
         queryKey: ['admin-tutorials'],
-        queryFn: () => api.get<any, any>('/tutorials?page=0&size=100').then(res =>
-          Array.isArray(res) ? res : (res?.content || [])),
+        queryFn: () => tutorialService.getAll(0, 100),
         staleTime: 30000,
       },
       {
         queryKey: ['admin-projects'],
-        queryFn: () => api.get<any, any>('/projects?page=0&size=100').then(res =>
-          Array.isArray(res) ? res : (res?.content || [])),
+        queryFn: () => projectService.getAll(0, 100),
         staleTime: 30000,
       },
     ],

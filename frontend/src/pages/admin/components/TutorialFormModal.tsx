@@ -22,7 +22,7 @@ interface TutorialFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   tutorial: Tutorial | null;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: Partial<Tutorial>) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -39,6 +39,17 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
     }
   });
 
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setColorMode(isDark ? 'dark' : 'light');
+    const observer = new MutationObserver(() => {
+      setColorMode(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       if (tutorial) {
@@ -46,7 +57,7 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
           title: tutorial.title || '',
           slug: tutorial.slug || '',
           description: tutorial.description || '',
-          category: typeof tutorial.category === 'object' && tutorial.category ? (tutorial.category as any).name : tutorial.category || '',
+          category: typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category ? String((tutorial.category as Record<string, unknown>).name || '') : typeof tutorial.category === 'string' ? tutorial.category : '',
           coverImage: tutorial.coverImage || tutorial.thumbnail || '',
           content: tutorial.content || '',
         });
@@ -89,29 +100,32 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-            <Input {...register('title')} onChange={handleTitleChange} />
-            {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+            <label htmlFor="tutorial-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+            <Input id="tutorial-title" aria-invalid={!!errors.title} aria-describedby={errors.title ? "tutorial-title-error" : undefined} {...register('title')} onChange={handleTitleChange} />
+            {errors.title && <p id="tutorial-title-error" role="alert" className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
-            <Input {...register('slug')} />
-            {errors.slug && <p className="text-red-500 text-xs mt-1">{errors.slug.message}</p>}
+            <label htmlFor="tutorial-slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
+            <Input id="tutorial-slug" aria-invalid={!!errors.slug} aria-describedby={errors.slug ? "tutorial-slug-error" : undefined} {...register('slug')} />
+            {errors.slug && <p id="tutorial-slug-error" role="alert" className="text-red-500 text-xs mt-1">{errors.slug.message}</p>}
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+          <label htmlFor="tutorial-desc" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
           <textarea
+            id="tutorial-desc"
+            aria-invalid={!!errors.description}
+            aria-describedby={errors.description ? "tutorial-desc-error" : undefined}
             {...register('description')}
             className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2"
             rows={3}
           />
-          {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+          {errors.description && <p id="tutorial-desc-error" role="alert" className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-          <Input {...register('category')} />
-          {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+          <label htmlFor="tutorial-cat" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+          <Input id="tutorial-cat" aria-invalid={!!errors.category} aria-describedby={errors.category ? "tutorial-cat-error" : undefined} {...register('category')} />
+          {errors.category && <p id="tutorial-cat-error" role="alert" className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -134,30 +148,16 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
             <Controller
               name="content"
               control={control}
-              render={({ field }) => {
-                // Dùng 1 MDEditor instance duy nhất, đổi color-mode theo dark mode
-                // Tránh mount 2 editor cùng lúc (gây double memory + potential desync)
-                const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
-                useEffect(() => {
-                  const isDark = document.documentElement.classList.contains('dark');
-                  setColorMode(isDark ? 'dark' : 'light');
-                  const observer = new MutationObserver(() => {
-                    setColorMode(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-                  });
-                  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-                  return () => observer.disconnect();
-                }, []);
-                return (
-                  <div data-color-mode={colorMode}>
-                    <MDEditor
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      height={400}
-                      previewOptions={{ rehypePlugins: [[rehypeRaw]] }}
-                    />
-                  </div>
-                );
-              }}
+              render={({ field }) => (
+                <div data-color-mode={colorMode}>
+                  <MDEditor
+                    value={field.value || ''}
+                    onChange={field.onChange}
+                    height={400}
+                    previewOptions={{ rehypePlugins: [[rehypeRaw]] }}
+                  />
+                </div>
+              )}
             />
           </div>
         </div>

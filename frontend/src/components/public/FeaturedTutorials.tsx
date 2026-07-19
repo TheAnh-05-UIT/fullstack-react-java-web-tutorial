@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Clock, Eye, Calendar } from 'lucide-react';
 import { Card, Badge, Button, Avatar } from '../ui';
-import { api } from '../../services/api';
+import { tutorialService } from '../../services/tutorialService';
 import type { Tutorial } from '../../types';
 import { formatReadTime, formatViews } from '../../utils/format';
 
@@ -21,13 +21,7 @@ const categoryColors: Record<string, 'primary' | 'secondary' | 'accent' | 'succe
 export function FeaturedTutorials() {
   const { data: tutorials = [] } = useQuery({
     queryKey: ['featuredTutorials'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/tutorials?page=0&size=4');
-      if (Array.isArray(response)) {
-        return response;
-      }
-      return response?.content || [];
-    }
+    queryFn: () => tutorialService.getAll(0, 4)
   });
 
   const featured = tutorials.slice(0, 4);

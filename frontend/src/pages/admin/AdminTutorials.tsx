@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, Button, SearchInput } from '../../components/ui';
+import { Card, Button, SearchInput, LoadingSpinner, EmptyState, ErrorState } from '../../components/ui';
 import { tutorialService } from '../../services';
 import type { Tutorial } from '../../types';
 import { TutorialTable } from './components/TutorialTable';
@@ -15,7 +15,7 @@ export function AdminTutorials() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
 
-  const { data: tutorials = [], isLoading } = useQuery({
+  const { data: tutorials = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tutorials'],
     // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
     queryFn: () => tutorialService.getAll()
@@ -23,7 +23,7 @@ export function AdminTutorials() {
 
   const saveMutation = useMutation({
     // Gọi qua tutorialService thay vì api trực tiếp
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<Tutorial>) => {
       if (editingTutorial?.id) {
         return tutorialService.update(editingTutorial.id, data);
       }
@@ -34,9 +34,10 @@ export function AdminTutorials() {
       setIsModalOpen(false);
       toast.success(editingTutorial ? 'Tutorial updated successfully!' : 'Tutorial created successfully!');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Failed to save tutorial:', error);
-      const msg = Array.isArray(error?.message) ? error.message.join(', ') : (error?.message || error?.error || 'Cannot save Tutorial');
+      const err = error as Record<string, unknown>;
+      const msg = Array.isArray(err?.message) ? err.message.join(', ') : (err?.message || err?.error || 'Cannot save Tutorial');
       toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   });
@@ -50,9 +51,10 @@ export function AdminTutorials() {
       queryClient.invalidateQueries({ queryKey: ['tutorials'] });
       toast.success('Tutorial deleted successfully!');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Failed to delete tutorial:', error);
-      const msg = Array.isArray(error?.message) ? error.message.join(', ') : (error?.message || error?.error || 'Cannot delete Tutorial');
+      const err = error as Record<string, unknown>;
+      const msg = Array.isArray(err?.message) ? err.message.join(', ') : (err?.message || err?.error || 'Cannot delete Tutorial');
       toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   });
@@ -94,9 +96,20 @@ export function AdminTutorials() {
       </Card>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-        </div>
+        <LoadingSpinner text="Loading tutorials..." />
+      ) : isError ? (
+        <ErrorState 
+          title="Failed to Load Tutorials" 
+          error={error} 
+          onRetry={() => refetch()} 
+        />
+      ) : filteredTutorials.length === 0 ? (
+        <EmptyState
+          title="No tutorials found"
+          description="There are no tutorials matching your search criteria."
+          actionLabel={searchQuery ? "Clear Search" : "Add New Tutorial"}
+          onAction={() => searchQuery ? setSearchQuery('') : handleOpenModal()}
+        />
       ) : (
         <TutorialTable 
           tutorials={filteredTutorials} 
@@ -109,7 +122,7 @@ export function AdminTutorials() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         tutorial={editingTutorial}
-        onSubmit={async (data: any) => { saveMutation.mutate(data); }}
+        onSubmit={async (data: Partial<Tutorial>) => { saveMutation.mutate(data); }}
         isLoading={saveMutation.isPending}
       />
     </div>

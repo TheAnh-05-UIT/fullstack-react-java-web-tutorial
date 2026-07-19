@@ -23,7 +23,7 @@ export function AdminProjects() {
 
   const saveMutation = useMutation({
     // Gọi qua projectService thay vì api trực tiếp
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<Project>) => {
       if (editingProject?.id) {
         return projectService.update(editingProject.id, data);
       }
@@ -107,7 +107,7 @@ export function AdminProjects() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         project={editingProject}
-        onSubmit={async (data: any) => { saveMutation.mutate(data); }}
+        onSubmit={async (data: Partial<Project>) => { saveMutation.mutate(data); }}
         isLoading={saveMutation.isPending}
       />
     </div>

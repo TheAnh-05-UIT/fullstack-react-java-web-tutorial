@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, MapPin, Calendar, ExternalLink, Award, Briefcase, Code } from 'lucide-react';
 import { Card, Badge } from '../../components/ui';
-import { api } from '../../services/api';
+import { settingsService } from '../../services/settingsService';
 
 export interface ExperienceInfo {
   title: string;
@@ -81,9 +81,9 @@ export function AboutPage() {
   });
 
   useEffect(() => {
-      api.get<any, { key: string, value: string }>('/settings/ABOUT_US_CONTENT')
+      settingsService.getByKey('ABOUT_US_CONTENT')
       .then(response => {
-        if (response.value) {
+        if (response?.value) {
           const data = JSON.parse(response.value);
           // Map old schema to new if necessary
           setContent(prev => ({

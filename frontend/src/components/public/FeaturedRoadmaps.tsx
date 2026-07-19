@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
 import { Card, Button } from '../ui';
-import { api } from '../../services/api';
+import { roadmapService } from '../../services/roadmapService';
 import type { Roadmap } from '../../types';
 
 const iconComponents: Record<string, React.ReactNode> = {
@@ -44,13 +44,7 @@ const colorClasses: Record<string, { bg: string; text: string; border: string }>
 export function FeaturedRoadmaps() {
   const { data: roadmaps = [] } = useQuery({
     queryKey: ['featuredRoadmaps'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/roadmaps?page=0&size=3');
-      if (Array.isArray(response)) {
-        return response;
-      }
-      return response?.content || [];
-    }
+    queryFn: () => roadmapService.getAll(0, 3)
   });
 
   return (

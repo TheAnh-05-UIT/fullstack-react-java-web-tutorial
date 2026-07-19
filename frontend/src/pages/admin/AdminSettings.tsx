@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Button } from '../../components/ui';
 import { Save, Loader2, Info } from 'lucide-react';
-import { api } from '../../services/api';
+import { settingsService } from '../../services/settingsService';
 
 interface ExperienceInfo {
   title: string;
@@ -52,8 +52,8 @@ export function AdminSettings() {
 
   const fetchSettings = async () => {
     try {
-      const response = await api.get<any, { key: string, value: string }>('/settings/ABOUT_US_CONTENT');
-      if (response.value) {
+      const response = await settingsService.getByKey('ABOUT_US_CONTENT');
+      if (response?.value) {
         const data = JSON.parse(response.value);
         setContent(prev => ({
           ...prev,
@@ -96,8 +96,7 @@ export function AdminSettings() {
           certifications: [
             'AWS Certified Solutions Architect',
             'Certified Kubernetes Administrator (CKA)',
-            'HashiCorp Terraform Associate',
-            'Docker Certified Associate',
+            'HashiCorp Certified: Terraform Associate',
           ],
           connect: {
             github: 'https://github.com',
@@ -117,9 +116,7 @@ export function AdminSettings() {
     setIsSaving(true);
     setMessage('');
     try {
-      await api.put('/settings/ABOUT_US_CONTENT', {
-        value: JSON.stringify(content)
-      });
+      await settingsService.updateByKey('ABOUT_US_CONTENT', JSON.stringify(content));
       setMessage('About page content saved successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {

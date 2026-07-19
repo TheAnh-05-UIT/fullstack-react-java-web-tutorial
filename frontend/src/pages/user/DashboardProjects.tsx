@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Plus, MoreVertical, Github, ExternalLink } from 'lucide-react';
 import { Card, Badge, Button } from '../../components/ui';
-import { api } from '../../services/api';
-import type { PagedResponse, Project, ProjectStatus } from '../../types';
+import { projectService } from '../../services/projectService';
+import type { Project, ProjectStatus } from '../../types';
 
 const statusColors: Record<ProjectStatus, 'success' | 'warning' | 'primary' | 'secondary'> = {
   'Completed': 'success',
@@ -19,8 +19,8 @@ export function DashboardProjects() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await api.get<any, PagedResponse<Project>>('/projects?page=0&size=100');
-        setProjects(data?.content || []);
+        const data = await projectService.getAll(0, 100);
+        setProjects(data);
       } catch (error) {
         console.error('Failed to fetch projects:', error);
       }

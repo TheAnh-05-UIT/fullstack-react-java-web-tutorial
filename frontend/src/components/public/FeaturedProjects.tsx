@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Github, ExternalLink, ArrowRight, User } from 'lucide-react';
 import { Card, Badge, Button } from '../ui';
-import { api } from '../../services/api';
+import { projectService } from '../../services/projectService';
 import type { Project } from '../../types';
 
 const difficultyColors: Record<string, 'success' | 'warning' | 'error'> = {
@@ -14,13 +14,7 @@ const difficultyColors: Record<string, 'success' | 'warning' | 'error'> = {
 export function FeaturedProjects() {
   const { data: projects = [] } = useQuery({
     queryKey: ['featuredProjects'],
-    queryFn: async () => {
-      const response = await api.get<any, any>('/projects?page=0&size=3');
-      if (Array.isArray(response)) {
-        return response;
-      }
-      return response?.content || [];
-    }
+    queryFn: () => projectService.getAll(0, 3)
   });
 
   return (

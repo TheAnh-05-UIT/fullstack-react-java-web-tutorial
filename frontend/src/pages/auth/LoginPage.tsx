@@ -1,15 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth, type UserProfile } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 import { Card, Input, Button } from '../../components/ui';
 import { Lock, Mail } from 'lucide-react';
-
-interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  userLogin: UserProfile;
-}
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,7 +21,7 @@ export function LoginPage() {
 
     try {
       // Gọi API Login thật
-      const response = await api.post<any, LoginResponse>('/login', { email, password });
+      const response = await authService.login({ email, password });
       
       // Lưu toàn bộ thẻ và thông tin user vào Context + LocalStorage
       login(response.accessToken, response.refreshToken, response.userLogin);

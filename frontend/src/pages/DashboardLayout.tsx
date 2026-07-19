@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/layout';
+import { LoadingSpinner } from '../components/ui';
 import { useApp } from '../context/AppContext';
 import type { ViewMode } from '../types';
 
@@ -17,7 +19,9 @@ export function DashboardLayout({ variant }: DashboardLayoutProps) {
         className="transition-all duration-300 p-6 lg:p-8"
         style={{ marginLeft: sidebarOpen ? '16rem' : '5rem' }}
       >
-        <Outlet />
+        <Suspense fallback={<LoadingSpinner className="min-h-[60vh]" />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

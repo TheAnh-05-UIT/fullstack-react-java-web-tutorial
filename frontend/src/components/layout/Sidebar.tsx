@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, FolderKanban, Map, Bookmark, StickyNote, Award, User, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FolderKanban, Map, Bookmark, StickyNote, Award, User, Settings, ChevronLeft, ChevronRight, Terminal } from 'lucide-react';
 import { Avatar } from '../ui';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,7 @@ const userLinks = [
 
 const adminLinks = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { path: '/admin/devops', label: 'DevOps Lifecycle CRUD', icon: Terminal },
   { path: '/admin/users', label: 'Users', icon: User },
   { path: '/admin/tutorials', label: 'Tutorials', icon: BookOpen },
   { path: '/admin/projects', label: 'Projects', icon: FolderKanban },

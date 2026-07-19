@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { BookOpen, FolderKanban, Award, Flame } from 'lucide-react';
 import { Card, StatCard, DonutChart, Button, Badge } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
-import type { PagedResponse, Tutorial } from '../../types';
+import { tutorialService } from '../../services/tutorialService';
+import type { Tutorial } from '../../types';
 import { formatReadTime } from '../../utils/format';
 
 export function DashboardHome() {
@@ -13,8 +13,8 @@ export function DashboardHome() {
   useEffect(() => {
     const fetchTutorials = async () => {
       try {
-        const data = await api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=100');
-        setTutorials(data?.content || []);
+        const data = await tutorialService.getAll(0, 100);
+        setTutorials(data);
       } catch (error) {
         console.error('Failed to fetch tutorials:', error);
       }

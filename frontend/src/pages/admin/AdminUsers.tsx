@@ -3,7 +3,7 @@ import { UserPlus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Button, SearchInput } from '../../components/ui';
 import { userService } from '../../services';
-import type { User } from '../../types';
+import { getRoleName, type User } from '../../types';
 import { UserTable } from './components/UserTable';
 import { UserFormModal } from './components/UserFormModal';
 import toast from 'react-hot-toast';
@@ -24,7 +24,7 @@ export function AdminUsers() {
 
   const saveMutation = useMutation({
     // Gọi qua userService thay vì api trực tiếp
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<User> & { password?: string }) => {
       if (editingUser?.id) {
         return userService.update(String(editingUser.id), data);
       }
@@ -43,7 +43,7 @@ export function AdminUsers() {
 
   const deleteMutation = useMutation({
     // Gọi qua userService thay vì api trực tiếp
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: string | number) => {
       return userService.delete(id);
     },
     onSuccess: () => {
@@ -61,14 +61,14 @@ export function AdminUsers() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string | number) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     deleteMutation.mutate(id);
   };
 
   const filteredUsers = users.filter((user: User) => {
-    const userName = (user as any).username || user.name || '';
-    const userRoleStr = ((user.role as any)?.name || user.role || 'USER').toLowerCase();
+    const userName = user.username || user.name || '';
+    const userRoleStr = getRoleName(user.role).toLowerCase();
     
     const matchesSearch = userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchQuery.toLowerCase());

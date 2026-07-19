@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { BookOpen, Clock, CheckCircle, TrendingUp, Award, Target, ChevronRight } from 'lucide-react';
 import { Card, Badge, Button, ProgressRing } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
-import type { PagedResponse, Tutorial, Roadmap } from '../../types';
+import { tutorialService } from '../../services/tutorialService';
+import { roadmapService } from '../../services/roadmapService';
+import type { Tutorial, Roadmap } from '../../types';
 import { formatReadTime } from '../../utils/format';
 
 export function DashboardLearning() {
@@ -15,8 +16,8 @@ export function DashboardLearning() {
     const fetchData = async () => {
       try {
         const [tutorialsData, roadmapsData] = await Promise.all([
-          api.get<any, PagedResponse<Tutorial>>('/tutorials?page=0&size=100').then(res => res?.content || []),
-          api.get<any, PagedResponse<Roadmap>>('/roadmaps?page=0&size=100').then(res => res?.content || []),
+          tutorialService.getAll(0, 100),
+          roadmapService.getAll(0, 100),
         ]);
         setTutorials(tutorialsData || []);
         setRoadmaps(roadmapsData || []);

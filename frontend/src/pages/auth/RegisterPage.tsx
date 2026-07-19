@@ -1,15 +1,9 @@
 import { useState } from 'react';
-import { useAuth, type UserProfile } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 import { Card, Input, Button } from '../../components/ui';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-
-interface RegisterResponse {
-  accessToken: string;
-  refreshToken: string;
-  userLogin: UserProfile;
-}
 
 export function RegisterPage() {
   const [name, setName] = useState('');
@@ -37,7 +31,7 @@ export function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const response = await api.post<any, RegisterResponse>('/register', { 
+      const response = await authService.register({ 
         name, 
         email, 
         password 

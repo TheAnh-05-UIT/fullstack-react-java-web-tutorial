@@ -44,17 +44,21 @@ export function TutorialTable({ tutorials, onEdit, onDelete }: TutorialTableProp
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="primary">{typeof tutorial.category === 'object' && tutorial.category ? (tutorial.category as any).name : tutorial.category || 'DevOps'}</Badge>
+                    <Badge variant="primary">
+                      {typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category
+                        ? String((tutorial.category as Record<string, unknown>).name || 'DevOps')
+                        : typeof tutorial.category === 'string' ? tutorial.category : 'DevOps'}
+                    </Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {(((tutorial as any).viewCount || tutorial.views || 0)).toLocaleString()}
+                    {Number(tutorial.viewCount ?? tutorial.views ?? 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
-                    <button onClick={() => onEdit(tutorial)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-blue-500 transition-colors">
-                      <Edit2 className="w-4 h-4" />
+                    <button type="button" onClick={() => onEdit(tutorial)} aria-label={`Edit tutorial ${tutorial.title}`} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-blue-500 transition-colors">
+                      <Edit2 className="w-4 h-4" aria-hidden="true" />
                     </button>
-                    <button onClick={() => onDelete(tutorial.id)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500 transition-colors">
-                      <Trash2 className="w-4 h-4" />
+                    <button type="button" onClick={() => onDelete(tutorial.id)} aria-label={`Delete tutorial ${tutorial.title}`} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500 transition-colors">
+                      <Trash2 className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </td>
                 </tr>

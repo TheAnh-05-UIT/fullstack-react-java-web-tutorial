@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { RoadmapCard } from '../../components/public';
-import { api } from '../../services/api';
+import { roadmapService } from '../../services/roadmapService';
 import type { Roadmap } from '../../types';
 import { Button } from '../../components/ui';
 
@@ -11,11 +11,11 @@ export function RoadmapsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['roadmaps', currentPage],
     queryFn: async () => {
-      const response = await api.get<any, any>(`/roadmaps?page=${currentPage}&size=10`);
+      const response = await roadmapService.getPaged(currentPage, 10);
       if (Array.isArray(response)) {
         return { content: response, totalPages: 1 };
       }
-      return { content: response?.content || [], totalPages: response?.totalPages || 1 };
+      return { content: response?.content || [], totalPages: (response as any)?.totalPages || 1 };
     }
   });
 

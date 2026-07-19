@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { ProjectCard } from '../../components/public';
 import { Button, SearchInput } from '../../components/ui';
-import { api } from '../../services/api';
+import { projectService } from '../../services/projectService';
 import type { Project } from '../../types';
 
 const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced'] as const;
@@ -17,8 +17,11 @@ export function ProjectsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['projects', currentPage, difficulty],
     queryFn: async () => {
-      const url = `/projects?page=${currentPage}&size=10${difficulty !== 'All' ? `&difficulty=${difficulty.toUpperCase()}` : ''}`;
-      const response = await api.get<any, any>(url);
+      const response = await projectService.getPaged(
+        currentPage,
+        10,
+        difficulty !== 'All' ? difficulty.toUpperCase() : undefined
+      );
       if (Array.isArray(response)) {
         return { content: response, totalPages: 1 };
       }
@@ -26,7 +29,7 @@ export function ProjectsPage() {
     }
   });
 
-  const projects = data?.content || [];
+  const projects = useMemo(() => data?.content || [], [data?.content]);
   const totalPages = data?.totalPages || 1;
 
   const filteredProjects = useMemo(() => {

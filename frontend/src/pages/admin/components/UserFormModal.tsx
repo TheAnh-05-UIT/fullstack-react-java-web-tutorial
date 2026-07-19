@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Modal, Input, Button, Avatar } from '../../../components/ui';
 import type { User } from '../../../types';
-import { api } from '../../../services/api';
+import { uploadService } from '../../../services/uploadService';
 import toast from 'react-hot-toast';
 
 const userSchema = z.object({
@@ -22,7 +22,7 @@ interface UserFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: UserFormData) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -45,10 +45,10 @@ export function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: Us
     if (isOpen) {
       if (user) {
         reset({
-          name: (user as any).username || user.name || '',
-          username: (user as any).username || user.name || '',
+          name: user.username || user.name || '',
+          username: user.username || user.name || '',
           email: user.email || '',
-          role: typeof user.role === 'object' ? ((user.role as any).name || 'USER').toLowerCase() as any : (user.role || 'user'),
+          role: (typeof user.role === 'object' ? (user.role?.name || 'user') : (user.role || 'user')).toLowerCase() as 'user' | 'admin',
           avatar: user.avatar || '',
         });
       } else {
@@ -147,9 +147,7 @@ export function UserFormModal({ isOpen, onClose, user, onSubmit, isLoading }: Us
                         try {
                           const formData = new FormData();
                           formData.append('file', file);
-                          const data: any = await api.post('/upload?folder=users', formData, {
-                            headers: { 'Content-Type': 'multipart/form-data' },
-                          });
+                          const data = await uploadService.uploadFile(formData, 'users');
                           if (data && data.url) {
                             setValue('avatar', data.url, { shouldValidate: true });
                           }

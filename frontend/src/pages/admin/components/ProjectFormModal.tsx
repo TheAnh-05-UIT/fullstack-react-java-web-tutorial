@@ -24,7 +24,7 @@ interface ProjectFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project | null;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: Partial<Project>) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -50,9 +50,9 @@ export function ProjectFormModal({ isOpen, onClose, project, onSubmit, isLoading
           title: project.title || '',
           slug: project.slug || '',
           description: project.description || '',
-          difficulty: project.difficulty as any || 'BEGINNER',
-          status: project.status as any || 'DRAFT',
-          thumbnail: project.thumbnail || (project as any).coverImage || '',
+          difficulty: (project.difficulty?.toUpperCase() as ProjectFormData['difficulty']) || 'BEGINNER',
+          status: (project.status?.toUpperCase() as ProjectFormData['status']) || 'DRAFT',
+          thumbnail: project.thumbnail || project.coverImage || '',
           techStack: Array.isArray(project.techStack) ? project.techStack.join(', ') : project.techStack || '',
           content: project.content || '',
         });

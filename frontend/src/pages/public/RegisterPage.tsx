@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../services/api';
+import { authService } from '../../services/authService';
 import { Card, Input, Button } from '../../components/ui';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -29,7 +29,7 @@ export function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await api.post<{ token: string, message: string }>('/auth/register', { 
+      await authService.register({ 
         name, 
         email, 
         password 

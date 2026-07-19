@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Filter, X } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { TutorialCard } from '../../components/public';
-import { Button, SearchInput, Badge } from '../../components/ui';
+import { Button, SearchInput, Badge, LoadingSpinner, EmptyState, ErrorState } from '../../components/ui';
 import type { Category, Tutorial } from '../../types';
 import { tutorialService } from '../../services';
 
@@ -28,7 +28,7 @@ export function TutorialsPage() {
   }, [currentPage, selectedCategory]);
 
   // Fetch all tutorials so we can compute exact category counts and filter globally across all pages
-  const { data: allTutorials = [], isLoading } = useQuery({
+  const { data: allTutorials = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tutorials-all'],
     // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
     queryFn: () => tutorialService.getAll(0, 1000)
@@ -38,8 +38,8 @@ export function TutorialsPage() {
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     allTutorials.forEach((tutorial: Tutorial) => {
-      const rawCat = typeof tutorial.category === 'object' && tutorial.category 
-        ? (tutorial.category as any).name 
+      const rawCat = typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category
+        ? String((tutorial.category as Record<string, unknown>).name || '')
         : tutorial.category || 'Other';
       const catName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
       counts.set(catName, (counts.get(catName) || 0) + 1);
@@ -53,8 +53,8 @@ export function TutorialsPage() {
 
   const filteredTutorials = useMemo(() => {
     return allTutorials.filter((tutorial: Tutorial) => {
-      const rawCat = typeof tutorial.category === 'object' && tutorial.category 
-        ? (tutorial.category as any).name 
+      const rawCat = typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category
+        ? String((tutorial.category as Record<string, unknown>).name || '')
         : tutorial.category || 'Other';
       const categoryName = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
       
@@ -153,24 +153,20 @@ export function TutorialsPage() {
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center items-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-              </div>
+              <LoadingSpinner text="Loading tutorials..." />
+            ) : isError ? (
+              <ErrorState 
+                title="Failed to Load Tutorials" 
+                error={error} 
+                onRetry={() => refetch()} 
+              />
             ) : filteredTutorials.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  No tutorials found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Try adjusting your search or filter criteria
-                </p>
-                <Button variant="secondary" onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setCurrentPage(0); }}>
-                  Clear filters
-                </Button>
-              </div>
+              <EmptyState
+                title="No tutorials found"
+                description="Try adjusting your search or filter criteria to find what you're looking for."
+                actionLabel="Clear filters"
+                onAction={() => { setSearchQuery(''); setSelectedCategory('all'); setCurrentPage(0); }}
+              />
             ) : (
               <>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
