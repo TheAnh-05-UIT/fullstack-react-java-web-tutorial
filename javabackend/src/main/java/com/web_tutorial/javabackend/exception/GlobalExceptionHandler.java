@@ -106,6 +106,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
+    @ExceptionHandler(com.web_tutorial.javabackend.exception.DevopsContentSerializationException.class)
+    public ResponseEntity<RestResponse<Object>> handleDevopsContentSerializationException(
+            com.web_tutorial.javabackend.exception.DevopsContentSerializationException ex, HttpServletRequest request) {
+
+        log.error("Failed to process DevOps content at {}. Operation: {}, Field: {}", 
+                request.getRequestURI(), ex.getOperation(), ex.getFieldName(), ex);
+
+        RestResponse<Object> res = new RestResponse<>();
+        res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        res.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        res.setMessage("Lỗi xử lý dữ liệu nội dung DevOps.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
     // lỗi 500 Internal Server Error – handler cuối cùng, chỉ bắt những gì chưa được xử lý ở trên
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestResponse<Object>> handleGlobalException(

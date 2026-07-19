@@ -143,12 +143,12 @@ public class DevopsService {
         phase.setActive(request.active());
 
         // Chuyển các Object/List từ DTO sang chuỗi JSON để lưu vào DB
-        phase.setThemeJson(toJsonString(request.theme()));
-        phase.setCurriculumJson(toJsonString(request.curriculum()));
-        phase.setToolsJson(toJsonString(request.tools()));
-        phase.setLearningPathJson(toJsonString(request.learningPath()));
-        phase.setQuizJson(toJsonString(request.quiz()));
-        phase.setHandsOnLabsJson(toJsonString(request.handsOnLabs()));
+        phase.setThemeJson(toJsonString(request.theme(), "theme"));
+        phase.setCurriculumJson(toJsonString(request.curriculum(), "curriculum"));
+        phase.setToolsJson(toJsonString(request.tools(), "tools"));
+        phase.setLearningPathJson(toJsonString(request.learningPath(), "learningPath"));
+        phase.setQuizJson(toJsonString(request.quiz(), "quiz"));
+        phase.setHandsOnLabsJson(toJsonString(request.handsOnLabs(), "handsOnLabs"));
     }
 
     private DevopsDTOs.PhaseResponse toPhaseResponse(DevopsPhase phase) {
@@ -163,31 +163,31 @@ public class DevopsService {
                 phase.getId(), phase.getPhaseKey(), phase.getTitle(), phase.getName(),
                 phase.getTagline(), phase.getSummary(), phase.getHeroSnippetTitle(), phase.getHeroSnippet(),
                 phase.getIconName(), phase.getColorGradient(), phase.getDisplayOrder(), phase.isActive(),
-                fromJsonString(phase.getThemeJson()),
-                fromJsonString(phase.getCurriculumJson()),
-                fromJsonString(phase.getToolsJson()),
-                fromJsonString(phase.getLearningPathJson()),
-                fromJsonString(phase.getQuizJson()),
-                fromJsonString(phase.getHandsOnLabsJson()));
+                fromJsonString(phase.getThemeJson(), "theme"),
+                fromJsonString(phase.getCurriculumJson(), "curriculum"),
+                fromJsonString(phase.getToolsJson(), "tools"),
+                fromJsonString(phase.getLearningPathJson(), "learningPath"),
+                fromJsonString(phase.getQuizJson(), "quiz"),
+                fromJsonString(phase.getHandsOnLabsJson(), "handsOnLabs"));
     }
 
-    private String toJsonString(Object obj) {
+    private String toJsonString(Object obj, String fieldName) {
         if (obj == null)
             return null;
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            return null;
+            throw new com.web_tutorial.javabackend.exception.DevopsContentSerializationException("SERIALIZE", fieldName, e);
         }
     }
 
-    private Object fromJsonString(String json) {
+    private Object fromJsonString(String json, String fieldName) {
         if (json == null || json.isBlank())
             return null;
         try {
             return objectMapper.readTree(json);
         } catch (JsonProcessingException e) {
-            return null;
+            throw new com.web_tutorial.javabackend.exception.DevopsContentSerializationException("DESERIALIZE", fieldName, e);
         }
     }
 }
