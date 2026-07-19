@@ -1,58 +1,54 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 
 import { DashboardLayout } from './pages/DashboardLayout';
-import { 
-  DashboardHome, 
-  DashboardLearning, 
-  DashboardTutorials, 
-  DashboardProjects, 
-  DashboardSettings 
-} from './pages/user';
-
-import { 
-  AdminOverview, 
-  AdminUsers, 
-  AdminTutorials, 
-  AdminProjects, 
-  AdminRoadmaps, 
-  AdminSettings 
-} from './pages/admin';
-
 import { AppProvider, useApp } from './context/AppContext';
 import { ScrollToTop } from './components/ScrollToTop';
-import { BackToTop } from './components/ui';
+import { BackToTop, LoadingSpinner } from './components/ui';
 
-// Import Public Layout và Pages
+// Import Public Layout và HomePage (giữ eager cho HomePage tải ngay lập tức)
 import { Navbar, Footer } from './components/layout';
-import { 
-  HomePage, 
-  TutorialsPage, 
-  TutorialDetailPage, 
-  ProjectsPage, 
-  ProjectDetailPage, 
-  RoadmapsPage, 
-  RoadmapDetailPage, 
-  AboutPage 
-} from './pages/public';
+import { HomePage } from './pages/public/HomePage';
 
-import { PlanPhasePage } from './features/devops/pages/PlanPhasePage';
-import { CodePhasePage } from './features/devops/pages/CodePhasePage';
-import { BuildPhasePage } from './features/devops/pages/BuildPhasePage';
-import { TestPhasePage } from './features/devops/pages/TestPhasePage';
-import { ReleasePhasePage } from './features/devops/pages/ReleasePhasePage';
-import { DeployPhasePage } from './features/devops/pages/DeployPhasePage';
-import { OperatePhasePage } from './features/devops/pages/OperatePhasePage';
-import { MonitorPhasePage } from './features/devops/pages/MonitorPhasePage';
+// Lazy load Public Pages (lớn hoặc ít truy cập ban đầu)
+const TutorialsPage = lazy(() => import('./pages/public/TutorialsPage').then(m => ({ default: m.TutorialsPage })));
+const TutorialDetailPage = lazy(() => import('./pages/public/TutorialDetailPage').then(m => ({ default: m.TutorialDetailPage })));
+const ProjectsPage = lazy(() => import('./pages/public/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => import('./pages/public/ProjectDetailPage').then(m => ({ default: m.ProjectDetailPage })));
+const RoadmapsPage = lazy(() => import('./pages/public/RoadmapsPage').then(m => ({ default: m.RoadmapsPage })));
+const RoadmapDetailPage = lazy(() => import('./pages/public/RoadmapDetailPage').then(m => ({ default: m.RoadmapDetailPage })));
+const AboutPage = lazy(() => import('./pages/public/AboutPage').then(m => ({ default: m.AboutPage })));
+
+// Lazy load DevOps Pages
+const DevOpsPhaseRoute = lazy(() => import('./features/devops/pages/DevOpsPhaseRoute').then(m => ({ default: m.DevOpsPhaseRoute })));
+const DevOpsAdminPage = lazy(() => import('./features/devops/admin/DevOpsAdminPage').then(m => ({ default: m.DevOpsAdminPage })));
+
+// Lazy load User Dashboard Pages
+const DashboardHome = lazy(() => import('./pages/user/DashboardHome').then(m => ({ default: m.DashboardHome })));
+const DashboardLearning = lazy(() => import('./pages/user/DashboardLearning').then(m => ({ default: m.DashboardLearning })));
+const DashboardTutorials = lazy(() => import('./pages/user/DashboardTutorials').then(m => ({ default: m.DashboardTutorials })));
+const DashboardProjects = lazy(() => import('./pages/user/DashboardProjects').then(m => ({ default: m.DashboardProjects })));
+const DashboardSettings = lazy(() => import('./pages/user/DashboardSettings').then(m => ({ default: m.DashboardSettings })));
+
+// Lazy load Admin Pages (chứa rich text editor, table lớn, quản trị)
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview').then(m => ({ default: m.AdminOverview })));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const AdminTutorials = lazy(() => import('./pages/admin/AdminTutorials').then(m => ({ default: m.AdminTutorials })));
+const AdminProjects = lazy(() => import('./pages/admin/AdminProjects').then(m => ({ default: m.AdminProjects })));
+const AdminRoadmaps = lazy(() => import('./pages/admin/AdminRoadmaps').then(m => ({ default: m.AdminRoadmaps })));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default: m.AdminSettings })));
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col">
       <Navbar />
       <main className="flex-1">
-        {children}
+        <Suspense fallback={<LoadingSpinner className="min-h-[60vh]" />}>
+          {children}
+        </Suspense>
       </main>
       <Footer />
     </div>
@@ -95,14 +91,7 @@ function AppRoutes() {
       <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
 
       {/* DevOps Lifecycle Phase Pages (wrapped inside PublicLayout for Navbar and Footer) */}
-      <Route path="/devops/plan" element={<PublicLayout><PlanPhasePage /></PublicLayout>} />
-      <Route path="/devops/code" element={<PublicLayout><CodePhasePage /></PublicLayout>} />
-      <Route path="/devops/build" element={<PublicLayout><BuildPhasePage /></PublicLayout>} />
-      <Route path="/devops/test" element={<PublicLayout><TestPhasePage /></PublicLayout>} />
-      <Route path="/devops/release" element={<PublicLayout><ReleasePhasePage /></PublicLayout>} />
-      <Route path="/devops/deploy" element={<PublicLayout><DeployPhasePage /></PublicLayout>} />
-      <Route path="/devops/operate" element={<PublicLayout><OperatePhasePage /></PublicLayout>} />
-      <Route path="/devops/monitor" element={<PublicLayout><MonitorPhasePage /></PublicLayout>} />
+      <Route path="/devops/:phaseKey" element={<PublicLayout><DevOpsPhaseRoute /></PublicLayout>} />
       
       {/* Dashboard Dành Cho Người Dùng Đã Đăng Nhập */}
       <Route path="/dashboard" element={
@@ -124,6 +113,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<AdminOverview />} />
+        <Route path="devops" element={<DevOpsAdminPage />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="tutorials" element={<AdminTutorials />} />
         <Route path="projects" element={<AdminProjects />} />
