@@ -11,42 +11,34 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web_tutorial.javabackend.domain.devops.DevopsPhase;
 import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import com.web_tutorial.javabackend.exception.DevopsDataSeedingException;
+
 /**
  * Data Seeder: Tự động khởi tạo 8 Giai đoạn DevOps mặc định kèm cấu trúc nội
- * dung bài học
- * vào Database khi ứng dụng Spring Boot khởi động lần đầu tiên (khi DB còn
- * trống).
+ * dung bài học vào Database khi ứng dụng Spring Boot khởi động lần đầu tiên (khi DB còn trống).
  *
- * Kiểm tra an toàn: Nếu đã có dữ liệu trong bảng devops_phases, seeder sẽ bỏ
- * qua hoàn toàn
+ * Kiểm tra an toàn: Nếu đã có dữ liệu trong bảng devops_phases, seeder sẽ bỏ qua hoàn toàn
  * để không ghi đè dữ liệu mà Admin đã chỉnh sửa.
  */
 @Component
+@ConditionalOnProperty(name = "app.devops.seeding.enabled", havingValue = "true", matchIfMissing = false)
 public class DevopsDataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DevopsDataSeeder.class);
 
     private final DevopsPhaseRepository phaseRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
-    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public DevopsDataSeeder(DevopsPhaseRepository phaseRepository,
-            com.fasterxml.jackson.databind.ObjectMapper objectMapper,
-            org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.phaseRepository = phaseRepository;
         this.objectMapper = objectMapper;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        log.info("[DevopsDataSeeder] Đang làm mới dữ liệu DevOps Phases...");
-        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-        phaseRepository.deleteAll();
-        phaseRepository.flush();
-        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
-
         log.info("[DevopsDataSeeder] Bắt đầu khởi tạo 8 Giai đoạn DevOps Lifecycle Content mặc định từ JSON...");
 
         org.springframework.core.io.support.PathMatchingResourcePatternResolver resolver = new org.springframework.core.io.support.PathMatchingResourcePatternResolver();
@@ -59,51 +51,56 @@ public class DevopsDataSeeder implements CommandLineRunner {
         }
 
         for (org.springframework.core.io.Resource resource : resources) {
-            try (java.io.InputStream is = resource.getInputStream()) {
-                com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(is);
-
-                String key = node.path("slug").asText();
-                if (key == null || key.isEmpty()) {
-                    key = resource.getFilename().replace(".json", "");
-                }
-
-                DevopsPhase phase = new DevopsPhase();
-                phase.setPhaseKey(key);
-                phase.setTitle(node.path("title").asText(node.path("name").asText()));
-                phase.setName(node.path("name").asText());
-                phase.setTagline(node.path("tagline").asText());
-                phase.setSummary(node.path("summary").asText());
-                phase.setHeroSnippetTitle(node.path("heroSnippetTitle").asText());
-                phase.setHeroSnippet(node.path("heroSnippet").asText());
-                // In PhaseData, icon isn't directly at root, wait, theme has iconBg etc. But we
-                // hardcoded icon before.
-                // Let's fallback to some defaults if missing, or we can just parse from the old
-                // hardcoded strings
-                // Actually the JSON has no iconName or colorGradient at root.
-                // In my old seeder, I hardcoded them. I should map them here!
-                phase.setIconName(getIconForKey(key));
-                phase.setColorGradient(getColorForKey(key));
-                phase.setDisplayOrder(node.path("stageNumber").asInt(99));
-                phase.setActive(true);
-
-                phase.setThemeJson(objectMapper.writeValueAsString(node.path("theme")));
-                phase.setCurriculumJson(objectMapper.writeValueAsString(node.path("curriculum")));
-                phase.setToolsJson(objectMapper.writeValueAsString(node.path("tools")));
-                phase.setLearningPathJson(objectMapper.writeValueAsString(node.path("learningPath")));
-                phase.setQuizJson(objectMapper.writeValueAsString(node.path("quiz")));
-                phase.setHandsOnLabsJson(objectMapper.writeValueAsString(node.path("handsOnLabs")));
-
-                phase.setCreatedAt(Instant.now());
-                phase.setCreatedBy("system-seeder");
-
-                phaseRepository.save(phase);
-                log.info("[DevopsDataSeeder] Phase '{}' đã được nạp dữ liệu nội dung.", key);
-            } catch (Exception e) {
-                log.error("[DevopsDataSeeder] Lỗi khi nạp dữ liệu từ file {}", resource.getFilename(), e);
-            }
+            parseAndSaveResource(resource);
         }
 
         log.info("[DevopsDataSeeder] Khởi tạo thành công 8 Giai đoạn DevOps Lifecycle Content!");
+    }
+
+    // Package-private for testing
+    void parseAndSaveResource(org.springframework.core.io.Resource resource) {
+        try (java.io.InputStream is = resource.getInputStream()) {
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(is);
+
+            String key = node.path("slug").asText();
+            if (key == null || key.isEmpty()) {
+                key = resource.getFilename().replace(".json", "");
+            }
+
+            if (phaseRepository.existsByPhaseKey(key)) {
+                log.info("[DevopsDataSeeder] Phase '{}' đã tồn tại, bỏ qua để bảo vệ dữ liệu admin.", key);
+                return; // Skip existing
+            }
+
+            DevopsPhase phase = new DevopsPhase();
+            phase.setPhaseKey(key);
+            phase.setTitle(node.path("title").asText(node.path("name").asText()));
+            phase.setName(node.path("name").asText());
+            phase.setTagline(node.path("tagline").asText());
+            phase.setSummary(node.path("summary").asText());
+            phase.setHeroSnippetTitle(node.path("heroSnippetTitle").asText());
+            phase.setHeroSnippet(node.path("heroSnippet").asText());
+            
+            phase.setIconName(getIconForKey(key));
+            phase.setColorGradient(getColorForKey(key));
+            phase.setDisplayOrder(node.path("stageNumber").asInt(99));
+            phase.setActive(true);
+
+            phase.setThemeJson(objectMapper.writeValueAsString(node.path("theme")));
+            phase.setCurriculumJson(objectMapper.writeValueAsString(node.path("curriculum")));
+            phase.setToolsJson(objectMapper.writeValueAsString(node.path("tools")));
+            phase.setLearningPathJson(objectMapper.writeValueAsString(node.path("learningPath")));
+            phase.setQuizJson(objectMapper.writeValueAsString(node.path("quiz")));
+            phase.setHandsOnLabsJson(objectMapper.writeValueAsString(node.path("handsOnLabs")));
+
+            phase.setCreatedAt(Instant.now());
+            phase.setCreatedBy("system-seeder");
+
+            phaseRepository.save(phase);
+            log.info("[DevopsDataSeeder] Phase '{}' đã được nạp dữ liệu nội dung mới.", key);
+        } catch (Exception e) {
+            throw new DevopsDataSeedingException("Lỗi khi nạp dữ liệu từ file " + resource.getFilename(), e);
+        }
     }
 
     private String getIconForKey(String key) {
