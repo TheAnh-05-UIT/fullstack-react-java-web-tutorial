@@ -9,10 +9,13 @@ export const useTouchLearningProgress = () => {
   return useMutation({
     mutationFn: ({ contentType, contentKey }: { contentType: LearningContentType; contentKey: string }) =>
       learningProgressApi.touchProgress(contentType, contentKey),
-    onSuccess: (data, { contentType, contentKey }) => {
+    onSuccess: async (data, { contentType, contentKey }) => {
       queryClient.setQueryData(learningProgressKeys.detail(contentType, contentKey), data);
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() });
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.lists() })
+      ]);
     },
   });
 };
@@ -30,10 +33,13 @@ export const useUpdateLearningProgress = () => {
       contentKey: string;
       request: UpdateLearningProgressRequest;
     }) => learningProgressApi.updateProgress(contentType, contentKey, request),
-    onSuccess: (data, { contentType, contentKey }) => {
+    onSuccess: async (data, { contentType, contentKey }) => {
       queryClient.setQueryData(learningProgressKeys.detail(contentType, contentKey), data);
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() });
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.lists() })
+      ]);
     },
   });
 };
@@ -44,10 +50,13 @@ export const useCompleteLearningProgress = () => {
   return useMutation({
     mutationFn: ({ contentType, contentKey }: { contentType: LearningContentType; contentKey: string }) =>
       learningProgressApi.completeProgress(contentType, contentKey),
-    onSuccess: (data, { contentType, contentKey }) => {
+    onSuccess: async (data, { contentType, contentKey }) => {
       queryClient.setQueryData(learningProgressKeys.detail(contentType, contentKey), data);
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() });
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.lists() })
+      ]);
     },
   });
 };
@@ -58,7 +67,7 @@ export const useResetLearningProgress = () => {
   return useMutation({
     mutationFn: ({ contentType, contentKey }: { contentType: LearningContentType; contentKey: string }) =>
       learningProgressApi.resetProgress(contentType, contentKey),
-    onSuccess: (_, { contentType, contentKey }) => {
+    onSuccess: async (_, { contentType, contentKey }) => {
       const resetData: LearningProgress = {
         contentType,
         contentKey,
@@ -68,8 +77,11 @@ export const useResetLearningProgress = () => {
         completedAt: null,
       };
       queryClient.setQueryData(learningProgressKeys.detail(contentType, contentKey), resetData);
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() });
-      queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.summary() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.continue() }),
+        queryClient.invalidateQueries({ queryKey: learningProgressKeys.lists() })
+      ]);
     },
   });
 };
