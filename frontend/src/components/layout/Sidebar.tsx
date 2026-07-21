@@ -1,12 +1,13 @@
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, FolderKanban, Map, Bookmark, StickyNote, Award, User, Settings, ChevronLeft, ChevronRight, Terminal } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FolderKanban, Map, Bookmark, StickyNote, Award, User, Settings, ChevronLeft, ChevronRight, Terminal, Trophy } from 'lucide-react';
 import { Avatar } from '../ui';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 
 const userLinks = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { path: '/dashboard/learning', label: 'My Learning', icon: BookOpen },
+  { path: '/dashboard/learning', label: 'Tổng quan học tập', icon: BookOpen },
+  { path: '/dashboard/learning-progress', label: 'Tiến độ học tập', icon: Trophy },
   { path: '/dashboard/tutorials', label: 'Tutorials', icon: BookOpen },
   { path: '/dashboard/projects', label: 'Projects', icon: FolderKanban },
   { path: '/dashboard/roadmaps', label: 'Roadmaps', icon: Map },

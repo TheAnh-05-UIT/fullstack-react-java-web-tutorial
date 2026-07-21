@@ -29,6 +29,7 @@ const DevOpsAdminPage = lazy(() => import('./features/devops/admin/DevOpsAdminPa
 // Lazy load User Dashboard Pages
 const DashboardHome = lazy(() => import('./pages/user/DashboardHome').then(m => ({ default: m.DashboardHome })));
 const DashboardLearning = lazy(() => import('./pages/user/DashboardLearning').then(m => ({ default: m.DashboardLearning })));
+const DashboardLearningProgress = lazy(() => import('./pages/user/DashboardLearningProgress').then(m => ({ default: m.DashboardLearningProgress })));
 const DashboardTutorials = lazy(() => import('./pages/user/DashboardTutorials').then(m => ({ default: m.DashboardTutorials })));
 const DashboardProjects = lazy(() => import('./pages/user/DashboardProjects').then(m => ({ default: m.DashboardProjects })));
 const DashboardSettings = lazy(() => import('./pages/user/DashboardSettings').then(m => ({ default: m.DashboardSettings })));
@@ -101,6 +102,7 @@ function AppRoutes() {
       }>
         <Route index element={<DashboardHome />} />
         <Route path="learning" element={<DashboardLearning />} />
+        <Route path="learning-progress" element={<DashboardLearningProgress />} />
         <Route path="tutorials" element={<DashboardTutorials />} />
         <Route path="projects" element={<DashboardProjects />} />
         <Route path="settings" element={<DashboardSettings />} />

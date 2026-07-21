@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { learningProgressApi } from '../api/learningProgressApi';
 import { learningProgressKeys } from './learningProgressKeys';
 import { useAuth } from '../../../context/AuthContext';
-import type { LearningContentType } from '../types/learningProgress.types';
+import type { LearningContentType, LearningProgressListFilters } from '../types/learningProgress.types';
 
 export const useLearningProgressSummary = () => {
   const { isAuthenticated } = useAuth();
@@ -35,5 +35,17 @@ export const useLearningProgress = (contentType: LearningContentType, contentKey
     queryFn: () => learningProgressApi.getProgress(contentType, trimmedKey),
     enabled: isAuthenticated === true && !!contentType && trimmedKey.length > 0,
     staleTime: 60000,
+  });
+};
+
+export const useLearningProgressList = (filters: LearningProgressListFilters) => {
+  const { isInitialized, isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: learningProgressKeys.list(filters),
+    queryFn: () => learningProgressApi.getMyProgressPage(filters),
+    enabled: isInitialized === true && isAuthenticated === true,
+    staleTime: 60000,
+    placeholderData: (previousData) => previousData,
   });
 };

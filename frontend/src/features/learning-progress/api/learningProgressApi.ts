@@ -5,6 +5,8 @@ import type {
   LearningProgressSummary,
   ContinueLearning,
   UpdateLearningProgressRequest,
+  LearningProgressPage,
+  LearningProgressListFilters,
 } from '../types/learningProgress.types';
 
 const BASE_PATH = '/learning-progress/me';
@@ -20,6 +22,23 @@ export const learningProgressApi = {
 
   getContinueLearning: (): Promise<ContinueLearning | null> => {
     return api.get<unknown, ContinueLearning | null>(`${BASE_PATH}/continue`);
+  },
+
+  getMyProgressPage: (filters: LearningProgressListFilters): Promise<LearningProgressPage> => {
+    const params: Record<string, string | number> = {
+      page: filters.page,
+      size: filters.size,
+    };
+    
+    if (filters.status && filters.status !== ('ALL' as string)) {
+      params.status = filters.status;
+    }
+    
+    if (filters.contentType && filters.contentType !== ('ALL' as string)) {
+      params.contentType = filters.contentType;
+    }
+
+    return api.get<unknown, LearningProgressPage>(BASE_PATH, { params });
   },
 
   getProgress: (contentType: LearningContentType, contentKey: string): Promise<LearningProgress> => {

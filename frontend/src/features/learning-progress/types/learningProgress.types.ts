@@ -28,6 +28,36 @@ export interface ContinueLearning {
   thumbnail: string | null;
 }
 
+export interface LearningProgressListItem {
+  contentType: LearningContentType;
+  contentKey: string;
+  title: string;
+  route: string | null;
+  thumbnail: string | null;
+  contentAvailable: boolean;
+  status: 'IN_PROGRESS' | 'COMPLETED';
+  progressPercent: number;
+  lastAccessedAt: string | null;
+  completedAt: string | null;
+}
+
+export interface LearningProgressPage {
+  content: LearningProgressListItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface LearningProgressListFilters {
+  page: number;
+  size: number;
+  status?: 'IN_PROGRESS' | 'COMPLETED';
+  contentType?: LearningContentType;
+}
+
 export interface UpdateLearningProgressRequest {
   progressPercent: number;
 }

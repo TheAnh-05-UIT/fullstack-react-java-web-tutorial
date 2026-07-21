@@ -1,3 +1,4 @@
+import { BookOpen, Map, FolderKanban, Terminal, type LucideIcon } from 'lucide-react';
 import type { LearningContentType } from '../types/learningProgress.types';
 
 export function getLearningContentTypeLabel(contentType: LearningContentType): string {
@@ -14,6 +15,32 @@ export function getLearningContentTypeLabel(contentType: LearningContentType): s
       return contentType;
   }
 }
+
+export function getLearningContentTypeIcon(contentType: LearningContentType): LucideIcon {
+  switch (contentType) {
+    case 'TUTORIAL':
+      return BookOpen;
+    case 'PROJECT':
+      return FolderKanban;
+    case 'ROADMAP':
+      return Map;
+    case 'DEVOPS_PHASE':
+      return Terminal;
+    default:
+      return BookOpen;
+  }
+}
+
+export function getLearningProgressStatusLabel(status: 'IN_PROGRESS' | 'COMPLETED'): string {
+  return status === 'COMPLETED' ? 'Đã hoàn thành' : 'Đang học';
+}
+
+export function getLearningProgressStatusClassName(status: 'IN_PROGRESS' | 'COMPLETED'): string {
+  return status === 'COMPLETED' 
+    ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-400'
+    : 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400';
+}
+
 
 export function getLearningContentFallbackTitle(contentKey: string | null | undefined): string {
   if (!contentKey || contentKey.trim().length === 0) {
@@ -33,11 +60,15 @@ export function getLearningContentFallbackTitle(contentKey: string | null | unde
 
 export function buildLearningContentRoute(
   contentType: LearningContentType,
-  contentKey: string,
+  contentKey?: string | null,
   backendRoute?: string | null
 ): string | null {
   if (backendRoute && backendRoute.trim().length > 0) {
     return backendRoute;
+  }
+
+  if (!contentKey || contentKey.trim().length === 0) {
+    return null;
   }
 
   const encodedKey = encodeURIComponent(contentKey.trim());
