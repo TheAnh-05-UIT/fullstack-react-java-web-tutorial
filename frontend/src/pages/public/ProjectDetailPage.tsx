@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui';
 import { marked } from 'marked';
 import { projectService } from '../../services';
 import type { Project } from '../../types';
+import { LearningProgressControls } from '../../features/learning-progress/components/LearningProgressControls';
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,6 +105,20 @@ export function ProjectDetailPage() {
             <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-400 mb-8">
               {project.description}
             </p>
+
+            {(() => {
+              const projectProgressKey = project.slug?.trim() || id?.trim() || '';
+              if (!projectProgressKey) return null;
+              
+              return (
+                <div className="mb-8">
+                  <LearningProgressControls 
+                    contentType="PROJECT" 
+                    contentKey={projectProgressKey} 
+                  />
+                </div>
+              );
+            })()}
 
             {(project.githubUrl || project.demoUrl) && (
               <div className="flex flex-wrap items-center gap-4 py-6 border-y border-gray-200 dark:border-gray-800 mb-8">

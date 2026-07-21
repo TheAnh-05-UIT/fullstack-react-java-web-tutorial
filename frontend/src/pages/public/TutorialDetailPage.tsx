@@ -6,6 +6,7 @@ import { marked } from 'marked';
 import { tutorialService } from '../../services';
 import type { Tutorial } from '../../types';
 import { formatReadTime, formatViews } from '../../utils/format';
+import { LearningProgressControls } from '../../features/learning-progress/components/LearningProgressControls';
 
 export function TutorialDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -143,16 +144,31 @@ export function TutorialDetailPage() {
               {tutorial.title}
             </h1>
 
-            <div className="flex items-center gap-4 py-6 border-y border-gray-200 dark:border-gray-800 mb-8">
-              <Avatar src={tutorial.author?.avatar} alt={tutorial.author?.name} size="md" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">
-                  {tutorial.authorName || formatAuthorName(tutorial.createBy) || tutorial.author?.name || 'Unknown Author'}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {tutorial.author?.role || 'Contributor'}
-                </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 py-6 border-y border-gray-200 dark:border-gray-800 mb-8">
+              <div className="flex items-center gap-4">
+                <Avatar src={tutorial.author?.avatar} alt={tutorial.author?.name} size="md" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {tutorial.authorName || formatAuthorName(tutorial.createBy) || tutorial.author?.name || 'Unknown Author'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {tutorial.author?.role || 'Contributor'}
+                  </p>
+                </div>
               </div>
+              {(() => {
+                const tutorialProgressKey = tutorial.slug?.trim() || '';
+                if (!tutorialProgressKey) return null;
+                
+                return (
+                  <div className="w-full md:w-auto md:min-w-[320px]">
+                    <LearningProgressControls
+                      contentType="TUTORIAL"
+                      contentKey={tutorialProgressKey}
+                    />
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="prose dark:prose-invert max-w-none">

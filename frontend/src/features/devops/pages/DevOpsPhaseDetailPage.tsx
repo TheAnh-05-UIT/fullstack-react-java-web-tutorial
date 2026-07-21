@@ -8,6 +8,7 @@ import { LearningPathSection } from '../components/LearningPathSection';
 import { LabsSection }        from '../components/LabsSection';
 import { PhaseNavFooter }     from '../components/PhaseNavFooter';
 import { devopsApi }          from '../services/devopsApi';
+import { LearningProgressControls } from '../../learning-progress/components/LearningProgressControls';
 
 const OBSERVED_SECTIONS = ['curriculum', 'tools', 'learning-path', 'labs'];
 
@@ -135,6 +136,21 @@ export function DevOpsPhaseDetailPage({ phaseKey }: { phaseKey: string }) {
     <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
       <StickyNav data={dynamicData} activeSection={activeSection} />
       <HeroSection data={dynamicData} />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
+        {(() => {
+          const devopsProgressKey = dynamicData.id?.trim() ?? '';
+          if (!devopsProgressKey) return null;
+          
+          return (
+            <LearningProgressControls
+              contentType="DEVOPS_PHASE"
+              contentKey={devopsProgressKey}
+            />
+          );
+        })()}
+      </div>
+
       <CurriculumSection data={dynamicData} />
       <ToolsSection data={dynamicData} />
       <LearningPathSection data={dynamicData} />

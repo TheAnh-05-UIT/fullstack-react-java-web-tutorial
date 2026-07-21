@@ -5,6 +5,7 @@ import { marked } from 'marked';
 import { roadmapService } from '../../services';
 import type { Roadmap } from '../../types';
 import { Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
+import { LearningProgressControls } from '../../features/learning-progress/components/LearningProgressControls';
 
 const iconComponents: Record<string, React.ReactNode> = {
   'infinity': <Infinity className="w-8 h-8" />,
@@ -112,6 +113,20 @@ export function RoadmapDetailPage() {
           <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-400 mb-8">
             {roadmap.description}
           </p>
+
+          {(() => {
+            const roadmapProgressKey = roadmap.slug?.trim() || id?.trim() || '';
+            if (!roadmapProgressKey) return null;
+            
+            return (
+              <div className="mb-8">
+                <LearningProgressControls 
+                  contentType="ROADMAP" 
+                  contentKey={roadmapProgressKey} 
+                />
+              </div>
+            );
+          })()}
 
           {roadmap.content && (
             <div className="p-8 md:p-12 border-t border-gray-200 dark:border-gray-800">

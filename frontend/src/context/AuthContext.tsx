@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { useQueryClient } from '@tanstack/react-query';
 import type { AuthUser } from '../types';
 import { authService } from '../services/authService';
 
@@ -15,6 +16,7 @@ export type UserProfile = AuthUser;
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isInitialized: boolean;
   role: string | null;
   user: UserProfile | null;
   login: (accessToken: string, refreshToken: string, userData: UserProfile) => void;
@@ -52,8 +54,10 @@ function extractRoleFromToken(token: string, fallback?: string | { id?: number; 
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const queryClient = useQueryClient();
 
   // Dùng useCallback để tránh stale closure khi dùng logout trong useEffect
   const logout = useCallback(async () => {
@@ -70,17 +74,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       setRole(null);
       setUser(null);
+      queryClient.clear();
     }
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
+    let active = true;
+    
     const checkAuth = () => {
-      const token = localStorage.getItem('access_token');
-      const refreshToken = localStorage.getItem('refresh_token');
-      const userStr = localStorage.getItem('user');
+      try {
+        const token = localStorage.getItem('access_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+        const userStr = localStorage.getItem('user');
 
-      if (token && refreshToken && userStr) {
-        try {
+        if (token && refreshToken && userStr) {
           const parsedUser = JSON.parse(userStr);
 
           // Kiểm tra refresh token có hết hạn không.
@@ -100,14 +107,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const userRole = extractRoleFromToken(token, parsedUser.role);
           setRole(userRole);
           setUser(parsedUser);
-        } catch {
-          // Token hoặc user data bị corrupt → logout
-          logout();
+        }
+      } catch {
+        // Token hoặc user data bị corrupt → logout
+        logout();
+      } finally {
+        if (active) {
+          setIsInitialized(true);
         }
       }
     };
 
     checkAuth();
+    
+    return () => {
+      active = false;
+    };
   }, [logout]); // Thêm logout vào deps để tránh stale closure
 
   const login = (accessToken: string, refreshToken: string, userData: UserProfile) => {
@@ -127,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isInitialized, role, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

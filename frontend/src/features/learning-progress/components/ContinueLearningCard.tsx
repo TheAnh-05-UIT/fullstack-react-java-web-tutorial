@@ -35,7 +35,8 @@ export function ContinueLearningCard() {
     );
   }
 
-  if (continueData === null) {
+  // If backend returns empty body or empty object when no progress exists
+  if (!continueData || !continueData.contentKey) {
     return (
       <Card className="p-6 h-full min-h-[200px]">
         <EmptyState 
