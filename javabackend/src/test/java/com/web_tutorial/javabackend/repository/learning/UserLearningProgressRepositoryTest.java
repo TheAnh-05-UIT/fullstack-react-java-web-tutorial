@@ -22,11 +22,12 @@ import com.web_tutorial.javabackend.domain.learning.LearningProgressStatus;
 import com.web_tutorial.javabackend.domain.learning.UserLearningProgress;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
+import com.web_tutorial.javabackend.support.AbstractMySqlIntegrationTest;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
-public class UserLearningProgressRepositoryTest {
+public class UserLearningProgressRepositoryTest extends AbstractMySqlIntegrationTest {
 
     @Autowired
     private UserLearningProgressRepository progressRepository;

@@ -7,11 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import com.web_tutorial.javabackend.support.AbstractMySqlIntegrationTest;
 
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
-public class DevopsDataSeederMissingIntegrationTest {
+public class DevopsDataSeederMissingIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Autowired(required = false)
     private DevopsDataSeeder devopsDataSeeder;

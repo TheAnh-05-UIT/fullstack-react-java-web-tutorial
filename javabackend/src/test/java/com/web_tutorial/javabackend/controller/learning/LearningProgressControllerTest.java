@@ -30,11 +30,12 @@ import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
 import com.web_tutorial.javabackend.repository.learning.UserLearningProgressRepository;
 import com.web_tutorial.javabackend.repository.tutorial.TutorialRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
+import com.web_tutorial.javabackend.support.AbstractMySqlIntegrationTest;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class LearningProgressControllerTest {
+public class LearningProgressControllerTest extends AbstractMySqlIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

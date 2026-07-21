@@ -12,9 +12,13 @@ import com.web_tutorial.javabackend.domain.user.Role;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.repository.user.RoleRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
+import com.web_tutorial.javabackend.support.AbstractMySqlIntegrationTest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-public class AdminSeederTest {
+public class AdminSeederTest extends AbstractMySqlIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -46,12 +50,14 @@ public class AdminSeederTest {
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole(adminRole);
             userRepository.save(admin);
-            System.out.println("=== ADMIN USER CREATED SUCCESSFULLY ===");
-            System.out.println("Email: admin@example.com");
-            System.out.println("Password: admin123");
+            
+            Optional<User> savedAdmin = userRepository.findByEmail("admin@example.com");
+            assertTrue(savedAdmin.isPresent());
+            assertEquals("ADMIN", savedAdmin.get().getRole().getName());
+            assertTrue(passwordEncoder.matches("admin123", savedAdmin.get().getPassword()));
         } else {
-            System.out.println("=== ADMIN USER ALREADY EXISTS ===");
-            System.out.println("Email: admin@example.com");
+            assertTrue(existingAdminOpt.isPresent());
+            assertEquals("ADMIN", existingAdminOpt.get().getRole().getName());
         }
     }
 }

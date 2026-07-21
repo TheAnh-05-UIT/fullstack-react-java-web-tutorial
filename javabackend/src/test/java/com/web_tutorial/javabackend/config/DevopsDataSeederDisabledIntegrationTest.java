@@ -10,6 +10,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
+import com.web_tutorial.javabackend.support.AbstractMySqlIntegrationTest;
 
 @SpringBootTest
 @Transactional
@@ -17,7 +18,7 @@ import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
 @TestPropertySource(properties = {
     "app.devops.seeding.enabled=false"
 })
-public class DevopsDataSeederDisabledIntegrationTest {
+public class DevopsDataSeederDisabledIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Autowired(required = false)
     private DevopsDataSeeder devopsDataSeeder;
