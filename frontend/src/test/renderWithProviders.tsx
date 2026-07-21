@@ -1,5 +1,5 @@
-﻿import React, { ReactElement, StrictMode } from 'react';
-import { render, RenderOptions } from '@testing-library/react';
+import React, { StrictMode, type ReactElement } from 'react';
+import { render, type RenderOptions } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
