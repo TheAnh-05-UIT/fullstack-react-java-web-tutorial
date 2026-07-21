@@ -5,6 +5,8 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.web_tutorial.javabackend.domain.learning.LearningContentType;
@@ -23,4 +25,18 @@ public interface UserLearningProgressRepository extends JpaRepository<UserLearni
     long countByUserIdAndStatus(Long userId, LearningProgressStatus status);
 
     void deleteByUserIdAndContentTypeAndContentKey(Long userId, LearningContentType contentType, String contentKey);
+
+    @Query("""
+        SELECT p
+        FROM UserLearningProgress p
+        WHERE p.user.id = :userId
+          AND (:status IS NULL OR p.status = :status)
+          AND (:contentType IS NULL OR p.contentType = :contentType)
+    """)
+    Page<UserLearningProgress> findMyProgress(
+        @Param("userId") Long userId,
+        @Param("status") LearningProgressStatus status,
+        @Param("contentType") LearningContentType contentType,
+        Pageable pageable
+    );
 }

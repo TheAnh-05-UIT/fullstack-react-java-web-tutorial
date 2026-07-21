@@ -103,6 +103,12 @@ public class LearningProgressControllerTest {
     }
 
     @Test
+    void whenAnonymousGetMyProgressPage_then401() throws Exception {
+        mockMvc.perform(get("/api/v1/learning-progress/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void whenAnonymousPutProgress_then401() throws Exception {
         UpdateLearningProgressRequest req = new UpdateLearningProgressRequest();
         req.setProgressPercent(50);
@@ -293,6 +299,19 @@ public class LearningProgressControllerTest {
         mockMvc.perform(get("/api/v1/learning-progress/me/continue"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data", nullValue()));
+    }
+
+    @Test
+    @WithMockUser(username = "user-a@example.com")
+    void whenAuthenticatedGetMyProgressPage_then200() throws Exception {
+        // Just test that the endpoint responds properly with 200 and paginated structure
+        mockMvc.perform(get("/api/v1/learning-progress/me")
+                .param("page", "0")
+                .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page", is(0)))
+                .andExpect(jsonPath("$.data.size", is(10)))
+                .andExpect(jsonPath("$.data.totalElements", is(0)));
     }
 
     // --- IDOR Tests ---

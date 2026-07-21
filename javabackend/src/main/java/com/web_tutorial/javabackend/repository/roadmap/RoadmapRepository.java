@@ -13,6 +13,8 @@ public interface RoadmapRepository extends JpaRepository<Roadmap, Long> {
 
     boolean existsBySlug(String slug);
 
+    java.util.List<Roadmap> findBySlugInAndIsDeletedFalse(java.util.Collection<String> slugs);
+
     java.util.List<Roadmap> findAllByOrderByIdDesc();
     org.springframework.data.domain.Page<Roadmap> findAllByOrderByIdDesc(org.springframework.data.domain.Pageable pageable);
 }

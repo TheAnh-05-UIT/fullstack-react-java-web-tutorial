@@ -27,6 +27,8 @@ public interface TutorialRepository extends JpaRepository<Tutorial, Long> {
 
     Optional<Tutorial> findByIdAndIsDeletedFalse(Long id);
 
+    List<Tutorial> findBySlugInAndIsDeletedFalse(java.util.Collection<String> slugs);
+
     @Modifying
     @Query("UPDATE Tutorial t SET t.views = COALESCE(t.views, 0) + 1 WHERE t.id = :id")
     void incrementViews(@Param("id") Long id);

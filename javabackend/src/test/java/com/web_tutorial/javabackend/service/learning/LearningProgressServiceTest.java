@@ -46,6 +46,8 @@ public class LearningProgressServiceTest {
     private UserLearningProgressRepository progressRepository;
     @Mock
     private LearningContentValidator contentValidator;
+    @Mock
+    private LearningProgressMetadataResolver metadataResolver;
 
     @InjectMocks
     private LearningProgressService service;
@@ -310,5 +312,44 @@ public class LearningProgressServiceTest {
                 .thenReturn(Optional.empty());
 
         assertNull(service.getContinueLearning());
+    }
+
+    @Test
+    void testGetMyProgressPage() throws Exception {
+        mockAuth("test@example.com");
+
+        UserLearningProgress p1 = new UserLearningProgress();
+        p1.setContentType(LearningContentType.TUTORIAL);
+        p1.setContentKey("react");
+        p1.setStatus(LearningProgressStatus.COMPLETED);
+        p1.setProgressPercent(100);
+
+        org.springframework.data.domain.Page<UserLearningProgress> mockPage = new org.springframework.data.domain.PageImpl<>(
+                java.util.List.of(p1),
+                org.springframework.data.domain.PageRequest.of(0, 10),
+                1
+        );
+
+        when(progressRepository.findMyProgress(
+                any(), any(), any(), any()
+        )).thenReturn(mockPage);
+
+        LearningProgressMetadataResolver.LearningContentMetadata meta = new LearningProgressMetadataResolver.LearningContentMetadata(
+                "React Basics", "/tutorials/react", "react.jpg", true
+        );
+        when(metadataResolver.resolveMetadata(any())).thenReturn(
+                java.util.Map.of("TUTORIAL:react", meta)
+        );
+
+        com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressPageResponse res = service.getMyProgressPage(0, 10, null, null);
+
+        assertNotNull(res);
+        assertEquals(1, res.getTotalElements());
+        assertEquals(1, res.getContent().size());
+        
+        var item = res.getContent().get(0);
+        assertEquals("React Basics", item.getTitle());
+        assertEquals("/tutorials/react", item.getRoute());
+        assertEquals(LearningProgressResponseStatus.COMPLETED, item.getStatus());
     }
 }

@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web_tutorial.javabackend.domain.dto.request.learning.UpdateLearningProgressRequest;
 import com.web_tutorial.javabackend.domain.dto.response.learning.ContinueLearningResponse;
+import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressListItemResponse;
+import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressPageResponse;
 import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressResponse;
 import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressResponseStatus;
 import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressSummaryResponse;
@@ -15,6 +17,12 @@ import com.web_tutorial.javabackend.domain.learning.LearningContentType;
 import com.web_tutorial.javabackend.domain.learning.LearningProgressStatus;
 import com.web_tutorial.javabackend.domain.learning.UserLearningProgress;
 import com.web_tutorial.javabackend.domain.user.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import java.util.List;
+import java.util.Map;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.repository.learning.UserLearningProgressRepository;
@@ -27,14 +35,17 @@ public class LearningProgressService {
     private final UserRepository userRepository;
     private final UserLearningProgressRepository progressRepository;
     private final LearningContentValidator contentValidator;
+    private final LearningProgressMetadataResolver metadataResolver;
 
     public LearningProgressService(
             UserRepository userRepository,
             UserLearningProgressRepository progressRepository,
-            LearningContentValidator contentValidator) {
+            LearningContentValidator contentValidator,
+            LearningProgressMetadataResolver metadataResolver) {
         this.userRepository = userRepository;
         this.progressRepository = progressRepository;
         this.contentValidator = contentValidator;
+        this.metadataResolver = metadataResolver;
     }
 
     private User getCurrentUser() {
@@ -213,6 +224,86 @@ public class LearningProgressService {
             response.setStatus(LearningProgressResponseStatus.IN_PROGRESS);
         }
 
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public LearningProgressPageResponse getMyProgressPage(
+            int page,
+            int size,
+            LearningProgressStatus status,
+            LearningContentType contentType) throws IdInvalidException {
+
+        if (page < 0) {
+            throw new IdInvalidException("Page must be greater than or equal to 0");
+        }
+        if (size < 1) {
+            throw new IdInvalidException("Size must be greater than or equal to 1");
+        }
+        if (size > 50) {
+            throw new IdInvalidException("Size must be less than or equal to 50");
+        }
+
+        User user = getCurrentUser();
+
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by(
+                        Sort.Order.desc("lastAccessedAt"),
+                        Sort.Order.desc("id")
+                )
+        );
+
+        Page<UserLearningProgress> progressPage = progressRepository.findMyProgress(user.getId(), status, contentType, pageable);
+
+        LearningProgressPageResponse response = new LearningProgressPageResponse();
+        response.setPage(progressPage.getNumber());
+        response.setSize(progressPage.getSize());
+        response.setTotalElements(progressPage.getTotalElements());
+        response.setTotalPages(progressPage.getTotalPages());
+        response.setFirst(progressPage.isFirst());
+        response.setLast(progressPage.isLast());
+
+        if (progressPage.isEmpty()) {
+            response.setContent(List.of());
+            return response;
+        }
+
+        Map<String, LearningProgressMetadataResolver.LearningContentMetadata> metadataMap = metadataResolver.resolveMetadata(progressPage.getContent());
+
+        List<LearningProgressListItemResponse> items = progressPage.getContent().stream().map(p -> {
+            LearningProgressListItemResponse item = new LearningProgressListItemResponse();
+            item.setContentType(p.getContentType());
+            item.setContentKey(p.getContentKey());
+            item.setProgressPercent(p.getProgressPercent());
+            item.setLastAccessedAt(p.getLastAccessedAt());
+            item.setCompletedAt(p.getCompletedAt());
+
+            if (p.getStatus() == LearningProgressStatus.COMPLETED) {
+                item.setStatus(LearningProgressResponseStatus.COMPLETED);
+            } else {
+                item.setStatus(LearningProgressResponseStatus.IN_PROGRESS);
+            }
+
+            String mapKey = p.getContentType().name() + ":" + p.getContentKey();
+            LearningProgressMetadataResolver.LearningContentMetadata metadata = metadataMap.get(mapKey);
+
+            if (metadata != null) {
+                item.setTitle(metadata.title());
+                item.setRoute(metadata.route());
+                item.setThumbnail(metadata.thumbnail());
+                item.setContentAvailable(metadata.available());
+            } else {
+                item.setTitle("Nội dung không còn tồn tại");
+                item.setRoute(null);
+                item.setThumbnail(null);
+                item.setContentAvailable(false);
+            }
+
+            return item;
+        }).toList();
+
+        response.setContent(items);
         return response;
     }
 

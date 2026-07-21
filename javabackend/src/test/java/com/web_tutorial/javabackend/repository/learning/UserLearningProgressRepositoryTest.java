@@ -173,4 +173,52 @@ public class UserLearningProgressRepositoryTest {
         assertThat(completedCount).isEqualTo(1);
         assertThat(inProgressCount).isEqualTo(0);
     }
+
+    @Test
+    void testFindMyProgress() {
+        Instant now = Instant.now();
+
+        UserLearningProgress p1 = new UserLearningProgress();
+        p1.setUser(testUser);
+        p1.setContentType(LearningContentType.TUTORIAL);
+        p1.setContentKey("tut-my-1");
+        p1.setStatus(LearningProgressStatus.IN_PROGRESS);
+        p1.setProgressPercent(20);
+        p1.setLastAccessedAt(now.minus(2, ChronoUnit.DAYS));
+        progressRepository.save(p1);
+
+        UserLearningProgress p2 = new UserLearningProgress();
+        p2.setUser(testUser);
+        p2.setContentType(LearningContentType.PROJECT);
+        p2.setContentKey("proj-my-1");
+        p2.setStatus(LearningProgressStatus.COMPLETED);
+        p2.setProgressPercent(100);
+        p2.setLastAccessedAt(now.minus(1, ChronoUnit.DAYS));
+        progressRepository.save(p2);
+
+        progressRepository.flush();
+
+        // 1. Without filters
+        Page<UserLearningProgress> page1 = progressRepository.findMyProgress(
+                testUser.getId(), null, null, PageRequest.of(0, 10, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.desc("lastAccessedAt"), org.springframework.data.domain.Sort.Order.desc("id"))));
+        assertThat(page1.getContent()).hasSize(2);
+        assertThat(page1.getContent().get(0).getContentKey()).isEqualTo("proj-my-1");
+
+        // 2. With status filter
+        Page<UserLearningProgress> page2 = progressRepository.findMyProgress(
+                testUser.getId(), LearningProgressStatus.IN_PROGRESS, null, PageRequest.of(0, 10));
+        assertThat(page2.getContent()).hasSize(1);
+        assertThat(page2.getContent().get(0).getContentKey()).isEqualTo("tut-my-1");
+
+        // 3. With contentType filter
+        Page<UserLearningProgress> page3 = progressRepository.findMyProgress(
+                testUser.getId(), null, LearningContentType.PROJECT, PageRequest.of(0, 10));
+        assertThat(page3.getContent()).hasSize(1);
+        assertThat(page3.getContent().get(0).getContentKey()).isEqualTo("proj-my-1");
+
+        // 4. With both filters
+        Page<UserLearningProgress> page4 = progressRepository.findMyProgress(
+                testUser.getId(), LearningProgressStatus.IN_PROGRESS, LearningContentType.TUTORIAL, PageRequest.of(0, 10));
+        assertThat(page4.getContent()).hasSize(1);
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.web_tutorial.javabackend.domain.project.Project;
+import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findBySlug(String slug);
+
+    java.util.List<Project> findBySlugInAndIsDeletedFalseAndStatus(java.util.Collection<String> slugs, ProjectStatus status);
 
     boolean existsBySlug(String slug);
 

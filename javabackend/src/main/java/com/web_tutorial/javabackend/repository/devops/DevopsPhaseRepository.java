@@ -26,6 +26,8 @@ public interface DevopsPhaseRepository extends JpaRepository<DevopsPhase, Long> 
      */
     boolean existsByPhaseKey(String phaseKey);
 
+    List<DevopsPhase> findByPhaseKeyInAndActiveTrue(java.util.Collection<String> phaseKeys);
+
     /**
      * Lấy danh sách tất cả giai đoạn đang hoạt động, sắp xếp theo thứ tự hiển thị.
      * Chỉ trả về giai đoạn có active = true (không bao gồm giai đoạn bị ẩn).

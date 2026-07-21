@@ -9,13 +9,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.web_tutorial.javabackend.domain.dto.request.learning.UpdateLearningProgressRequest;
 import com.web_tutorial.javabackend.domain.dto.response.learning.ContinueLearningResponse;
+import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressPageResponse;
 import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressResponse;
 import com.web_tutorial.javabackend.domain.dto.response.learning.LearningProgressSummaryResponse;
 import com.web_tutorial.javabackend.domain.learning.LearningContentType;
+import com.web_tutorial.javabackend.domain.learning.LearningProgressStatus;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.service.learning.LearningProgressService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
@@ -39,9 +42,22 @@ public class LearningProgressController {
     }
 
     @GetMapping("/continue")
-    @ApiMessage("Get continue learning content")
+    @ApiMessage("Get continue learning recommendation")
     public ResponseEntity<ContinueLearningResponse> getContinueLearning() {
-        return ResponseEntity.ok(learningProgressService.getContinueLearning());
+        ContinueLearningResponse response = learningProgressService.getContinueLearning();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    @ApiMessage("Get my learning progress")
+    public ResponseEntity<LearningProgressPageResponse> getMyProgressPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) LearningProgressStatus status,
+            @RequestParam(required = false) LearningContentType contentType) throws IdInvalidException {
+        
+        LearningProgressPageResponse response = learningProgressService.getMyProgressPage(page, size, status, contentType);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{contentType}/{contentKey}")
