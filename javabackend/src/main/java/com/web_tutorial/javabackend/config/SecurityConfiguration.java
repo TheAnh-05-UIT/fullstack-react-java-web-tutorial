@@ -41,17 +41,17 @@ public class SecurityConfiguration {
 
     // Lấy secret key từ file cấu hình để mã hóa/giải mã JWT
     private SecretKey getSecretKey() {
-        if (jwtKey == null || jwtKey.trim().isEmpty() || "${JWT_SECRET}".equals(jwtKey.trim())) {
-            throw new IllegalStateException("FATAL: JWT_SECRET environment variable is missing or empty! The application cannot start without a valid JWT secret key.");
+        if (jwtKey == null || jwtKey.trim().isEmpty() || "${JWT_SECRET_BASE64}".equals(jwtKey.trim())) {
+            throw new IllegalStateException("FATAL: JWT_SECRET_BASE64 environment variable is missing or empty! The application cannot start without a valid JWT secret key.");
         }
         byte[] keyBytes;
         try {
             keyBytes = Base64.from(jwtKey).decode();
         } catch (Exception e) {
-            throw new IllegalStateException("FATAL: JWT_SECRET is not a valid Base64 string!");
+            throw new IllegalStateException("FATAL: JWT_SECRET_BASE64 is not a valid Base64 string!");
         }
         if (keyBytes.length < 64) {
-            throw new IllegalStateException("FATAL: JWT_SECRET must decode to at least 64 bytes (512 bits) for HS512 algorithm!");
+            throw new IllegalStateException("FATAL: JWT_SECRET_BASE64 must decode to at least 64 bytes (512 bits) for HS512 algorithm!");
         }
         return new SecretKeySpec(keyBytes, 0, keyBytes.length, JWT_ALGORITHM.getName());
     }

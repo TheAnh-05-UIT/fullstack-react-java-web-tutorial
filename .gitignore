@@ -4,7 +4,6 @@ javabackend/*.log
 
 # Maven
 .mvn/timing.properties
-application.properties
 
 # React / Node.js
 frontend/node_modules/

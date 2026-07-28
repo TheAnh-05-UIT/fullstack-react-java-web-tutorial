@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import com.web_tutorial.javabackend.repository.user.RoleRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 
 @Component
+@ConditionalOnProperty(name = "app.bootstrap.admin.enabled", havingValue = "true", matchIfMissing = false)
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
@@ -21,20 +23,26 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${admin.default.email:admin@gmail.com}")
-    private String adminEmail;
+    private final String adminEmail;
+    private final String adminPassword;
 
-    @Value("${admin.default.password:admin123}")
-    private String adminPassword;
-
-    public DataInitializer(RoleRepository roleRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(
+            RoleRepository roleRepository,
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            @Value("${app.bootstrap.admin.email:}") String adminEmail,
+            @Value("${app.bootstrap.admin.password:}") String adminPassword) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.adminEmail = adminEmail == null ? "" : adminEmail.trim();
+        this.adminPassword = adminPassword == null ? "" : adminPassword;
     }
 
     @Override
     public void run(String... args) throws Exception {
+        validateConfiguration();
+
         // 1. Khởi tạo role USER nếu chưa tồn tại
         Role userRole = roleRepository.findByName("USER").orElseGet(() -> {
             log.info("Creating default USER role...");
@@ -63,6 +71,25 @@ public class DataInitializer implements CommandLineRunner {
             admin.setRole(adminRole);
             userRepository.save(admin);
             log.info("Default administrator account created successfully. Email: {}", adminEmail);
+        }
+    }
+
+    private void validateConfiguration() {
+        if (adminEmail.isBlank()) {
+            throw new IllegalStateException(
+                    "Admin bootstrap is enabled but app.bootstrap.admin.email is missing");
+        }
+        if (adminPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "Admin bootstrap is enabled but app.bootstrap.admin.password is missing");
+        }
+        if (adminPassword.length() < 12
+                || !adminPassword.matches(".*[A-Z].*")
+                || !adminPassword.matches(".*[a-z].*")
+                || !adminPassword.matches(".*\\d.*")
+                || !adminPassword.matches(".*[^A-Za-z0-9].*")) {
+            throw new IllegalStateException(
+                    "Admin bootstrap password must be at least 12 characters and include upper, lower, digit, and special characters");
         }
     }
 }
