@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -28,8 +29,10 @@ import com.web_tutorial.javabackend.domain.dto.response.ResultPaginationDTO;
 import com.web_tutorial.javabackend.domain.dto.response.project.ProjectResponseDTO;
 import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
 import com.web_tutorial.javabackend.domain.project.Project;
+import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 import com.web_tutorial.javabackend.domain.tutorial.Category;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
 import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
@@ -78,7 +81,8 @@ class TutorialAndProjectBatchQueryTest {
         t2.setCreateBy("admin@example.com");
 
         Page<Tutorial> page = new PageImpl<>(Arrays.asList(t1, t2), PageRequest.of(0, 10), 2);
-        when(tutorialRepository.findByIsDeletedFalseOrderByIdDesc(any(Pageable.class))).thenReturn(page);
+        when(tutorialRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(TutorialStatus.PUBLISHED), any(Pageable.class))).thenReturn(page);
 
         User adminUser = new User();
         adminUser.setEmail("admin@example.com");
@@ -111,7 +115,8 @@ class TutorialAndProjectBatchQueryTest {
         p1.setCreateBy("unknown@example.com");
 
         Page<Project> page = new PageImpl<>(List.of(p1), PageRequest.of(0, 10), 1);
-        when(projectRepository.findAllByOrderByIdDesc(any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(ProjectStatus.PUBLISHED), any(Pageable.class))).thenReturn(page);
         when(userRepository.findAllByEmailIn(Set.of("unknown@example.com"))).thenReturn(Collections.emptyList());
 
         ResultPaginationDTO result = projectService.getAllProjects(PageRequest.of(0, 10));
@@ -128,7 +133,8 @@ class TutorialAndProjectBatchQueryTest {
     void testTutorialBatchQuery_emptyPageNoUserQuery() {
         // Trang rỗng -> không truy vấn bảng User
         Page<Tutorial> emptyPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
-        when(tutorialRepository.findByIsDeletedFalseOrderByIdDesc(any(Pageable.class))).thenReturn(emptyPage);
+        when(tutorialRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(TutorialStatus.PUBLISHED), any(Pageable.class))).thenReturn(emptyPage);
 
         ResultPaginationDTO result = tutorialService.getAllTutorials(PageRequest.of(0, 10));
 

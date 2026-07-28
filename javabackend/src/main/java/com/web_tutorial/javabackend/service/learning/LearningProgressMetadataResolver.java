@@ -19,6 +19,7 @@ import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
 import com.web_tutorial.javabackend.repository.roadmap.RoadmapRepository;
@@ -77,7 +78,9 @@ public class LearningProgressMetadataResolver {
     }
 
     private void resolveTutorials(Set<String> keys, Map<String, LearningContentMetadata> metadataMap) {
-        List<Tutorial> tutorials = tutorialRepository.findBySlugInAndIsDeletedFalse(keys);
+        List<Tutorial> tutorials = tutorialRepository.findBySlugInAndStatusAndIsDeletedFalse(
+                keys,
+                TutorialStatus.PUBLISHED);
         Map<String, Tutorial> tutorialMap = tutorials.stream()
                 .collect(Collectors.toMap(Tutorial::getSlug, t -> t, (t1, t2) -> t1));
 

@@ -12,6 +12,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.web_tutorial.javabackend.domain.learning.LearningContentType;
+import com.web_tutorial.javabackend.domain.project.ProjectStatus;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
@@ -63,32 +65,45 @@ public class LearningContentValidatorTest {
 
     @Test
     void validateExists_Tutorial_Valid() throws Exception {
-        when(tutorialRepository.existsBySlugAndIsDeletedFalse("react")).thenReturn(true);
+        when(tutorialRepository.existsBySlugAndStatusAndIsDeletedFalse("react", TutorialStatus.PUBLISHED))
+                .thenReturn(true);
         validator.validateExists(LearningContentType.TUTORIAL, "react");
         // No exception
     }
 
     @Test
     void validateExists_Tutorial_SoftDeleted_ThrowsNotFound() {
-        when(tutorialRepository.existsBySlugAndIsDeletedFalse("react")).thenReturn(false);
+        when(tutorialRepository.existsBySlugAndStatusAndIsDeletedFalse("react", TutorialStatus.PUBLISHED))
+                .thenReturn(false);
         assertThrows(ResourceNotFoundException.class, () -> validator.validateExists(LearningContentType.TUTORIAL, "react"));
     }
 
     @Test
     void validateExists_Project_Valid() throws Exception {
-        when(projectRepository.existsBySlug("proj-1")).thenReturn(true);
+        when(projectRepository.existsBySlugAndStatusAndIsDeletedFalse("proj-1", ProjectStatus.PUBLISHED))
+                .thenReturn(true);
         validator.validateExists(LearningContentType.PROJECT, "proj-1");
     }
 
     @Test
     void validateExists_Roadmap_Valid() throws Exception {
-        when(roadmapRepository.existsBySlug("road-1")).thenReturn(true);
+        when(roadmapRepository.existsBySlugAndIsDeletedFalse("road-1")).thenReturn(true);
         validator.validateExists(LearningContentType.ROADMAP, "road-1");
     }
 
     @Test
     void validateExists_DevopsPhase_Valid() throws Exception {
-        when(devopsPhaseRepository.existsByPhaseKey("planning")).thenReturn(true);
+        when(devopsPhaseRepository.existsByPhaseKeyAndActiveTrue("planning")).thenReturn(true);
         validator.validateExists(LearningContentType.DEVOPS_PHASE, "planning");
+    }
+
+    @Test
+    void validateExists_NonPublicContent_ThrowsNotFound() {
+        when(projectRepository.existsBySlugAndStatusAndIsDeletedFalse("draft", ProjectStatus.PUBLISHED))
+                .thenReturn(false);
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> validator.validateExists(LearningContentType.PROJECT, "draft"));
     }
 }

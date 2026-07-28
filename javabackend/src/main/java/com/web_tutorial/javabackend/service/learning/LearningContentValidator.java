@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.web_tutorial.javabackend.domain.learning.LearningContentType;
+import com.web_tutorial.javabackend.domain.project.ProjectStatus;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
@@ -52,19 +54,20 @@ public class LearningContentValidator {
         boolean exists;
         switch (contentType) {
             case TUTORIAL:
-                exists = tutorialRepository.existsBySlugAndIsDeletedFalse(normalizedKey);
+                exists = tutorialRepository.existsBySlugAndStatusAndIsDeletedFalse(
+                        normalizedKey,
+                        TutorialStatus.PUBLISHED);
                 break;
             case PROJECT:
-                // Projects do not have soft-delete (isDeleted) based on codebase observation. 
-                // We use existsBySlug.
-                exists = projectRepository.existsBySlug(normalizedKey);
+                exists = projectRepository.existsBySlugAndStatusAndIsDeletedFalse(
+                        normalizedKey,
+                        ProjectStatus.PUBLISHED);
                 break;
             case ROADMAP:
-                // Roadmaps do not have soft-delete either.
-                exists = roadmapRepository.existsBySlug(normalizedKey);
+                exists = roadmapRepository.existsBySlugAndIsDeletedFalse(normalizedKey);
                 break;
             case DEVOPS_PHASE:
-                exists = devopsPhaseRepository.existsByPhaseKey(normalizedKey);
+                exists = devopsPhaseRepository.existsByPhaseKeyAndActiveTrue(normalizedKey);
                 break;
             default:
                 throw new IdInvalidException("Unsupported learning content type: " + contentType);

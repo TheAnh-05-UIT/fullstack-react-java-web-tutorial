@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.web_tutorial.javabackend.domain.dto.request.tutorial.CreateTutorialRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.tutorial.TutorialResponseDTO;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
@@ -54,7 +55,8 @@ class TutorialProjectRoadmapRefactorTest {
         tutorial.setViews(5L);
         tutorial.setCreateBy("author@example.com");
 
-        when(tutorialRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(tutorial));
+        when(tutorialRepository.findByIdAndStatusAndIsDeletedFalse(10L, TutorialStatus.PUBLISHED))
+                .thenReturn(Optional.of(tutorial));
 
         TutorialResponseDTO dto = tutorialService.getTutorialResponseById(10L);
 
@@ -68,7 +70,8 @@ class TutorialProjectRoadmapRefactorTest {
     @Test
     void testTutorialGetResponseById_NotFound_ThrowsExceptionNoIncrement() {
         TutorialServiceImpl tutorialService = new TutorialServiceImpl(tutorialRepository, categoryRepository, userRepository);
-        when(tutorialRepository.findByIdAndIsDeletedFalse(99L)).thenReturn(Optional.empty());
+        when(tutorialRepository.findByIdAndStatusAndIsDeletedFalse(99L, TutorialStatus.PUBLISHED))
+                .thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> tutorialService.getTutorialResponseById(99L));
         verify(tutorialRepository, never()).incrementViews(any());
@@ -86,7 +89,7 @@ class TutorialProjectRoadmapRefactorTest {
     @Test
     void testRoadmapGetResponseById_NotFound_ThrowsException() {
         RoadmapServiceImpl roadmapService = new RoadmapServiceImpl(roadmapRepository, userRepository);
-        when(roadmapRepository.findById(77L)).thenReturn(Optional.empty());
+        when(roadmapRepository.findByIdAndIsDeletedFalse(77L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> roadmapService.getRoadmapResponseById(77L));
     }

@@ -111,7 +111,7 @@ public class DevopsServiceSerializationTest {
         existingPhase.setPhaseKey("plan");
         existingPhase.setThemeJson("{\"invalid\": json}"); // will trigger error if mocked
         
-        when(phaseRepository.findByPhaseKey("plan")).thenReturn(Optional.of(existingPhase));
+        when(phaseRepository.findByPhaseKeyAndActiveTrue("plan")).thenReturn(Optional.of(existingPhase));
         when(objectMapper.readTree(anyString())).thenThrow(new JsonProcessingException("Mocked error") {});
 
         DevopsContentSerializationException exception = assertThrows(DevopsContentSerializationException.class, () -> {
@@ -128,7 +128,7 @@ public class DevopsServiceSerializationTest {
         existingPhase.setPhaseKey("plan");
         existingPhase.setThemeJson(null); // Optional field
         
-        when(phaseRepository.findByPhaseKey("plan")).thenReturn(Optional.of(existingPhase));
+        when(phaseRepository.findByPhaseKeyAndActiveTrue("plan")).thenReturn(Optional.of(existingPhase));
 
         // It shouldn't throw exception, but return null for that field safely
         Optional<DevopsDTOs.PhaseDetailResponse> responseOpt = devopsService.getPhaseDetailByKey("plan");

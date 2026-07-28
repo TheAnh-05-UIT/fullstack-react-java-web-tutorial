@@ -2,6 +2,7 @@ package com.web_tutorial.javabackend.controller.learning;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,6 +28,7 @@ import com.web_tutorial.javabackend.domain.learning.LearningContentType;
 import com.web_tutorial.javabackend.domain.learning.LearningProgressStatus;
 import com.web_tutorial.javabackend.domain.learning.UserLearningProgress;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.repository.learning.UserLearningProgressRepository;
 import com.web_tutorial.javabackend.repository.tutorial.TutorialRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
@@ -78,6 +80,7 @@ public class LearningProgressControllerTest extends AbstractMySqlIntegrationTest
         tutorial.setTitle("Test Tutorial");
         tutorial.setSlug("test-tutorial");
         tutorial.setDescription("Desc");
+        tutorial.setStatus(TutorialStatus.PUBLISHED);
         tutorial.setDeleted(false);
         tutorial = tutorialRepository.save(tutorial);
     }
@@ -174,6 +177,18 @@ public class LearningProgressControllerTest extends AbstractMySqlIntegrationTest
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status", is("IN_PROGRESS")))
                 .andExpect(jsonPath("$.data.progressPercent", is(0)));
+    }
+
+    @Test
+    @WithMockUser(username = "user-a@example.com")
+    void whenTouchDraftContent_then404AndDoesNotCreateProgress() throws Exception {
+        tutorial.setStatus(TutorialStatus.DRAFT);
+        tutorialRepository.saveAndFlush(tutorial);
+
+        mockMvc.perform(post("/api/v1/learning-progress/me/TUTORIAL/test-tutorial/touch"))
+                .andExpect(status().isNotFound());
+
+        assertEquals(0, progressRepository.count());
     }
 
     @Test

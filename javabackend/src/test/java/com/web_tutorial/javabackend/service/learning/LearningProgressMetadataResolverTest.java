@@ -26,6 +26,7 @@ import com.web_tutorial.javabackend.domain.project.Project;
 import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.repository.devops.DevopsPhaseRepository;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
 import com.web_tutorial.javabackend.repository.roadmap.RoadmapRepository;
@@ -85,7 +86,9 @@ public class LearningProgressMetadataResolverTest {
         tut1.setSlug("tut-1");
         tut1.setTitle("Tutorial 1");
         tut1.setCoverImage("img.jpg");
-        when(tutorialRepository.findBySlugInAndIsDeletedFalse(anyCollection()))
+        when(tutorialRepository.findBySlugInAndStatusAndIsDeletedFalse(
+                anyCollection(),
+                eq(TutorialStatus.PUBLISHED)))
                 .thenReturn(List.of(tut1));
 
         Project proj1 = new Project();
@@ -113,7 +116,9 @@ public class LearningProgressMetadataResolverTest {
 
         // Verify batch calls (max 1 per type)
         ArgumentCaptor<java.util.Collection> tutCaptor = ArgumentCaptor.forClass(java.util.Collection.class);
-        verify(tutorialRepository, times(1)).findBySlugInAndIsDeletedFalse(tutCaptor.capture());
+        verify(tutorialRepository, times(1)).findBySlugInAndStatusAndIsDeletedFalse(
+                tutCaptor.capture(),
+                eq(TutorialStatus.PUBLISHED));
         assertThat(tutCaptor.getValue()).containsExactlyInAnyOrder("tut-1", "orphan-tut"); // Deduplicated!
 
         verify(projectRepository, times(1)).findBySlugInAndIsDeletedFalseAndStatus(anyCollection(), eq(ProjectStatus.PUBLISHED));
