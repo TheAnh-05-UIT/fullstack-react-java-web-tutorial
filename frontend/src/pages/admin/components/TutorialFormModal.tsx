@@ -14,6 +14,7 @@ const tutorialSchema = z.object({
   category: z.string().min(2, 'Category is required'),
   coverImage: z.string().optional(),
   content: z.string().optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
 });
 
 type TutorialFormData = z.infer<typeof tutorialSchema>;
@@ -36,6 +37,7 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
       category: '',
       coverImage: 'https://images.pexels.com/photos/270348/pexels-photo-270348.jpeg?auto=compress&cs=tinysrgb&w=600',
       content: '',
+      status: 'DRAFT',
     }
   });
 
@@ -60,6 +62,9 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
           category: typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category ? String((tutorial.category as Record<string, unknown>).name || '') : typeof tutorial.category === 'string' ? tutorial.category : '',
           coverImage: tutorial.coverImage || tutorial.thumbnail || '',
           content: tutorial.content || '',
+          status: tutorial.status === 'PUBLISHED' || tutorial.status === 'ARCHIVED'
+            ? tutorial.status
+            : 'DRAFT',
         });
       } else {
         reset({
@@ -69,6 +74,7 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
           category: 'DevOps',
           coverImage: 'https://images.pexels.com/photos/270348/pexels-photo-270348.jpeg?auto=compress&cs=tinysrgb&w=600',
           content: '',
+          status: 'DRAFT',
         });
       }
     }
@@ -126,6 +132,19 @@ export function TutorialFormModal({ isOpen, onClose, tutorial, onSubmit, isLoadi
           <label htmlFor="tutorial-cat" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
           <Input id="tutorial-cat" aria-invalid={!!errors.category} aria-describedby={errors.category ? "tutorial-cat-error" : undefined} {...register('category')} />
           {errors.category && <p id="tutorial-cat-error" role="alert" className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
+        </div>
+        <div>
+          <label htmlFor="tutorial-status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+          <select
+            id="tutorial-status"
+            {...register('status')}
+            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+          {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

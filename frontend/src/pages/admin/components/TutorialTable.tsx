@@ -17,6 +17,7 @@ export function TutorialTable({ tutorials, onEdit, onDelete }: TutorialTableProp
             <tr>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+              <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
               <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Views</th>
               <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
@@ -24,7 +25,7 @@ export function TutorialTable({ tutorials, onEdit, onDelete }: TutorialTableProp
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {tutorials.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   No tutorials found
                 </td>
               </tr>
@@ -48,6 +49,11 @@ export function TutorialTable({ tutorials, onEdit, onDelete }: TutorialTableProp
                       {typeof tutorial.category === 'object' && tutorial.category && 'name' in tutorial.category
                         ? String((tutorial.category as Record<string, unknown>).name || 'DevOps')
                         : typeof tutorial.category === 'string' ? tutorial.category : 'DevOps'}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant={tutorial.status === 'PUBLISHED' ? 'success' : 'secondary'}>
+                      {tutorial.status || 'DRAFT'}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">

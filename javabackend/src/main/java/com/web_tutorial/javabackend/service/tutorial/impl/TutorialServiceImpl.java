@@ -116,6 +116,12 @@ public class TutorialServiceImpl implements TutorialService {
         String currentUser = SecurityService.getCurrentUserLogin().orElse("System");
         tutorial.setCreateBy(currentUser);
         tutorial.setCreatedAt(Instant.now());
+        if (tutorial.getStatus() == null) {
+            tutorial.setStatus(TutorialStatus.DRAFT);
+        }
+        if (tutorial.getStatus() == TutorialStatus.PUBLISHED && tutorial.getPublishedAt() == null) {
+            tutorial.setPublishedAt(Instant.now());
+        }
 
         if (tutorial.getCategory() != null && tutorial.getCategory().getName() != null) {
             String catName = tutorial.getCategory().getName();
@@ -165,8 +171,12 @@ public class TutorialServiceImpl implements TutorialService {
                 tutorial.setContent(tutorialDetails.getContent());
             if (tutorialDetails.getCoverImage() != null)
                 tutorial.setCoverImage(tutorialDetails.getCoverImage());
-            if (tutorialDetails.getStatus() != null)
+            if (tutorialDetails.getStatus() != null) {
                 tutorial.setStatus(tutorialDetails.getStatus());
+                if (tutorialDetails.getStatus() == TutorialStatus.PUBLISHED && tutorial.getPublishedAt() == null) {
+                    tutorial.setPublishedAt(Instant.now());
+                }
+            }
             if (tutorialDetails.getReadTime() != null && tutorialDetails.getReadTime() > 0 && tutorialDetails.getReadTime() <= 30) {
                 tutorial.setReadTime(tutorialDetails.getReadTime());
             } else if (tutorialDetails.getContent() != null || tutorial.getReadTime() == null || tutorial.getReadTime() <= 0 || tutorial.getReadTime() > 30) {

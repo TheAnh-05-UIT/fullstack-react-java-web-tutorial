@@ -2,6 +2,7 @@ package com.web_tutorial.javabackend.domain.dto.request.tutorial;
 
 import jakarta.validation.constraints.NotBlank;
 import com.web_tutorial.javabackend.domain.dto.tutorial.CategoryDTO;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 
 public class CreateTutorialRequestDTO {
 
@@ -17,6 +18,8 @@ public class CreateTutorialRequestDTO {
     private String content;
 
     private String coverImage;
+
+    private TutorialStatus status;
 
     private CategoryDTO category;
 
@@ -58,6 +61,14 @@ public class CreateTutorialRequestDTO {
 
     public void setCoverImage(String coverImage) {
         this.coverImage = coverImage;
+    }
+
+    public TutorialStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TutorialStatus status) {
+        this.status = status;
     }
 
     public CategoryDTO getCategory() {

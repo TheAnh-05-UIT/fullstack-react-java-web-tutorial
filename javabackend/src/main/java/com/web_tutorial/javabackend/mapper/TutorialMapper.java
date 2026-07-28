@@ -47,6 +47,7 @@ public class TutorialMapper {
         tutorial.setDescription(dto.getDescription());
         tutorial.setContent(dto.getContent());
         tutorial.setCoverImage(dto.getCoverImage());
+        tutorial.setStatus(dto.getStatus());
         if (dto.getCategory() != null && dto.getCategory().getName() != null) {
             Category category = new Category();
             category.setName(dto.getCategory().getName());
