@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Map, ChevronRight } from 'lucide-react';
-import { marked } from 'marked';
 import { roadmapService } from '../../services';
 import type { Roadmap } from '../../types';
-import { Infinity, Cloud, Shield, Layers, Container } from 'lucide-react';
+import { Infinity as InfinityIcon, Cloud, Shield, Layers, Container } from 'lucide-react';
 import { LearningProgressControls } from '../../features/learning-progress/components/LearningProgressControls';
+import { SafeRichContent } from '../../components/content/SafeRichContent';
 
 const iconComponents: Record<string, React.ReactNode> = {
-  'infinity': <Infinity className="w-8 h-8" />,
+  'infinity': <InfinityIcon className="w-8 h-8" />,
   'cloud': <Cloud className="w-8 h-8" />,
   'shield': <Shield className="w-8 h-8" />,
   'layers': <Layers className="w-8 h-8" />,
@@ -132,74 +132,7 @@ export function RoadmapDetailPage() {
             <div className="p-8 md:p-12 border-t border-gray-200 dark:border-gray-800">
               <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">About this Roadmap</h2>
               <div className="w-full rounded-xl overflow-hidden bg-white border border-gray-200 dark:border-gray-800 shadow-sm">
-                <iframe
-                  srcDoc={
-                    (() => {
-                      const trimmed = roadmap.content.trim();
-                      const isFullHtml = trimmed.toLowerCase().includes('<!doctype html>') || 
-                                         trimmed.toLowerCase().includes('<html') ||
-                                         (trimmed.startsWith('<') && trimmed.includes('<style>'));
-                                         
-                      if (isFullHtml) {
-                        return roadmap.content;
-                      }
-
-                      return `
-                        <!DOCTYPE html>
-                        <html>
-                          <head>
-                            <style>
-                              body { 
-                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                                line-height: 1.6;
-                                color: #374151;
-                                margin: 0;
-                                padding: 24px;
-                              }
-                              html { overflow-y: hidden !important; height: auto !important; }
-                              pre { background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
-                              code { background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: ui-monospace, monospace; }
-                              a { color: #4f46e5; text-decoration: none; }
-                              a:hover { text-decoration: underline; }
-                              img { max-width: 100%; height: auto; border-radius: 0.5rem; }
-                              blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; color: #6b7280; font-style: italic; }
-                            </style>
-                          </head>
-                          <body>
-                            ${marked.parse(roadmap.content)}
-                          </body>
-                        </html>
-                      `;
-                    })()
-                  }
-                  title={roadmap.title}
-                  className="w-full transition-all duration-300"
-                  style={{ minHeight: '300px', border: 'none' }}
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                  scrolling="no"
-                  onLoad={(e) => {
-                    const iframe = e.currentTarget;
-                    try {
-                      const doc = iframe.contentWindow?.document;
-                      if (doc) {
-                        const updateHeight = () => {
-                          const body = doc.body;
-                          const html = doc.documentElement;
-                          const height = Math.max(
-                            body.scrollHeight, body.offsetHeight,
-                            html.clientHeight, html.scrollHeight, html.offsetHeight
-                          );
-                          iframe.style.height = `${height + 30}px`;
-                        };
-                        updateHeight();
-                        setTimeout(updateHeight, 500);
-                        setTimeout(updateHeight, 2000);
-                      }
-                    } catch (err) {
-                      console.error('Failed to resize iframe:', err);
-                    }
-                  }}
-                />
+                <SafeRichContent content={roadmap.content} format="markdown" />
               </div>
             </div>
           )}
