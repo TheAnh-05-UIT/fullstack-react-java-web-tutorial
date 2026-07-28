@@ -18,12 +18,12 @@ export function AdminRoadmaps() {
   const { data: roadmaps = [], isLoading } = useQuery({
     queryKey: ['roadmaps'],
     // Gọi qua roadmapService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
-    queryFn: () => roadmapService.getAll()
+    queryFn: () => roadmapService.getAllForAdmin()
   });
 
   const saveMutation = useMutation({
     // Gọi qua roadmapService thay vì api trực tiếp
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<Roadmap>) => {
       if (editingRoadmap?.id) {
         return roadmapService.update(editingRoadmap.id, data);
       }
@@ -107,7 +107,7 @@ export function AdminRoadmaps() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         roadmap={editingRoadmap}
-        onSubmit={async (data: any) => { saveMutation.mutate(data); }}
+        onSubmit={async (data: Partial<Roadmap>) => { saveMutation.mutate(data); }}
         isLoading={saveMutation.isPending}
       />
     </div>

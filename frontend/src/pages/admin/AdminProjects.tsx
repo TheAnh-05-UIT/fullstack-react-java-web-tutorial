@@ -18,7 +18,7 @@ export function AdminProjects() {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     // Gọi qua projectService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
-    queryFn: () => projectService.getAll()
+    queryFn: () => projectService.getAllForAdmin()
   });
 
   const saveMutation = useMutation({

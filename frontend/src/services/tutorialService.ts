@@ -6,6 +6,10 @@ export const tutorialService = {
     const response = await api.get<unknown, PagedResponse<Tutorial> | Tutorial[]>(`/tutorials?page=${page}&size=${size}`);
     return Array.isArray(response) ? response : (response?.content || []);
   },
+  getAllForAdmin: async (page = 0, size = 100): Promise<Tutorial[]> => {
+    const response = await api.get<unknown, PagedResponse<Tutorial> | Tutorial[]>(`/tutorials/admin?page=${page}&size=${size}`);
+    return Array.isArray(response) ? response : (response?.content || []);
+  },
   getMyTutorials: async (): Promise<Tutorial[]> => {
     const response = await api.get<unknown, PagedResponse<Tutorial> | Tutorial[]>('/tutorials/my-tutorials');
     return Array.isArray(response) ? response : (response?.content || []);

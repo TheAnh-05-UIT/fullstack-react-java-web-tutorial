@@ -4,6 +4,8 @@ import { Card, SimpleBarChart, DonutChart, Badge, Button } from '../../component
 import { userService } from '../../services/userService';
 import { tutorialService } from '../../services/tutorialService';
 import { projectService } from '../../services/projectService';
+import type { Project, Tutorial, User } from '../../types';
+import { getRoleName } from '../../types';
 
 export function AdminOverview() {
 
@@ -17,12 +19,12 @@ export function AdminOverview() {
       },
       {
         queryKey: ['admin-tutorials'],
-        queryFn: () => tutorialService.getAll(0, 100),
+        queryFn: () => tutorialService.getAllForAdmin(0, 100),
         staleTime: 30000,
       },
       {
         queryKey: ['admin-projects'],
-        queryFn: () => projectService.getAll(0, 100),
+        queryFn: () => projectService.getAllForAdmin(0, 100),
         staleTime: 30000,
       },
     ],
@@ -30,12 +32,12 @@ export function AdminOverview() {
 
   const isLoading = usersQuery.isLoading || tutorialsQuery.isLoading || projectsQuery.isLoading;
 
-  const users: any[] = usersQuery.data || [];
-  const tutorials: any[] = tutorialsQuery.data || [];
-  const projects: any[] = projectsQuery.data || [];
+  const users: User[] = usersQuery.data || [];
+  const tutorials: Tutorial[] = tutorialsQuery.data || [];
+  const projects: Project[] = projectsQuery.data || [];
 
   // Tính toán stats từ data
-  const totalViews = tutorials.reduce((sum: number, t: any) => sum + (t.views || 0), 0);
+  const totalViews = tutorials.reduce((sum, tutorial) => sum + (tutorial.views || 0), 0);
 
   const stats = [
     { label: 'Total Users', value: users.length.toString() },
@@ -45,12 +47,16 @@ export function AdminOverview() {
   ];
 
   // Top 5 users mới nhất
-  const recentUsers = [...users].sort((a: any, b: any) => b.id - a.id).slice(0, 5);
+  const recentUsers = [...users]
+    .sort((a, b) => Number(b.id) - Number(a.id))
+    .slice(0, 5);
 
   // Category distribution
   const catMap = new Map<string, number>();
-  tutorials.forEach((t: any) => {
-    const rawCat = typeof t.category === 'object' && t.category ? (t.category as any).name : t.category || 'Other';
+  tutorials.forEach((tutorial) => {
+    const rawCat = typeof tutorial.category === 'object'
+      ? tutorial.category.name || 'Other'
+      : tutorial.category || 'Other';
     const cat = typeof rawCat === 'string' ? rawCat.trim() : String(rawCat);
     catMap.set(cat, (catMap.get(cat) || 0) + 1);
   });
@@ -65,18 +71,18 @@ export function AdminOverview() {
   // Weekly activity based on user registrations
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const weekData = days.map(day => ({ date: day, value: 0 }));
-  users.forEach((u: any) => {
-    if (u.createdAt) {
-      const d = new Date(u.createdAt).getDay();
+  users.forEach((user) => {
+    if (user.createdAt) {
+      const d = new Date(user.createdAt).getDay();
       if (!isNaN(d)) weekData[d].value += 1;
     }
   });
 
   // Recent activity – mix users, tutorials, projects
   const mixed = [
-    ...users.map((u: any) => ({ id: `u-${u.id}`, action: 'New user registered', user: u.email || u.username, time: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recently', ts: new Date(u.createdAt || Date.now()).getTime() })),
-    ...tutorials.map((t: any) => ({ id: `t-${t.id}`, action: `Tutorial published: ${t.title}`, user: t.createBy || 'admin', time: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Recently', ts: new Date(t.createdAt || Date.now()).getTime() })),
-    ...projects.map((p: any) => ({ id: `p-${p.id}`, action: `Project added: ${p.title}`, user: p.createBy || 'admin', time: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Recently', ts: new Date(p.createdAt || Date.now()).getTime() })),
+    ...users.map((user) => ({ id: `u-${user.id}`, action: 'New user registered', user: user.email || user.username, time: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Recently', ts: new Date(user.createdAt || Date.now()).getTime() })),
+    ...tutorials.map((tutorial) => ({ id: `t-${tutorial.id}`, action: `Tutorial published: ${tutorial.title}`, user: tutorial.createBy || 'admin', time: tutorial.createdAt ? new Date(tutorial.createdAt).toLocaleDateString() : 'Recently', ts: new Date(tutorial.createdAt || Date.now()).getTime() })),
+    ...projects.map((project) => ({ id: `p-${project.id}`, action: `Project added: ${project.title}`, user: project.createBy || 'admin', time: project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'Recently', ts: new Date(project.createdAt || Date.now()).getTime() })),
   ].sort((a, b) => b.ts - a.ts).slice(0, 5);
 
   if (isLoading) {
@@ -164,8 +170,8 @@ export function AdminOverview() {
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.username || user.name || 'Anonymous'}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email || 'No email'}</p>
                 </div>
-                <Badge variant={((user.role as any)?.name || user.role) === 'ADMIN' ? 'primary' : 'secondary'}>
-                  {((user.role as any)?.name || user.role) || 'USER'}
+                <Badge variant={getRoleName(user.role) === 'ADMIN' ? 'primary' : 'secondary'}>
+                  {getRoleName(user.role)}
                 </Badge>
               </div>
             )) : (

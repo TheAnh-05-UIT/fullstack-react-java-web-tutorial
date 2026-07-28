@@ -6,6 +6,10 @@ export const projectService = {
     const response = await api.get<unknown, PagedResponse<Project> | Project[]>(`/projects?page=${page}&size=${size}`);
     return Array.isArray(response) ? response : (response?.content || []);
   },
+  getAllForAdmin: async (page = 0, size = 100): Promise<Project[]> => {
+    const response = await api.get<unknown, PagedResponse<Project> | Project[]>(`/projects/admin?page=${page}&size=${size}`);
+    return Array.isArray(response) ? response : (response?.content || []);
+  },
   getPaged: async (page = 0, size = 10, difficulty?: string): Promise<PagedResponse<Project> | Project[]> => {
     const url = `/projects?page=${page}&size=${size}${difficulty ? `&difficulty=${difficulty}` : ''}`;
     return api.get<unknown, PagedResponse<Project> | Project[]>(url);

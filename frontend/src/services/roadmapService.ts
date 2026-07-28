@@ -6,6 +6,10 @@ export const roadmapService = {
     const response = await api.get<unknown, PagedResponse<Roadmap> | Roadmap[]>(`/roadmaps?page=${page}&size=${size}`);
     return Array.isArray(response) ? response : (response?.content || []);
   },
+  getAllForAdmin: async (page = 0, size = 100): Promise<Roadmap[]> => {
+    const response = await api.get<unknown, PagedResponse<Roadmap> | Roadmap[]>(`/roadmaps/admin?page=${page}&size=${size}`);
+    return Array.isArray(response) ? response : (response?.content || []);
+  },
   getPaged: async (page = 0, size = 10): Promise<PagedResponse<Roadmap> | Roadmap[]> => {
     return api.get<unknown, PagedResponse<Roadmap> | Roadmap[]>(`/roadmaps?page=${page}&size=${size}`);
   },

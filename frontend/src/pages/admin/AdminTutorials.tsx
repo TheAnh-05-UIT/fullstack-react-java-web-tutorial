@@ -18,7 +18,7 @@ export function AdminTutorials() {
   const { data: tutorials = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tutorials'],
     // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
-    queryFn: () => tutorialService.getAll()
+    queryFn: () => tutorialService.getAllForAdmin()
   });
 
   const saveMutation = useMutation({
