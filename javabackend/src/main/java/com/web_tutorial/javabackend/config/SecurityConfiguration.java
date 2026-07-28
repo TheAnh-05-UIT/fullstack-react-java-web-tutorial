@@ -78,6 +78,14 @@ public class SecurityConfiguration {
 
                         // Cho phép truy cập không cần token
                         .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/tutorials/admin",
+                                "/api/v1/tutorials/admin/**",
+                                "/api/v1/projects/admin",
+                                "/api/v1/projects/admin/**",
+                                "/api/v1/roadmaps/admin",
+                                "/api/v1/roadmaps/admin/**")
+                        .hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/tutorials/**", "/api/v1/projects/**",
                                 "/api/v1/roadmaps/**", "/uploads/**")
                         .permitAll()

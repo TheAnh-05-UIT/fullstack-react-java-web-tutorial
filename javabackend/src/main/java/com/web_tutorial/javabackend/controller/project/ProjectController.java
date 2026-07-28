@@ -32,6 +32,20 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiMessage("Get All Projects for Admin")
+    public ResponseEntity<ResultPaginationDTO> getAllProjectsForAdmin(Pageable pageable) {
+        return ResponseEntity.ok(this.projectService.getAllProjectsForAdmin(pageable));
+    }
+
+    @GetMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiMessage("Get Project by Id for Admin")
+    public ResponseEntity<ProjectResponseDTO> getProjectByIdForAdmin(@PathVariable Long id) {
+        return ResponseEntity.ok(this.projectService.getProjectResponseByIdForAdmin(id));
+    }
+
     @GetMapping("/{id}")
     @ApiMessage("Get All by Id")
     public ResponseEntity<ProjectResponseDTO> getProjectById(@PathVariable Long id) {

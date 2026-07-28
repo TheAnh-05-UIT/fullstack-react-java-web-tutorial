@@ -69,7 +69,7 @@ public class DevopsService {
      */
     @Transactional(readOnly = true)
     public Optional<DevopsDTOs.PhaseDetailResponse> getPhaseDetailByKey(String phaseKey) {
-        return phaseRepository.findByPhaseKey(phaseKey)
+        return phaseRepository.findByPhaseKeyAndActiveTrue(phaseKey)
                 .map(this::toPhaseDetailResponse);
     }
 

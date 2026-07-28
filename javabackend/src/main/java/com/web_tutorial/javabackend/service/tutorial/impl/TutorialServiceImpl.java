@@ -3,6 +3,7 @@ package com.web_tutorial.javabackend.service.tutorial.impl;
 import com.web_tutorial.javabackend.domain.tutorial.Category;
 import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
 import com.web_tutorial.javabackend.domain.tutorial.Tutorial;
+import com.web_tutorial.javabackend.domain.tutorial.TutorialStatus;
 import com.web_tutorial.javabackend.repository.tutorial.TutorialRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.domain.user.User;
@@ -48,12 +49,23 @@ public class TutorialServiceImpl implements TutorialService {
     // Chỉ trả về tutorial chưa bị soft-deleted, ưu thiên hiển thị mới nhất trước
     @Override
     public List<Tutorial> getAllTutorials() {
-        return this.tutorialRepository.findByIsDeletedFalseOrderByIdDesc();
+        return this.tutorialRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(TutorialStatus.PUBLISHED);
     }
 
     @Override
     public ResultPaginationDTO getAllTutorials(Pageable pageable) {
-        Page<Tutorial> page = this.tutorialRepository.findByIsDeletedFalseOrderByIdDesc(pageable);
+        Page<Tutorial> page = this.tutorialRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(
+                TutorialStatus.PUBLISHED,
+                pageable);
+        return toTutorialPage(page);
+    }
+
+    @Override
+    public ResultPaginationDTO getAllTutorialsForAdmin(Pageable pageable) {
+        return toTutorialPage(this.tutorialRepository.findByIsDeletedFalseOrderByIdDesc(pageable));
+    }
+
+    private ResultPaginationDTO toTutorialPage(Page<Tutorial> page) {
         List<Tutorial> tutorials = page.getContent();
 
         // Thu thập danh sách email tác giả (loại bỏ null/rỗng và trùng lặp)
@@ -89,13 +101,13 @@ public class TutorialServiceImpl implements TutorialService {
     // Chỉ tìm tutorial chưa bị xóa
     @Override
     public Optional<Tutorial> getTutorialById(Long id) {
-        return this.tutorialRepository.findByIdAndIsDeletedFalse(id);
+        return this.tutorialRepository.findByIdAndStatusAndIsDeletedFalse(id, TutorialStatus.PUBLISHED);
     }
 
     // Chỉ tìm tutorial chưa bị xóa theo slug
     @Override
     public Optional<Tutorial> getTutorialBySlug(String slug) {
-        return this.tutorialRepository.findBySlugAndIsDeletedFalse(slug);
+        return this.tutorialRepository.findBySlugAndStatusAndIsDeletedFalse(slug, TutorialStatus.PUBLISHED);
     }
 
     @Override
@@ -227,6 +239,17 @@ public class TutorialServiceImpl implements TutorialService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tutorial with slug " + slug + " does not exist"));
         this.incrementViewCount(tutorial.getId());
         tutorial.setViews((tutorial.getViews() == null ? 0L : tutorial.getViews()) + 1);
+        TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    public TutorialResponseDTO getTutorialResponseByIdForAdmin(Long id) {
+        Tutorial tutorial = this.tutorialRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tutorial not found"));
         TutorialResponseDTO dto = MapperUtils.toTutorialResponseDTO(tutorial);
         if (dto.getCreateBy() != null) {
             dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));

@@ -20,11 +20,13 @@ public interface DevopsPhaseRepository extends JpaRepository<DevopsPhase, Long> 
      * Ví dụ: findByPhaseKey("code") → trả về giai đoạn Code.
      */
     Optional<DevopsPhase> findByPhaseKey(String phaseKey);
+    Optional<DevopsPhase> findByPhaseKeyAndActiveTrue(String phaseKey);
 
     /**
      * Kiểm tra phaseKey đã tồn tại chưa (dùng khi tạo mới để tránh trùng).
      */
     boolean existsByPhaseKey(String phaseKey);
+    boolean existsByPhaseKeyAndActiveTrue(String phaseKey);
 
     List<DevopsPhase> findByPhaseKeyInAndActiveTrue(java.util.Collection<String> phaseKeys);
 

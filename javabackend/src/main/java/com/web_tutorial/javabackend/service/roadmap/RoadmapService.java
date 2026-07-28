@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 public interface RoadmapService {
     List<Roadmap> getAllRoadmaps();
     ResultPaginationDTO getAllRoadmaps(Pageable pageable);
+    ResultPaginationDTO getAllRoadmapsForAdmin(Pageable pageable);
     String getAuthorNameByEmail(String email);
 
     Optional<Roadmap> getRoadmapById(Long id);
@@ -30,6 +31,7 @@ public interface RoadmapService {
     RoadmapResponseDTO getRoadmapResponseById(Long id);
 
     RoadmapResponseDTO getRoadmapResponseBySlug(String slug);
+    RoadmapResponseDTO getRoadmapResponseByIdForAdmin(Long id);
 
     RoadmapResponseDTO createRoadmapFromDTO(CreateRoadmapRequestDTO requestDTO);
 

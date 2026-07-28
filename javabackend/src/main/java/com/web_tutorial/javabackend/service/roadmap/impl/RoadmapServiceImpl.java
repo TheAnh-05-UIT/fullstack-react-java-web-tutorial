@@ -47,12 +47,21 @@ public class RoadmapServiceImpl implements RoadmapService {
 
     @Override
     public List<Roadmap> getAllRoadmaps() {
-        return this.roadmapRepository.findAllByOrderByIdDesc();
+        return this.roadmapRepository.findByIsDeletedFalseOrderByIdDesc();
     }
 
     @Override
     public ResultPaginationDTO getAllRoadmaps(Pageable pageable) {
-        Page<Roadmap> page = this.roadmapRepository.findAllByOrderByIdDesc(pageable);
+        Page<Roadmap> page = this.roadmapRepository.findByIsDeletedFalseOrderByIdDesc(pageable);
+        return toRoadmapPage(page);
+    }
+
+    @Override
+    public ResultPaginationDTO getAllRoadmapsForAdmin(Pageable pageable) {
+        return toRoadmapPage(this.roadmapRepository.findAllByOrderByIdDesc(pageable));
+    }
+
+    private ResultPaginationDTO toRoadmapPage(Page<Roadmap> page) {
         Set<String> emails = page.getContent().stream()
                 .map(Roadmap::getCreateBy)
                 .filter(email -> email != null && !email.trim().isEmpty())
@@ -83,12 +92,12 @@ public class RoadmapServiceImpl implements RoadmapService {
 
     @Override
     public Optional<Roadmap> getRoadmapById(Long id) {
-        return this.roadmapRepository.findById(id);
+        return this.roadmapRepository.findByIdAndIsDeletedFalse(id);
     }
 
     @Override
     public Optional<Roadmap> getRoadmapBySlug(String slug) {
-        return this.roadmapRepository.findBySlug(slug);
+        return this.roadmapRepository.findBySlugAndIsDeletedFalse(slug);
     }
 
     @Override
@@ -148,6 +157,17 @@ public class RoadmapServiceImpl implements RoadmapService {
     public RoadmapResponseDTO getRoadmapResponseBySlug(String slug) {
         Roadmap roadmap = this.getRoadmapBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Roadmap with slug " + slug + " does not exist"));
+        RoadmapResponseDTO dto = MapperUtils.toRoadmapResponseDTO(roadmap);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    public RoadmapResponseDTO getRoadmapResponseByIdForAdmin(Long id) {
+        Roadmap roadmap = this.roadmapRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Roadmap not found"));
         RoadmapResponseDTO dto = MapperUtils.toRoadmapResponseDTO(roadmap);
         if (dto.getCreateBy() != null) {
             dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));

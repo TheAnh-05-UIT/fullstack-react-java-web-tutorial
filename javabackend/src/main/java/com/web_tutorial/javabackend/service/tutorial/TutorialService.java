@@ -15,6 +15,7 @@ public interface TutorialService {
     // Chỉ trả về tutorial chưa bị soft-deleted
     List<Tutorial> getAllTutorials();
     ResultPaginationDTO getAllTutorials(Pageable pageable);
+    ResultPaginationDTO getAllTutorialsForAdmin(Pageable pageable);
 
     Optional<Tutorial> getTutorialById(Long id);
 
@@ -35,6 +36,7 @@ public interface TutorialService {
     TutorialResponseDTO getTutorialResponseById(Long id);
 
     TutorialResponseDTO getTutorialResponseBySlug(String slug);
+    TutorialResponseDTO getTutorialResponseByIdForAdmin(Long id);
 
     TutorialResponseDTO createTutorialFromDTO(CreateTutorialRequestDTO requestDTO);
 

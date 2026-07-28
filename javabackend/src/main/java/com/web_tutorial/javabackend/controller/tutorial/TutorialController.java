@@ -32,6 +32,20 @@ public class TutorialController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiMessage("Get All Tutorials for Admin")
+    public ResponseEntity<ResultPaginationDTO> getAllTutorialsForAdmin(Pageable pageable) {
+        return ResponseEntity.ok(this.tutorialService.getAllTutorialsForAdmin(pageable));
+    }
+
+    @GetMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiMessage("Get Tutorial by Id for Admin")
+    public ResponseEntity<TutorialResponseDTO> getTutorialByIdForAdmin(@PathVariable Long id) {
+        return ResponseEntity.ok(this.tutorialService.getTutorialResponseByIdForAdmin(id));
+    }
+
     @GetMapping("/{id}")
     @ApiMessage("Get Tutorial by Id")
     public ResponseEntity<TutorialResponseDTO> getTutorialById(@PathVariable Long id) {

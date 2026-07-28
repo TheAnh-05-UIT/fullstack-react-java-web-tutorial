@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 public interface ProjectService {
     List<Project> getAllProjects();
     ResultPaginationDTO getAllProjects(Pageable pageable);
+    ResultPaginationDTO getAllProjectsForAdmin(Pageable pageable);
     String getAuthorNameByEmail(String email);
 
     Optional<Project> getProjectById(Long id);
@@ -31,6 +32,7 @@ public interface ProjectService {
     ProjectResponseDTO getProjectResponseById(Long id);
 
     ProjectResponseDTO getProjectResponseBySlug(String slug);
+    ProjectResponseDTO getProjectResponseByIdForAdmin(Long id);
 
     ProjectResponseDTO createProjectFromDTO(CreateProjectRequestDTO requestDTO);
 

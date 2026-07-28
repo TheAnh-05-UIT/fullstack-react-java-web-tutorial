@@ -3,6 +3,7 @@ package com.web_tutorial.javabackend.service.project.impl;
 import com.web_tutorial.javabackend.domain.tutorial.Category;
 import com.web_tutorial.javabackend.repository.tutorial.CategoryRepository;
 import com.web_tutorial.javabackend.domain.project.Project;
+import com.web_tutorial.javabackend.domain.project.ProjectStatus;
 import com.web_tutorial.javabackend.repository.project.ProjectRepository;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.service.project.ProjectService;
@@ -50,12 +51,23 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> getAllProjects() {
-        return this.projectRepository.findAllByOrderByIdDesc();
+        return this.projectRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(ProjectStatus.PUBLISHED);
     }
 
     @Override
     public ResultPaginationDTO getAllProjects(Pageable pageable) {
-        Page<Project> page = this.projectRepository.findAllByOrderByIdDesc(pageable);
+        Page<Project> page = this.projectRepository.findByStatusAndIsDeletedFalseOrderByIdDesc(
+                ProjectStatus.PUBLISHED,
+                pageable);
+        return toProjectPage(page);
+    }
+
+    @Override
+    public ResultPaginationDTO getAllProjectsForAdmin(Pageable pageable) {
+        return toProjectPage(this.projectRepository.findAllByOrderByIdDesc(pageable));
+    }
+
+    private ResultPaginationDTO toProjectPage(Page<Project> page) {
         List<Project> projects = page.getContent();
 
         // Thu thập danh sách email tác giả (loại bỏ null/rỗng và trùng lặp)
@@ -90,12 +102,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Optional<Project> getProjectById(Long id) {
-        return this.projectRepository.findById(id);
+        return this.projectRepository.findByIdAndStatusAndIsDeletedFalse(id, ProjectStatus.PUBLISHED);
     }
 
     @Override
     public Optional<Project> getProjectBySlug(String slug) {
-        return this.projectRepository.findBySlug(slug);
+        return this.projectRepository.findBySlugAndStatusAndIsDeletedFalse(slug, ProjectStatus.PUBLISHED);
     }
 
     @Override
@@ -193,6 +205,17 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project with slug " + slug + " does not exist"));
         this.incrementViewCount(project.getId());
         project.setViews((project.getViews() == null ? 0L : project.getViews()) + 1);
+        ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
+        if (dto.getCreateBy() != null) {
+            dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));
+        }
+        return dto;
+    }
+
+    @Override
+    public ProjectResponseDTO getProjectResponseByIdForAdmin(Long id) {
+        Project project = this.projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         ProjectResponseDTO dto = MapperUtils.toProjectResponseDTO(project);
         if (dto.getCreateBy() != null) {
             dto.setAuthorName(this.getAuthorNameByEmail(dto.getCreateBy()));

@@ -10,11 +10,17 @@ import com.web_tutorial.javabackend.domain.roadmap.Roadmap;
 @Repository
 public interface RoadmapRepository extends JpaRepository<Roadmap, Long> {
     Optional<Roadmap> findBySlug(String slug);
+    Optional<Roadmap> findBySlugAndIsDeletedFalse(String slug);
+    Optional<Roadmap> findByIdAndIsDeletedFalse(Long id);
 
     boolean existsBySlug(String slug);
+    boolean existsBySlugAndIsDeletedFalse(String slug);
 
     java.util.List<Roadmap> findBySlugInAndIsDeletedFalse(java.util.Collection<String> slugs);
 
     java.util.List<Roadmap> findAllByOrderByIdDesc();
     org.springframework.data.domain.Page<Roadmap> findAllByOrderByIdDesc(org.springframework.data.domain.Pageable pageable);
+    java.util.List<Roadmap> findByIsDeletedFalseOrderByIdDesc();
+    org.springframework.data.domain.Page<Roadmap> findByIsDeletedFalseOrderByIdDesc(
+            org.springframework.data.domain.Pageable pageable);
 }

@@ -32,6 +32,20 @@ public class RoadmapController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiMessage("Get All Roadmaps for Admin")
+    public ResponseEntity<ResultPaginationDTO> getAllRoadmapsForAdmin(Pageable pageable) {
+        return ResponseEntity.ok(this.roadmapService.getAllRoadmapsForAdmin(pageable));
+    }
+
+    @GetMapping("/admin/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @ApiMessage("Get Roadmap by Id for Admin")
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapByIdForAdmin(@PathVariable Long id) {
+        return ResponseEntity.ok(this.roadmapService.getRoadmapResponseByIdForAdmin(id));
+    }
+
     @GetMapping("/{id}")
     @ApiMessage("Get Roadmap by Id")
     public ResponseEntity<RoadmapResponseDTO> getRoadmapById(@PathVariable Long id) {
