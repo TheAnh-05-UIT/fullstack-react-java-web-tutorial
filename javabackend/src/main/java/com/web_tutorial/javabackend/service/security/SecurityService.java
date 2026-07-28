@@ -2,9 +2,14 @@ package com.web_tutorial.javabackend.service.security;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -26,7 +31,8 @@ import com.web_tutorial.javabackend.config.SecurityConfiguration;
 public class SecurityService {
 
     private final JwtEncoder jwtEncoder;
-    private final JwtDecoder jwtDecoder;
+    private final JwtDecoder refreshJwtDecoder;
+    private static final Set<String> ALLOWED_AUTHORITIES = Set.of("ROLE_USER", "ROLE_ADMIN");
 
     // Tiêm các cài đặt từ file application.properties
 
@@ -36,13 +42,33 @@ public class SecurityService {
     @Value("${javabackend.jwt.refresh-token-validity-in-seconds}")
     private Long refreshTokenExpiration;
 
-    public SecurityService(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder) {
+    @Value("${javabackend.jwt.issuer:web-tutorial}")
+    private String issuer;
+
+    @Value("${javabackend.jwt.access-token-audience:webtutorial-api}")
+    private String accessTokenAudience;
+
+    @Value("${javabackend.jwt.refresh-token-audience:webtutorial-auth}")
+    private String refreshTokenAudience;
+
+    public SecurityService(JwtEncoder jwtEncoder,
+            @Qualifier("refreshJwtDecoder") JwtDecoder refreshJwtDecoder) {
         this.jwtEncoder = jwtEncoder;
-        this.jwtDecoder = jwtDecoder;
+        this.refreshJwtDecoder = refreshJwtDecoder;
+    }
+
+    @PostConstruct
+    void validateTokenValidityConfiguration() {
+        if (jwtExpiration == null || jwtExpiration <= 0) {
+            throw new IllegalStateException("Access token validity must be greater than zero");
+        }
+        if (refreshTokenExpiration == null || refreshTokenExpiration <= jwtExpiration) {
+            throw new IllegalStateException("Refresh token validity must be greater than access token validity");
+        }
     }
 
     // Tạo Access Token Ngắn hạn, chứa scope quyền
-    public String generateToken(Authentication authentication) {
+    public String generateAccessToken(Authentication authentication) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.jwtExpiration, ChronoUnit.SECONDS);
 
@@ -50,14 +76,20 @@ public class SecurityService {
         // quyền mặc định gắn tiền tố SCOPE_
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                .filter(ALLOWED_AUTHORITIES::contains)
+                .distinct()
+                .sorted()
                 .collect(Collectors.joining(" "));
 
         // Chèn dữ liệu vào (Payload)
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("web-tutorial") // Nguồn phát hành thẻ
+                .issuer(issuer)
+                .audience(List.of(accessTokenAudience))
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(authentication.getName())
+                .id(UUID.randomUUID().toString())
+                .claim("token_type", "access")
                 .claim("scope", scope)
                 .build();
 
@@ -79,10 +111,13 @@ public class SecurityService {
         Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("web-tutorial")
+                .issuer(issuer)
+                .audience(List.of(refreshTokenAudience))
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
+                .id(UUID.randomUUID().toString())
+                .claim("token_type", "refresh")
                 .build();
 
         return this.jwtEncoder.encode(
@@ -91,8 +126,8 @@ public class SecurityService {
     }
 
     // Giải mã JWT Token
-    public Jwt decodeToken(String token) {
-        return this.jwtDecoder.decode(token);
+    public Jwt decodeRefreshToken(String token) {
+        return this.refreshJwtDecoder.decode(token);
     }
 
     private static String extractPrincipal(Authentication authentication) {

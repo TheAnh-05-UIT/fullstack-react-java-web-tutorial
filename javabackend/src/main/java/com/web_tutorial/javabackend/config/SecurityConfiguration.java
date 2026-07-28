@@ -6,7 +6,10 @@ import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -19,14 +22,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 // Cấu hình trung tâm bảo mật của ứng dụng (OAuth2 + JWT)
 @Configuration
@@ -37,7 +48,17 @@ public class SecurityConfiguration {
     @Value("${javabackend.jwt.base64-secret}")
     private String jwtKey;
 
+    @Value("${javabackend.jwt.issuer:web-tutorial}")
+    private String issuer;
+
+    @Value("${javabackend.jwt.access-token-audience:webtutorial-api}")
+    private String accessTokenAudience;
+
+    @Value("${javabackend.jwt.refresh-token-audience:webtutorial-auth}")
+    private String refreshTokenAudience;
+
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
+    private static final Set<String> ALLOWED_AUTHORITIES = Set.of("ROLE_USER", "ROLE_ADMIN");
 
     // Lấy secret key từ file cấu hình để mã hóa/giải mã JWT
     private SecretKey getSecretKey() {
@@ -63,9 +84,35 @@ public class SecurityConfiguration {
 
     // Tạo JWT Decoder để xác thực token
     @Bean
+    @Primary
     public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withSecretKey(getSecretKey())
-                .macAlgorithm(JWT_ALGORITHM).build();
+        return buildDecoder(accessTokenAudience, "access");
+    }
+
+    @Bean("refreshJwtDecoder")
+    public JwtDecoder refreshJwtDecoder() {
+        return buildDecoder(refreshTokenAudience, "refresh");
+    }
+
+    private JwtDecoder buildDecoder(String expectedAudience, String expectedTokenType) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(getSecretKey())
+                .macAlgorithm(JWT_ALGORITHM)
+                .build();
+        OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<List<String>>(
+                "aud", audiences -> audiences != null && audiences.contains(expectedAudience));
+        OAuth2TokenValidator<Jwt> tokenTypeValidator = new JwtClaimValidator<String>(
+                "token_type", expectedTokenType::equals);
+        OAuth2TokenValidator<Jwt> subjectValidator = new JwtClaimValidator<String>(
+                "sub", subject -> subject != null && !subject.isBlank());
+        OAuth2TokenValidator<Jwt> jwtIdValidator = new JwtClaimValidator<String>(
+                "jti", jwtId -> jwtId != null && !jwtId.isBlank());
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(issuer),
+                audienceValidator,
+                tokenTypeValidator,
+                subjectValidator,
+                jwtIdValidator));
+        return decoder;
     }
 
     // Cấu hình phân quyền truy cập cho các API
@@ -112,13 +159,22 @@ public class SecurityConfiguration {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix(""); // Không tự động thêm SCOPE_ để khớp exact ROLE_ADMIN
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("scope");
-
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(this::extractAuthorities);
         return jwtAuthenticationConverter;
+    }
+
+    private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
+        String scope = jwt.getClaimAsString("scope");
+        if (scope == null || scope.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(scope.trim().split("\\s+"))
+                .filter(ALLOWED_AUTHORITIES::contains)
+                .distinct()
+                .map(SimpleGrantedAuthority::new)
+                .map(GrantedAuthority.class::cast)
+                .toList();
     }
 
     @Bean

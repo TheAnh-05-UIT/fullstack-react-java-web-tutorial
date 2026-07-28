@@ -67,7 +67,7 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Sinh và lưu cặp token
-        String accessToken = securityService.generateToken(authentication);
+        String accessToken = securityService.generateAccessToken(authentication);
         String refreshToken = securityService.generateRefreshToken(savedUser.getEmail());
         userService.updateRefreshToken(savedUser.getEmail(), refreshToken);
 
@@ -82,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Sinh và lưu cặp token
-        String accessToken = securityService.generateToken(authentication);
+        String accessToken = securityService.generateAccessToken(authentication);
         String refreshToken = securityService.generateRefreshToken(loginDTO.getEmail());
         userService.updateRefreshToken(loginDTO.getEmail(), refreshToken);
 
@@ -100,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             // Giải mã token để lấy email; JwtException sẽ bị bắt phía dưới
-            String email = securityService.decodeToken(incomingRefreshToken).getSubject();
+            String email = securityService.decodeRefreshToken(incomingRefreshToken).getSubject();
 
             // Kiểm tra refresh token có khớp trong DB không (tránh reuse sau khi revoke)
             User user = userService.getUserByRefreshToken(incomingRefreshToken)
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
                     userDetails, null, userDetails.getAuthorities());
 
             // Token rotation: tạo cặp token hoàn toàn mới
-            String newAccessToken = securityService.generateToken(authentication);
+            String newAccessToken = securityService.generateAccessToken(authentication);
             String newRefreshToken = securityService.generateRefreshToken(email);
             userService.updateRefreshToken(email, newRefreshToken);
 
@@ -122,8 +122,7 @@ public class AuthServiceImpl implements AuthService {
 
         } catch (JwtException e) {
             // Chữ ký sai hoặc token hết hạn → trả 401
-            throw new InvalidRefreshTokenException(
-                    "Refresh token hết hạn hoặc không đúng chữ ký: " + e.getMessage());
+            throw new InvalidRefreshTokenException("Refresh token không hợp lệ hoặc đã hết hạn");
         }
     }
 
