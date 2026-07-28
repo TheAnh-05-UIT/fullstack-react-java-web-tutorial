@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Column;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,6 +41,7 @@ public class User {
     private String password; // Mật khẩu đã được mã hóa
     private String avatar; // Đường dẫn URL ảnh đại diện
 
+    @Column(name = "refresh_token", length = 2048)
     private String refreshToken;
 
     // Lưu thời gian và người thao tác
