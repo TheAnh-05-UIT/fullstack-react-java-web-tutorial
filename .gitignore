@@ -1,6 +1,9 @@
 # Spring Boot / Java
 javabackend/target/
 javabackend/*.log
+javabackend/data/
+data/
+uploads/
 
 # Maven
 .mvn/timing.properties

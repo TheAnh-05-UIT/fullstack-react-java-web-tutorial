@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.web_tutorial.javabackend.domain.dto.response.RestResponse;
 import org.slf4j.Logger;
@@ -35,6 +36,30 @@ public class GlobalExceptionHandler {
         res.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
         res.setMessage(ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    @ExceptionHandler(InvalidUploadException.class)
+    public ResponseEntity<RestResponse<Object>> handleInvalidUploadException(InvalidUploadException ex) {
+        return uploadError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnsupportedUploadTypeException.class)
+    public ResponseEntity<RestResponse<Object>> handleUnsupportedUploadTypeException(
+            UnsupportedUploadTypeException ex) {
+        return uploadError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
+    }
+
+    @ExceptionHandler({UploadTooLargeException.class, MaxUploadSizeExceededException.class})
+    public ResponseEntity<RestResponse<Object>> handleUploadTooLargeException(Exception ex) {
+        return uploadError(HttpStatus.PAYLOAD_TOO_LARGE, "Image file exceeds the configured size limit.");
+    }
+
+    @ExceptionHandler(UploadStorageException.class)
+    public ResponseEntity<RestResponse<Object>> handleUploadStorageException(
+            UploadStorageException ex,
+            HttpServletRequest request) {
+        log.error("Upload storage operation failed at {}", request.getRequestURI(), ex);
+        return uploadError(HttpStatus.INTERNAL_SERVER_ERROR, "Image storage operation failed.");
     }
 
     // lỗi 404 Not Found
@@ -150,5 +175,14 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
+    private ResponseEntity<RestResponse<Object>> uploadError(HttpStatus status, String message) {
+        RestResponse<Object> response = new RestResponse<>();
+        response.setStatusCode(status.value());
+        response.setError(status.getReasonPhrase());
+        response.setMessage(message);
+        response.setData(null);
+        return ResponseEntity.status(status).body(response);
     }
 }
