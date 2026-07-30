@@ -37,11 +37,13 @@ export function RegisterPage() {
         password 
       });
       
-      // Lưu token và thông tin user
-      login(response.accessToken, response.refreshToken, response.userLogin);
+      // Keep the access token in the in-memory auth context.
+      login(response.accessToken, response.userLogin);
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Đã có lỗi xảy ra. Email có thể đã được sử dụng.');
+    } catch (err: unknown) {
+      setError(err instanceof Error
+        ? err.message
+        : 'Đã có lỗi xảy ra. Email có thể đã được sử dụng.');
     } finally {
       setIsLoading(false);
     }

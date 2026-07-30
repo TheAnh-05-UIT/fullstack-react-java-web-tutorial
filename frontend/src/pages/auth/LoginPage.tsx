@@ -23,13 +23,13 @@ export function LoginPage() {
       // Gọi API Login thật
       const response = await authService.login({ email, password });
       
-      // Lưu toàn bộ thẻ và thông tin user vào Context + LocalStorage
-      login(response.accessToken, response.refreshToken, response.userLogin);
+      // Keep the access token in the in-memory auth context.
+      login(response.accessToken, response.userLogin);
       
       // Chuyển hướng về trang chủ
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Sai Email hoặc Mật khẩu');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sai Email hoặc Mật khẩu');
     } finally {
       setIsLoading(false);
     }

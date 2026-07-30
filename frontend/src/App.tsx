@@ -57,7 +57,11 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode, requiredRole?: string }) {
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated, isInitialized, role } = useAuth();
+
+  if (!isInitialized) {
+    return <LoadingSpinner className="min-h-screen" />;
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -73,13 +77,21 @@ function ProtectedRoute({ children, requiredRole }: { children: React.ReactNode,
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
   useApp();
 
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/register" element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />} />
+      <Route path="/login" element={
+        !isInitialized
+          ? <LoadingSpinner className="min-h-screen" />
+          : isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+      } />
+      <Route path="/register" element={
+        !isInitialized
+          ? <LoadingSpinner className="min-h-screen" />
+          : isAuthenticated ? <Navigate to="/" replace /> : <RegisterPage />
+      } />
       
       {/* Các Trang Công Khai */}
       <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />

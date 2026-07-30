@@ -1,145 +1,118 @@
-import { createContext, useContext, useState, type ReactNode, useEffect, useCallback } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { AuthUser } from '../types';
+import { jwtDecode } from 'jwt-decode';
+
 import { authService } from '../services/authService';
+import { setAccessToken, setAuthFailureHandler } from '../services/api';
+import type { AuthUser } from '../types';
 
 interface DecodedToken {
-  sub: string;
   scope?: string;
   role?: string;
-  exp: number;
 }
 
 export type UserProfile = AuthUser;
-
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isInitialized: boolean;
   role: string | null;
   user: UserProfile | null;
-  login: (accessToken: string, refreshToken: string, userData: UserProfile) => void;
-  logout: () => void;
+  login: (accessToken: string, userData: UserProfile) => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper type guard & extractor để lấy string role từ union string | object
 function getRoleString(roleProp?: string | { id?: number; name?: string }): string | undefined {
   if (typeof roleProp === 'string') {
     return roleProp;
   }
-  if (roleProp && typeof roleProp === 'object' && 'name' in roleProp && typeof roleProp.name === 'string') {
-    return roleProp.name;
-  }
-  return undefined;
+  return roleProp?.name;
 }
 
-// Helper extract role từ JWT token
-function extractRoleFromToken(token: string, fallback?: string | { id?: number; name?: string }): string {
-  const fallbackStr = getRoleString(fallback);
+function extractRoleFromToken(
+  token: string,
+  fallback?: string | { id?: number; name?: string },
+): string {
+  const fallbackRole = getRoleString(fallback);
   try {
     const decoded = jwtDecode<DecodedToken>(token);
-    let role = decoded.scope || decoded.role || fallbackStr || 'USER';
-    // Spring Boot Security đặt role dạng "ROLE_ADMIN", strip prefix để lấy "ADMIN"
-    if (role.startsWith('ROLE_')) {
-      role = role.substring(5);
-    }
-    return role;
+    const role = decoded.scope || decoded.role || fallbackRole || 'USER';
+    return role.startsWith('ROLE_') ? role.substring(5) : role;
   } catch {
-    return fallbackStr || 'USER';
+    return fallbackRole || 'USER';
   }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const queryClient = useQueryClient();
 
-  // Dùng useCallback để tránh stale closure khi dùng logout trong useEffect
-  const logout = useCallback(async () => {
-    try {
-      // Gọi API để revoke Refresh Token trong DB trước khi xóa localStorage
-      // Nếu API thất bại (token hết hạn, mạng lỗi), vẫn xóa local state bình thường
-      await authService.logout();
-    } catch {
-      // Ignore lỗi API – user vẫn được logout khỏi frontend
-    } finally {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
-      setIsAuthenticated(false);
-      setRole(null);
-      setUser(null);
-      queryClient.clear();
-    }
+  const clearAuthState = useCallback(() => {
+    setAccessToken(null);
+    setIsAuthenticated(false);
+    setRole(null);
+    setUser(null);
+    queryClient.clear();
   }, [queryClient]);
 
+  const login = useCallback((token: string, userData: UserProfile) => {
+    setAccessToken(token);
+    setIsAuthenticated(true);
+    setRole(extractRoleFromToken(token, userData.role));
+    setUser(userData);
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Local state is cleared even when the network is unavailable.
+    } finally {
+      clearAuthState();
+    }
+  }, [clearAuthState]);
+
   useEffect(() => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    setAuthFailureHandler(clearAuthState);
+
     let active = true;
-    
-    const checkAuth = () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        const refreshToken = localStorage.getItem('refresh_token');
-        const userStr = localStorage.getItem('user');
-
-        if (token && refreshToken && userStr) {
-          const parsedUser = JSON.parse(userStr);
-
-          // Kiểm tra refresh token có hết hạn không.
-          // Nếu refresh token còn hạn → cứ tạm coi là đã đăng nhập (interceptor sẽ
-          // tự refresh access token khi cần). Nếu refresh token CŨNG hết hạn → logout
-          // ngay lập tức để tránh UX xấu (user thấy đã đăng nhập nhưng bị redirect
-          // đột ngột khi gọi API đầu tiên).
-          const decodedRefresh = jwtDecode<DecodedToken>(refreshToken);
-          if (decodedRefresh.exp * 1000 < Date.now()) {
-            // Refresh token hết hạn → xóa toàn bộ, bắt đăng nhập lại
-            logout();
-            return;
-          }
-
-          setIsAuthenticated(true);
-          // Dùng helper để extract role
-          const userRole = extractRoleFromToken(token, parsedUser.role);
-          setRole(userRole);
-          setUser(parsedUser);
+    authService.bootstrap()
+      .then((session) => {
+        if (active) {
+          login(session.accessToken, session.userLogin);
         }
-      } catch {
-        // Token hoặc user data bị corrupt → logout
-        logout();
-      } finally {
+      })
+      .catch(() => {
+        if (active) {
+          clearAuthState();
+        }
+      })
+      .finally(() => {
         if (active) {
           setIsInitialized(true);
         }
-      }
-    };
+      });
 
-    checkAuth();
-    
     return () => {
       active = false;
+      setAuthFailureHandler(null);
     };
-  }, [logout]); // Thêm logout vào deps để tránh stale closure
-
-  const login = (accessToken: string, refreshToken: string, userData: UserProfile) => {
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-
-    try {
-      // Dùng helper để extract role
-      const userRole = extractRoleFromToken(accessToken, userData.role);
-      setIsAuthenticated(true);
-      setRole(userRole);
-      setUser(userData);
-    } catch {
-      console.error('Invalid token format');
-    }
-  };
+  }, [clearAuthState, login]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, isInitialized, role, user, login, logout }}>
@@ -148,11 +121,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// This hook intentionally shares the provider module so callers use the same context instance.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
-
