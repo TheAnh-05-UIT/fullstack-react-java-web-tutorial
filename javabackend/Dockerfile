@@ -14,11 +14,14 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Create directory for persistent image uploads
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+RUN addgroup -S appgroup && adduser -S -G appgroup -u 10001 appuser \
+    && mkdir -p /app/data/uploads \
+    && chown -R appuser:appgroup /app
 
 # Copy built jar from build stage
-COPY --from=build /app/target/javabackend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build --chown=appuser:appgroup /app/target/javabackend-0.0.1-SNAPSHOT.jar app.jar
+
+USER appuser
 
 # Expose port 8080
 EXPOSE 8080
