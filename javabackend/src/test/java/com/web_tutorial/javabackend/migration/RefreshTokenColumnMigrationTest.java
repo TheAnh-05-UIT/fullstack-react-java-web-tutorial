@@ -30,8 +30,34 @@ class RefreshTokenColumnMigrationTest {
                         refresh_token VARCHAR(255) NULL
                     )
                     """);
+            statement.execute("""
+                    CREATE TABLE tutorials (
+                        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        status VARCHAR(255),
+                        is_deleted BIT(1) NOT NULL DEFAULT 0,
+                        created_at DATETIME(6)
+                    )
+                    """);
+            statement.execute("""
+                    CREATE TABLE projects (
+                        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        status VARCHAR(255),
+                        is_deleted BIT(1) NOT NULL DEFAULT 0,
+                        created_at DATETIME(6)
+                    )
+                    """);
+            statement.execute("""
+                    CREATE TABLE roadmaps (
+                        id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        slug VARCHAR(255),
+                        is_deleted BIT(1) NOT NULL DEFAULT 0
+                    )
+                    """);
             statement.executeUpdate(
                     "INSERT INTO users (refresh_token) VALUES ('" + EXISTING_VALUE + "'), (NULL)");
+            statement.executeUpdate("INSERT INTO tutorials (id) VALUES (1)");
+            statement.executeUpdate("INSERT INTO projects (id) VALUES (1)");
+            statement.executeUpdate("INSERT INTO roadmaps (id) VALUES (1)");
         }
 
         flyway().migrate();
@@ -58,6 +84,13 @@ class RefreshTokenColumnMigrationTest {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getLong("row_count")).isEqualTo(2);
                 assertThat(rows.getLong("max_length")).isZero();
+            }
+
+            for (String table : new String[] {"tutorials", "projects", "roadmaps"}) {
+                try (ResultSet rows = statement.executeQuery("SELECT COUNT(*) AS row_count FROM " + table)) {
+                    assertThat(rows.next()).isTrue();
+                    assertThat(rows.getLong("row_count")).isOne();
+                }
             }
 
             try (ResultSet table = statement.executeQuery("""

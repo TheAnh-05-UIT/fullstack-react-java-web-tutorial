@@ -22,6 +22,7 @@ class ProductionConfigurationTest {
         assertThat(properties.getProperty("javabackend.jwt.base64-secret"))
                 .isEqualTo("${JWT_SECRET_BASE64}");
         assertThat(properties.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
+        assertThat(properties.getProperty("spring.flyway.enabled")).isEqualTo("true");
         assertThat(properties.getProperty("spring.jpa.show-sql")).isEqualTo("false");
         assertThat(properties.getProperty("app.bootstrap.admin.enabled")).isEqualTo("false");
     }
@@ -40,6 +41,16 @@ class ProductionConfigurationTest {
                 .isEqualTo("${DB_USERNAME:${MYSQL_USER:webtutorial_app}}");
         assertThat(properties.getProperty("spring.datasource.password"))
                 .isEqualTo("${DB_PASSWORD:${MYSQL_PASSWORD:}}");
+        assertThat(properties.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
+        assertThat(properties.getProperty("spring.flyway.enabled")).isEqualTo("true");
+    }
+
+    @Test
+    void testProfileUsesFlywayAndHibernateValidation() throws IOException {
+        Properties properties = loadProperties("application-test.properties");
+
+        assertThat(properties.getProperty("spring.jpa.hibernate.ddl-auto")).isEqualTo("validate");
+        assertThat(properties.getProperty("spring.flyway.enabled")).isEqualTo("true");
     }
 
     @Test
