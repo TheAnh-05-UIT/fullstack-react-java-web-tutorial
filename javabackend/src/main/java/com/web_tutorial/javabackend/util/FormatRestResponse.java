@@ -47,7 +47,7 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
         res.setStatusCode(statusCode);
 
         // Nếu Controller trả về String thì không bọc lại tránh lỗi casting của Spring
-        if (body instanceof String) {
+        if (body instanceof String || body instanceof byte[]) {
             return body;
         }
 

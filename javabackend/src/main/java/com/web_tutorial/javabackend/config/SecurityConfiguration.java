@@ -179,7 +179,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/devops/phases/**",
                                 "/api/v1/devops/simulations/**")
                         .permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/upload").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/upload").hasAuthority("ROLE_ADMIN")
                         // Yêu cầu token cho các request khác
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
