@@ -185,6 +185,8 @@ public class SecurityConfiguration {
                         // Cho phép truy cập không cần token
                         .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh",
                                 "/api/v1/logout", "/api/v1/csrf").permitAll()
+                        .requestMatchers("/api/v1/users", "/api/v1/users/**")
+                        .hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/tutorials/admin",
                                 "/api/v1/tutorials/admin/**",
@@ -196,12 +198,32 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/v1/tutorials/**", "/api/v1/projects/**",
                                 "/api/v1/roadmaps/**", "/uploads/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/v1/tutorials/**", "/api/v1/projects/**",
+                                "/api/v1/roadmaps/**", "/api/v1/devops/**")
+                        .hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/v1/tutorials/**", "/api/v1/projects/**",
+                                "/api/v1/roadmaps/**", "/api/v1/devops/**")
+                        .hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/api/v1/tutorials/**", "/api/v1/projects/**",
+                                "/api/v1/roadmaps/**", "/api/v1/devops/**")
+                        .hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/v1/tutorials/**", "/api/v1/projects/**",
+                                "/api/v1/roadmaps/**", "/api/v1/devops/**")
+                        .hasAuthority("ROLE_ADMIN")
                         // DevOps: GET phases & simulations công khai cho học viên
                         // Admin endpoints (/admin/**) yêu cầu ROLE_ADMIN qua @PreAuthorize
+                        .requestMatchers(HttpMethod.GET, "/api/v1/devops/admin/**")
+                        .hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/devops/phases/**",
                                 "/api/v1/devops/simulations/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/upload").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/learning-progress/**")
+                        .hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                         // Yêu cầu token cho các request khác
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
