@@ -4,6 +4,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +20,7 @@ import com.web_tutorial.javabackend.domain.dto.response.auth.LoginResponseDTO;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.service.auth.AuthCookieService;
 import com.web_tutorial.javabackend.service.auth.AuthService;
+import com.web_tutorial.javabackend.security.ratelimit.SensitiveEndpointRateLimiter;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
 import jakarta.servlet.http.Cookie;
@@ -26,30 +31,51 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1")
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
     private final AuthCookieService authCookieService;
+    private final SensitiveEndpointRateLimiter rateLimiter;
 
-    public AuthController(AuthService authService, AuthCookieService authCookieService) {
+    public AuthController(
+            AuthService authService,
+            AuthCookieService authCookieService,
+            SensitiveEndpointRateLimiter rateLimiter) {
         this.authService = authService;
         this.authCookieService = authCookieService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/register")
     @ApiMessage("Register Success")
     public ResponseEntity<LoginResponseDTO> register(
-            @Valid @RequestBody RegisterRequestDTO registerDTO) throws IdInvalidException {
+            @Valid @RequestBody RegisterRequestDTO registerDTO,
+            HttpServletRequest request) throws IdInvalidException {
+        rateLimiter.beforeRegister(request);
         return sessionResponse(authService.register(registerDTO), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
     @ApiMessage("Login Success")
-    public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginDTO) {
-        return sessionResponse(authService.login(loginDTO), HttpStatus.OK);
+    public ResponseEntity<LoginResponseDTO> login(
+            @Valid @RequestBody LoginRequestDTO loginDTO,
+            HttpServletRequest request) {
+        rateLimiter.beforeLogin(request, loginDTO.getEmail());
+        try {
+            LoginResponseDTO response = authService.login(loginDTO);
+            rateLimiter.loginSucceeded(loginDTO.getEmail());
+            return sessionResponse(response, HttpStatus.OK);
+        } catch (AuthenticationException exception) {
+            rateLimiter.loginFailed(loginDTO.getEmail());
+            log.debug("Authentication failed");
+            throw new BadCredentialsException(
+                    "Invalid credentials or too many attempts.", exception);
+        }
     }
 
     @PostMapping("/refresh")
     @ApiMessage("Get new Access Token by Refresh Token")
     public ResponseEntity<LoginResponseDTO> refreshToken(HttpServletRequest request) {
+        rateLimiter.beforeRefresh(request);
         String refreshToken = readRefreshToken(request);
         if (refreshToken == null || refreshToken.isBlank()) {
             return unauthorizedAndClearCookie();

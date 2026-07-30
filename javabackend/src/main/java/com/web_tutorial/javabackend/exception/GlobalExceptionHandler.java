@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
@@ -175,6 +176,22 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<RestResponse<Object>> handleRateLimitExceeded(
+            RateLimitExceededException ex) {
+        RestResponse<Object> response = new RestResponse<>();
+        response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setError(HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase());
+        response.setMessage(ex.getMessage());
+        response.setData(null);
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(ex.getDecision().retryAfterSeconds()))
+                .header("RateLimit-Limit", Integer.toString(ex.getDecision().limit()))
+                .header("RateLimit-Remaining", Integer.toString(ex.getDecision().remaining()))
+                .header("RateLimit-Reset", Long.toString(ex.getDecision().resetEpochSeconds()))
+                .body(response);
     }
 
     private ResponseEntity<RestResponse<Object>> uploadError(HttpStatus status, String message) {

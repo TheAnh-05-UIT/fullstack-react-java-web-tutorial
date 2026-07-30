@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,6 +40,8 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -48,11 +51,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.time.Clock;
 
 // Cấu hình trung tâm bảo mật của ứng dụng (OAuth2 + JWT)
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties({RateLimitProperties.class, SecurityHeadersProperties.class})
 public class SecurityConfiguration {
 
     @Value("${javabackend.jwt.base64-secret}")
@@ -127,7 +132,8 @@ public class SecurityConfiguration {
 
     // Cấu hình phân quyền truy cập cho các API
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http, SecurityHeadersProperties headerProperties) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository =
                 CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfTokenRepository.setCookiePath("/");
@@ -145,6 +151,22 @@ public class SecurityConfiguration {
 
         http
                 .cors(Customizer.withDefaults())
+                .headers(headers -> {
+                    headers.contentSecurityPolicy(csp -> csp
+                            .policyDirectives(headerProperties.contentSecurityPolicy()));
+                    headers.referrerPolicy(referrer -> referrer
+                            .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+                    headers.addHeaderWriter(new StaticHeadersWriter(
+                            "Permissions-Policy", headerProperties.permissionsPolicy()));
+                    headers.frameOptions(frame -> frame.deny());
+                    if (headerProperties.hstsEnabled()) {
+                        headers.httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(headerProperties.hstsMaxAge().toSeconds()));
+                    } else {
+                        headers.httpStrictTransportSecurity(hsts -> hsts.disable());
+                    }
+                })
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(csrfTokenRequestHandler)
@@ -227,5 +249,10 @@ public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public Clock clock() {
+        return Clock.systemUTC();
     }
 }
