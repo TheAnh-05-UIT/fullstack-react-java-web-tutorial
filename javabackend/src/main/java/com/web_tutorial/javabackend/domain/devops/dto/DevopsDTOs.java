@@ -1,8 +1,15 @@
 package com.web_tutorial.javabackend.domain.devops.dto;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.SLUG_PATTERN;
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.TEXT_MAX;
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHAR_MAX;
 
 /**
  * Tập hợp các DTO (Data Transfer Object) dành cho module DevOps Lifecycle
@@ -61,19 +68,29 @@ public class DevopsDTOs {
      * Chỉ ROLE_ADMIN mới được phép thực thi.
      */
     public record PhaseRequest(
-            @NotBlank(message = "phaseKey (slug) không được để trống") String phaseKey,
+            @NotBlank(message = "phaseKey (slug) không được để trống")
+            @Size(max = VARCHAR_MAX, message = "phaseKey must not exceed 255 characters")
+            @Pattern(regexp = SLUG_PATTERN, message = "phaseKey contains invalid characters")
+            String phaseKey,
 
-            @NotBlank(message = "title không được để trống") String title,
+            @NotBlank(message = "title không được để trống")
+            @Size(max = VARCHAR_MAX, message = "title must not exceed 255 characters")
+            String title,
 
-            String name,
-            String tagline,
-            String summary,
+            @Size(max = VARCHAR_MAX, message = "name must not exceed 255 characters") String name,
+            @Size(max = TEXT_MAX, message = "tagline is too long") String tagline,
+            @Size(max = TEXT_MAX, message = "summary is too long") String summary,
+            @Size(max = VARCHAR_MAX, message = "heroSnippetTitle must not exceed 255 characters")
             String heroSnippetTitle,
-            String heroSnippet,
-            String iconName,
+            @Size(max = TEXT_MAX, message = "heroSnippet is too long") String heroSnippet,
+            @Size(max = VARCHAR_MAX, message = "iconName must not exceed 255 characters") String iconName,
+            @Size(max = VARCHAR_MAX, message = "colorGradient must not exceed 255 characters")
             String colorGradient,
 
-            @NotNull(message = "displayOrder không được để trống") @Min(value = 1, message = "displayOrder phải >= 1") Integer displayOrder,
+            @NotNull(message = "displayOrder không được để trống")
+            @Min(value = 1, message = "displayOrder phải >= 1")
+            @Max(value = 10_000, message = "displayOrder must not exceed 10000")
+            Integer displayOrder,
 
             boolean active,
             Object theme,

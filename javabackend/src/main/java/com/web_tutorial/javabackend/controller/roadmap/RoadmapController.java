@@ -14,10 +14,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.annotation.Validated;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
+import java.util.Set;
+
+import com.web_tutorial.javabackend.validation.ValidatedPageRequest;
+
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.SLUG_PATTERN;
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHAR_MAX;
 
 @RestController
 @RequestMapping("/api/v1/roadmaps")
+@Validated
 public class RoadmapController {
+
+    private static final Set<String> ALLOWED_SORT_FIELDS =
+            Set.of("id", "title", "createdAt", "updatedAt");
 
     private final RoadmapService roadmapService;
 
@@ -27,7 +44,12 @@ public class RoadmapController {
 
     @GetMapping
     @ApiMessage("Get All Roadmaps")
-    public ResponseEntity<ResultPaginationDTO> getAllRoadmaps(Pageable pageable) {
+    public ResponseEntity<ResultPaginationDTO> getAllRoadmaps(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            HttpServletRequest request) {
+        Pageable pageable = ValidatedPageRequest.of(page, size, request.getParameterValues("sort"),
+                ALLOWED_SORT_FIELDS);
         ResultPaginationDTO response = this.roadmapService.getAllRoadmaps(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -35,26 +57,35 @@ public class RoadmapController {
     @GetMapping("/admin")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @ApiMessage("Get All Roadmaps for Admin")
-    public ResponseEntity<ResultPaginationDTO> getAllRoadmapsForAdmin(Pageable pageable) {
+    public ResponseEntity<ResultPaginationDTO> getAllRoadmapsForAdmin(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            HttpServletRequest request) {
+        Pageable pageable = ValidatedPageRequest.of(page, size, request.getParameterValues("sort"),
+                ALLOWED_SORT_FIELDS);
         return ResponseEntity.ok(this.roadmapService.getAllRoadmapsForAdmin(pageable));
     }
 
     @GetMapping("/admin/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @ApiMessage("Get Roadmap by Id for Admin")
-    public ResponseEntity<RoadmapResponseDTO> getRoadmapByIdForAdmin(@PathVariable Long id) {
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapByIdForAdmin(@PathVariable @Positive Long id) {
         return ResponseEntity.ok(this.roadmapService.getRoadmapResponseByIdForAdmin(id));
     }
 
     @GetMapping("/{id}")
     @ApiMessage("Get Roadmap by Id")
-    public ResponseEntity<RoadmapResponseDTO> getRoadmapById(@PathVariable Long id) {
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapById(@PathVariable @Positive Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(this.roadmapService.getRoadmapResponseById(id));
     }
 
     @GetMapping("/slug/{slug}")
     @ApiMessage("Get Roadmap by slug")
-    public ResponseEntity<RoadmapResponseDTO> getRoadmapBySlug(@PathVariable String slug) {
+    public ResponseEntity<RoadmapResponseDTO> getRoadmapBySlug(
+            @PathVariable
+            @Size(max = VARCHAR_MAX)
+            @Pattern(regexp = SLUG_PATTERN)
+            String slug) {
         return ResponseEntity.status(HttpStatus.OK).body(this.roadmapService.getRoadmapResponseBySlug(slug));
     }
 
@@ -70,7 +101,7 @@ public class RoadmapController {
     @ApiMessage("Update a Roadmap")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<RoadmapResponseDTO> updateRoadmap(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateRoadmapRequestDTO requestDTO) {
         return ResponseEntity.status(HttpStatus.OK).body(this.roadmapService.updateRoadmapFromDTO(id, requestDTO));
     }
@@ -78,7 +109,7 @@ public class RoadmapController {
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a Roadmap")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Void> deleteRoadmap(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteRoadmap(@PathVariable @Positive Long id) {
         this.roadmapService.deleteRoadmap(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
