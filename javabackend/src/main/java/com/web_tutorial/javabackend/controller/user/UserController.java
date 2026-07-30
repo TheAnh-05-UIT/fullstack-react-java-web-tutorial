@@ -10,10 +10,12 @@ import com.web_tutorial.javabackend.service.user.UserService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/users")
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -38,7 +41,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @ApiMessage("Get User by Id")
-    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable @Positive Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.getUserResponseById(id));
     }
 
@@ -53,14 +56,14 @@ public class UserController {
     @PutMapping("/{id}")
     @ApiMessage("Update a User")
     public ResponseEntity<UpdateUserResponseDTO> updateUser(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateUserRequestDTO requestDTO) throws IdInvalidException {
         return ResponseEntity.status(HttpStatus.OK).body(this.userService.updateUserFromDTO(id, requestDTO));
     }
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a User")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable @Positive Long id) {
         this.userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

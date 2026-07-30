@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,12 @@ import com.web_tutorial.javabackend.service.devops.DevopsService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.SLUG_PATTERN;
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHAR_MAX;
 
 /**
  * REST API Controller cho module DevOps Lifecycle Content.
@@ -33,6 +40,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/v1/devops")
+@Validated
 public class DevopsController {
 
     private final DevopsService devopsService;
@@ -58,7 +66,7 @@ public class DevopsController {
     @GetMapping("/phases/{phaseKey}")
     @ApiMessage("Get Phase Detail with Content by Key")
     public ResponseEntity<DevopsDTOs.PhaseDetailResponse> getPhaseDetailByKey(
-            @PathVariable String phaseKey) {
+            @PathVariable @Size(max = VARCHAR_MAX) @Pattern(regexp = SLUG_PATTERN) String phaseKey) {
         DevopsDTOs.PhaseDetailResponse phaseDetail = devopsService.getPhaseDetailByKey(phaseKey)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy Giai đoạn DevOps với khóa: " + phaseKey));
@@ -95,7 +103,7 @@ public class DevopsController {
     @ApiMessage("Admin: Update DevOps Phase Content")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<DevopsDTOs.PhaseDetailResponse> updatePhase(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid DevopsDTOs.PhaseRequest request) {
         DevopsDTOs.PhaseDetailResponse updatedPhase = devopsService.updatePhase(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(updatedPhase);
@@ -108,7 +116,7 @@ public class DevopsController {
     @DeleteMapping("/phases/{id}")
     @ApiMessage("Admin: Delete (Soft) DevOps Phase")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<Void> deletePhase(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePhase(@PathVariable @Positive Long id) {
         devopsService.deletePhase(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

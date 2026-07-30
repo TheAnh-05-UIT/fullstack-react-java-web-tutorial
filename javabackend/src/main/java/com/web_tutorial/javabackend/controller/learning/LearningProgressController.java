@@ -3,6 +3,7 @@ package com.web_tutorial.javabackend.controller.learning;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,10 +26,19 @@ import com.web_tutorial.javabackend.service.learning.LearningProgressService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.CONTENT_KEY_MAX;
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.CONTENT_KEY_PATTERN;
+import static com.web_tutorial.javabackend.validation.ApiInputConstraints.PAGE_SIZE_MAX;
 
 @RestController
 @RequestMapping("/api/v1/learning-progress/me")
 @PreAuthorize("hasAnyAuthority('ROLE_USER', 'ROLE_ADMIN')")
+@Validated
 public class LearningProgressController {
 
     private final LearningProgressService learningProgressService;
@@ -53,8 +63,8 @@ public class LearningProgressController {
     @GetMapping
     @ApiMessage("Get my learning progress")
     public ResponseEntity<LearningProgressPageResponse> getMyProgressPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(PAGE_SIZE_MAX) int size,
             @RequestParam(required = false) LearningProgressStatus status,
             @RequestParam(required = false) LearningContentType contentType) throws IdInvalidException {
         
@@ -66,7 +76,8 @@ public class LearningProgressController {
     @ApiMessage("Get learning progress")
     public ResponseEntity<LearningProgressResponse> getMyProgress(
             @PathVariable LearningContentType contentType,
-            @PathVariable String contentKey) throws IdInvalidException {
+            @PathVariable @Size(max = CONTENT_KEY_MAX)
+            @Pattern(regexp = CONTENT_KEY_PATTERN) String contentKey) throws IdInvalidException {
         return ResponseEntity.ok(learningProgressService.getMyProgress(contentType, contentKey));
     }
 
@@ -74,7 +85,8 @@ public class LearningProgressController {
     @ApiMessage("Touch learning progress")
     public ResponseEntity<LearningProgressResponse> touchMyContent(
             @PathVariable LearningContentType contentType,
-            @PathVariable String contentKey) throws IdInvalidException {
+            @PathVariable @Size(max = CONTENT_KEY_MAX)
+            @Pattern(regexp = CONTENT_KEY_PATTERN) String contentKey) throws IdInvalidException {
         return ResponseEntity.ok(learningProgressService.touchMyContent(contentType, contentKey));
     }
 
@@ -82,7 +94,8 @@ public class LearningProgressController {
     @ApiMessage("Update learning progress")
     public ResponseEntity<LearningProgressResponse> updateMyProgress(
             @PathVariable LearningContentType contentType,
-            @PathVariable String contentKey,
+            @PathVariable @Size(max = CONTENT_KEY_MAX)
+            @Pattern(regexp = CONTENT_KEY_PATTERN) String contentKey,
             @Valid @RequestBody UpdateLearningProgressRequest request) throws IdInvalidException {
         return ResponseEntity.ok(learningProgressService.updateMyProgress(contentType, contentKey, request));
     }
@@ -91,7 +104,8 @@ public class LearningProgressController {
     @ApiMessage("Complete learning content")
     public ResponseEntity<LearningProgressResponse> completeMyContent(
             @PathVariable LearningContentType contentType,
-            @PathVariable String contentKey) throws IdInvalidException {
+            @PathVariable @Size(max = CONTENT_KEY_MAX)
+            @Pattern(regexp = CONTENT_KEY_PATTERN) String contentKey) throws IdInvalidException {
         return ResponseEntity.ok(learningProgressService.completeMyContent(contentType, contentKey));
     }
 
@@ -99,7 +113,8 @@ public class LearningProgressController {
     @ApiMessage("Reset learning progress")
     public ResponseEntity<Void> resetMyProgress(
             @PathVariable LearningContentType contentType,
-            @PathVariable String contentKey) throws IdInvalidException {
+            @PathVariable @Size(max = CONTENT_KEY_MAX)
+            @Pattern(regexp = CONTENT_KEY_PATTERN) String contentKey) throws IdInvalidException {
         learningProgressService.resetMyProgress(contentType, contentKey);
         return ResponseEntity.noContent().build();
     }
