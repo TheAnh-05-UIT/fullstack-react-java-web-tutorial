@@ -22,11 +22,19 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Tách danh sách origins từ config (phân cách bởi dấu phẩy)
-        List<String> allowedOrigins = Arrays.asList(allowedOriginsStr.split(","));
+        List<String> allowedOrigins = Arrays.stream(allowedOriginsStr.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+        if (allowedOrigins.stream().anyMatch(origin -> origin.contains("*"))) {
+            throw new IllegalStateException(
+                    "CORS allowed origins cannot contain wildcards when credentials are enabled");
+        }
         configuration.setAllowedOrigins(allowedOrigins);
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowedHeaders(
+                Arrays.asList("Authorization", "Content-Type", "Accept", "X-XSRF-TOKEN"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // Cache preflight 1 giờ
 

@@ -1,5 +1,7 @@
 package com.web_tutorial.javabackend.domain.dto.response.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class LoginResponseDTO {
     private String accessToken;
+    @JsonIgnore
     private String refreshToken;
     private UserLogin userLogin;
 

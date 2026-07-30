@@ -2,6 +2,7 @@ package com.web_tutorial.javabackend.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import jakarta.servlet.http.Cookie;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -171,22 +173,24 @@ class RefreshTokenSessionIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
-    void logoutRevokesAllFamiliesAndIsIdempotent() throws Exception {
+    void logoutRevokesCurrentFamilyAndIsIdempotent() throws Exception {
         User user = createUser();
         TokenPair first = login(user.getEmail());
         TokenPair second = login(user.getEmail());
 
-        logout(first.accessToken(), 204);
-        logout(first.accessToken(), 204);
+        logout(first.refreshToken(), 204);
+        logout(first.refreshToken(), 204);
 
         refresh(first.refreshToken(), 401);
-        refresh(second.refreshToken(), 401);
-        assertThat(sessionRepository.findAllByUserId(user.getId()))
-                .hasSize(2)
-                .allSatisfy(session -> {
-                    assertThat(session.getRevokedAt()).isNotNull();
-                    assertThat(session.getRevokeReason()).isEqualTo("LOGOUT_ALL");
-                });
+        refresh(second.refreshToken(), 200);
+        Jwt firstJwt = refreshJwtDecoder.decode(first.refreshToken());
+        Jwt secondJwt = refreshJwtDecoder.decode(second.refreshToken());
+        assertThat(sessionRepository.findByFamilyId(
+                firstJwt.getClaimAsString("family_id")).orElseThrow().getRevokeReason())
+                .isEqualTo("LOGOUT");
+        assertThat(sessionRepository.findByFamilyId(
+                secondJwt.getClaimAsString("family_id")).orElseThrow().getRevokedAt())
+                .isNull();
     }
 
     private RefreshResult concurrentRefresh(String token, CountDownLatch ready,
@@ -194,13 +198,12 @@ class RefreshTokenSessionIntegrationTest extends AbstractMySqlIntegrationTest {
         ready.countDown();
         start.await();
         MvcResult result = mockMvc.perform(post("/api/v1/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshBody(token)))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", token)))
                 .andReturn();
         int status = result.getResponse().getStatus();
         String refreshToken = status == 200
-                ? objectMapper.readTree(result.getResponse().getContentAsString())
-                        .at("/data/refreshToken").asText()
+                ? result.getResponse().getCookie("refresh_token").getValue()
                 : null;
         return new RefreshResult(status, refreshToken);
     }
@@ -212,25 +215,30 @@ class RefreshTokenSessionIntegrationTest extends AbstractMySqlIntegrationTest {
                 .andReturn();
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
         JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).path("data");
-        return new TokenPair(data.path("accessToken").asText(), data.path("refreshToken").asText());
+        return new TokenPair(
+                data.path("accessToken").asText(),
+                result.getResponse().getCookie("refresh_token").getValue());
     }
 
     private TokenPair refresh(String token, int expectedStatus) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/v1/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(refreshBody(token)))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", token)))
                 .andReturn();
         assertThat(result.getResponse().getStatus()).isEqualTo(expectedStatus);
         if (expectedStatus != 200) {
             return null;
         }
         JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).path("data");
-        return new TokenPair(data.path("accessToken").asText(), data.path("refreshToken").asText());
+        return new TokenPair(
+                data.path("accessToken").asText(),
+                result.getResponse().getCookie("refresh_token").getValue());
     }
 
-    private void logout(String accessToken, int expectedStatus) throws Exception {
+    private void logout(String refreshToken, int expectedStatus) throws Exception {
         int status = mockMvc.perform(post("/api/v1/logout")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", refreshToken)))
                 .andReturn().getResponse().getStatus();
         assertThat(status).isEqualTo(expectedStatus);
     }
@@ -248,10 +256,6 @@ class RefreshTokenSessionIntegrationTest extends AbstractMySqlIntegrationTest {
         user.setPassword(passwordEncoder.encode(PASSWORD));
         user.setRole(role);
         return userRepository.saveAndFlush(user);
-    }
-
-    private String refreshBody(String token) {
-        return "{\"refreshToken\":\"" + token + "\"}";
     }
 
     private void expireConcurrencyGrace(String refreshToken) {

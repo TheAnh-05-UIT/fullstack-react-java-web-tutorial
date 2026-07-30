@@ -26,6 +26,7 @@ public class RefreshTokenSessionService {
             "Refresh token không hợp lệ hoặc đã hết hạn.";
     private static final String REUSE_REASON = "TOKEN_REUSE";
     private static final String LOGOUT_REASON = "LOGOUT_ALL";
+    private static final String CURRENT_LOGOUT_REASON = "LOGOUT";
 
     private final RefreshTokenSessionRepository sessionRepository;
     private final RefreshTokenHasher tokenHasher;
@@ -105,6 +106,21 @@ public class RefreshTokenSessionService {
     @Transactional
     public void revokeAll(User user) {
         sessionRepository.revokeActiveSessionsForUser(user.getId(), Instant.now(), LOGOUT_REASON);
+    }
+
+    @Transactional
+    public void revokeCurrentFamily(String rawToken, Jwt jwt) {
+        String familyId = requiredClaim(jwt, FAMILY_CLAIM);
+        sessionRepository.findByFamilyIdForUpdate(familyId).ifPresent(session -> {
+            boolean tokenMatches = session.getCurrentJti().equals(requiredJwtId(jwt))
+                    && hashesMatch(session.getTokenHash(), tokenHasher.hash(rawToken))
+                    && session.getUser().getEmail().equals(jwt.getSubject());
+            if (tokenMatches && !session.isRevoked()) {
+                session.setRevokedAt(Instant.now());
+                session.setRevokeReason(CURRENT_LOGOUT_REASON);
+                sessionRepository.saveAndFlush(session);
+            }
+        });
     }
 
     private boolean isConcurrentDuplicate(RefreshTokenSession session, String incomingJti,

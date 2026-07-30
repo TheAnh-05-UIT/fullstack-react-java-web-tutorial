@@ -8,9 +8,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.ObjectPostProcessor;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -31,9 +33,17 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.HttpStatusAccessDeniedHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+
+import jakarta.servlet.DispatcherType;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -118,13 +128,41 @@ public class SecurityConfiguration {
     // Cấu hình phân quyền truy cập cho các API
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository =
+                CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookiePath("/");
+        CsrfTokenRequestAttributeHandler csrfTokenRequestHandler =
+                new CsrfTokenRequestAttributeHandler();
+        csrfTokenRequestHandler.setCsrfRequestAttributeName(null);
+        RequestMatcher cookieAuthenticatedSessionRequest = request -> {
+            if (!HttpMethod.POST.matches(request.getMethod())) {
+                return false;
+            }
+            String requestPath = request.getRequestURI().substring(request.getContextPath().length());
+            return "/api/v1/refresh".equals(requestPath)
+                    || "/api/v1/logout".equals(requestPath);
+        };
+
         http
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(csrfTokenRequestHandler)
+                        .requireCsrfProtectionMatcher(cookieAuthenticatedSessionRequest)
+                        .withObjectPostProcessor(new ObjectPostProcessor<CsrfFilter>() {
+                            @Override
+                            public <O extends CsrfFilter> O postProcess(O filter) {
+                                filter.setAccessDeniedHandler(
+                                        new HttpStatusAccessDeniedHandler(HttpStatus.FORBIDDEN));
+                                return filter;
+                            }
+                        }))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 
                         // Cho phép truy cập không cần token
-                        .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh").permitAll()
+                        .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh",
+                                "/api/v1/logout", "/api/v1/csrf").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/tutorials/admin",
                                 "/api/v1/tutorials/admin/**",
@@ -142,10 +180,13 @@ public class SecurityConfiguration {
                                 "/api/v1/devops/simulations/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/upload").authenticated()
-                        // /api/v1/logout yêu cầu phải đăng nhập (có Access Token hợp lệ)
-                        .requestMatchers("/api/v1/logout").authenticated()
                         // Yêu cầu token cho các request khác
                         .anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler(new HttpStatusAccessDeniedHandler(HttpStatus.FORBIDDEN))
+                        .defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(HttpStatus.FORBIDDEN),
+                                cookieAuthenticatedSessionRequest))
                 // Không sử dụng Session
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 

@@ -1,7 +1,6 @@
 package com.web_tutorial.javabackend.service.auth;
 
 import com.web_tutorial.javabackend.domain.dto.request.auth.LoginRequestDTO;
-import com.web_tutorial.javabackend.domain.dto.request.auth.RefreshTokenRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.auth.RegisterRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.auth.LoginResponseDTO;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
@@ -19,7 +18,7 @@ public interface AuthService {
     LoginResponseDTO login(LoginRequestDTO loginDTO);
 
     // Kiểm tra refresh token và cấp lại cặp token mới (token rotation)
-    LoginResponseDTO refreshToken(RefreshTokenRequestDTO request);
+    LoginResponseDTO refreshToken(String refreshToken);
 
-    void logout(String email);
+    void logout(String refreshToken);
 }

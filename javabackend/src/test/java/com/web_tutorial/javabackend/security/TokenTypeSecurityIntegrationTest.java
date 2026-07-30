@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,6 +29,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import jakarta.servlet.http.Cookie;
 
 import com.web_tutorial.javabackend.config.SecurityConfiguration;
 import com.web_tutorial.javabackend.domain.user.Role;
@@ -83,7 +86,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
     void refreshTokenCannotAuthenticateProtectedEndpoint() throws Exception {
         String refreshToken = refreshToken("stolen@example.test");
 
-        mockMvc.perform(post("/api/v1/logout")
+        mockMvc.perform(get("/api/v1/users")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshToken))
                 .andExpect(status().isUnauthorized());
     }
@@ -103,11 +106,11 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
                 UsernamePasswordAuthenticationToken.authenticated(
                         "user@example.test",
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
 
-        mockMvc.perform(post("/api/v1/logout")
+        mockMvc.perform(get("/api/v1/users")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -231,19 +234,19 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         User user = createUser(email);
         user.setPassword(passwordEncoder.encode(password));
         userRepository.saveAndFlush(user);
-        String loginResponse = login(email, password);
-        String refreshToken = objectMapper.readTree(loginResponse).at("/data/refreshToken").asText();
+        TokenPair loginResponse = login(email, password);
+        String refreshToken = loginResponse.refreshToken();
 
         mockMvc.perform(post("/api/v1/refresh")
-                        .contentType("application/json")
-                        .content(refreshBody(refreshToken)))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.data.refreshToken").doesNotExist());
 
         mockMvc.perform(post("/api/v1/refresh")
-                        .contentType("application/json")
-                        .content(refreshBody(refreshToken)))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -255,10 +258,8 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         user.setPassword(passwordEncoder.encode(password));
         userRepository.saveAndFlush(user);
 
-        String response = login(email, password);
-
-        JsonNode body = objectMapper.readTree(response);
-        String responseRefreshToken = body.at("/data/refreshToken").asText();
+        TokenPair response = login(email, password);
+        String responseRefreshToken = response.refreshToken();
         Jwt refreshJwt = refreshJwtDecoder.decode(responseRefreshToken);
         var session = refreshTokenSessionRepository
                 .findByFamilyId(refreshJwt.getClaimAsString("family_id")).orElseThrow();
@@ -331,47 +332,44 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         User user = createUser(email);
         user.setPassword(passwordEncoder.encode(password));
         userRepository.saveAndFlush(user);
-        String refreshToken = objectMapper.readTree(login(email, password))
-                .at("/data/refreshToken").asText();
-        String accessToken = securityService.generateAccessToken(
-                UsernamePasswordAuthenticationToken.authenticated(
-                        user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+        String refreshToken = login(email, password).refreshToken();
 
         mockMvc.perform(post("/api/v1/logout")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", refreshToken)))
                 .andExpect(status().isNoContent());
 
         assertRefreshRejects(refreshToken);
     }
 
     private void assertProtectedEndpointRejects(String token) throws Exception {
-        mockMvc.perform(post("/api/v1/logout")
+        mockMvc.perform(get("/api/v1/users")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isUnauthorized());
     }
 
     private void assertRefreshRejects(String token) throws Exception {
         mockMvc.perform(post("/api/v1/refresh")
-                        .contentType("application/json")
-                        .content(refreshBody(token)))
+                        .with(csrf())
+                        .cookie(new Cookie("refresh_token", token)))
                 .andExpect(status().isUnauthorized());
-    }
-
-    private String refreshBody(String token) {
-        return "{\"refreshToken\":\"" + token + "\"}";
     }
 
     private String refreshToken(String email) {
         return securityService.generateRefreshToken(email, UUID.randomUUID().toString());
     }
 
-    private String login(String email, String password) throws Exception {
-        return mockMvc.perform(post("/api/v1/login")
+    private TokenPair login(String email, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/login")
                         .contentType("application/json")
                         .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
-                .andReturn().getResponse().getContentAsString();
+                .andExpect(jsonPath("$.data.refreshToken").doesNotExist())
+                .andReturn();
+        JsonNode data = objectMapper.readTree(result.getResponse().getContentAsString()).path("data");
+        return new TokenPair(
+                data.path("accessToken").asText(),
+                result.getResponse().getCookie("refresh_token").getValue());
     }
 
     private User createUser(String email) {
@@ -410,5 +408,8 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         }
         return jwtEncoder.encode(JwtEncoderParameters.from(
                 JwsHeader.with(SecurityConfiguration.JWT_ALGORITHM).build(), claims.build())).getTokenValue();
+    }
+
+    private record TokenPair(String accessToken, String refreshToken) {
     }
 }

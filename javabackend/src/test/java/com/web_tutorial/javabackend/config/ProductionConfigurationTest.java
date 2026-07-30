@@ -25,6 +25,7 @@ class ProductionConfigurationTest {
         assertThat(properties.getProperty("spring.flyway.enabled")).isEqualTo("true");
         assertThat(properties.getProperty("spring.jpa.show-sql")).isEqualTo("false");
         assertThat(properties.getProperty("app.bootstrap.admin.enabled")).isEqualTo("false");
+        assertThat(properties.getProperty("app.security.cookies.secure")).isEqualTo("true");
     }
 
     @Test

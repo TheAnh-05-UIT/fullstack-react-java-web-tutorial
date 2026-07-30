@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web_tutorial.javabackend.domain.dto.request.auth.LoginRequestDTO;
-import com.web_tutorial.javabackend.domain.dto.request.auth.RefreshTokenRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.auth.RegisterRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.auth.LoginResponseDTO;
 import com.web_tutorial.javabackend.domain.user.RefreshTokenSession;
@@ -85,8 +84,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
-    public LoginResponseDTO refreshToken(RefreshTokenRequestDTO request) {
-        String incomingRefreshToken = request.getRefreshToken();
+    public LoginResponseDTO refreshToken(String incomingRefreshToken) {
         try {
             Jwt incomingJwt = securityService.decodeRefreshToken(incomingRefreshToken);
             RefreshTokenSession session =
@@ -109,8 +107,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void logout(String email) {
-        userService.getUserByEmail(email).ifPresent(refreshTokenSessionService::revokeAll);
+    public void logout(String refreshToken) {
+        Jwt jwt = securityService.decodeRefreshToken(refreshToken);
+        refreshTokenSessionService.revokeCurrentFamily(refreshToken, jwt);
     }
 
     private String createRefreshSession(User user) {
