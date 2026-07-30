@@ -1,13 +1,21 @@
 package com.web_tutorial.javabackend.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 
+import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.validation.BindException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
@@ -16,6 +24,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.web_tutorial.javabackend.domain.dto.response.RestResponse;
@@ -126,11 +135,48 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
 
-        List<String> errors = fieldErrors.stream().map(FieldError::getDefaultMessage).collect(Collectors.toList());
+        List<String> errors = fieldErrors.stream()
+                .sorted(Comparator.comparing(FieldError::getField)
+                        .thenComparing(error -> String.valueOf(error.getDefaultMessage())))
+                .map(FieldError::getDefaultMessage)
+                .distinct()
+                .collect(Collectors.toList());
         // Nếu chỉ có 1 lỗi thì trả về String, nhiều lỗi thì trả về List<String>
         res.setMessage(errors.size() > 1 ? errors : errors.get(0));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    @ExceptionHandler(ApiInputValidationException.class)
+    public ResponseEntity<RestResponse<Object>> handleApiInputValidation(ApiInputValidationException ex) {
+        return inputError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            BindException.class,
+            ConstraintViolationException.class,
+            HandlerMethodValidationException.class,
+            MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<RestResponse<Object>> handleMalformedInput(Exception ex) {
+        return inputError(HttpStatus.BAD_REQUEST, "Request input is invalid.");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<RestResponse<Object>> handleUnsupportedMediaType(
+            HttpMediaTypeNotSupportedException ex) {
+        return inputError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content type is not supported.");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<RestResponse<Object>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex) {
+        if (isDuplicateKey(ex)) {
+            return inputError(HttpStatus.CONFLICT, "A resource with the same unique value already exists.");
+        }
+        log.error("Database integrity operation failed", ex);
+        return inputError(HttpStatus.INTERNAL_SERVER_ERROR, "Database operation failed.");
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -195,11 +241,26 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<RestResponse<Object>> uploadError(HttpStatus status, String message) {
+        return inputError(status, message);
+    }
+
+    private ResponseEntity<RestResponse<Object>> inputError(HttpStatus status, Object message) {
         RestResponse<Object> response = new RestResponse<>();
         response.setStatusCode(status.value());
         response.setError(status.getReasonPhrase());
         response.setMessage(message);
         response.setData(null);
         return ResponseEntity.status(status).body(response);
+    }
+
+    private boolean isDuplicateKey(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof SQLException sqlException && sqlException.getErrorCode() == 1062) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
