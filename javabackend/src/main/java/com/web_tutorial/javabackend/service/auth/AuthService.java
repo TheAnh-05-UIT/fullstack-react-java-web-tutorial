@@ -20,4 +20,6 @@ public interface AuthService {
 
     // Kiểm tra refresh token và cấp lại cặp token mới (token rotation)
     LoginResponseDTO refreshToken(RefreshTokenRequestDTO request);
+
+    void logout(String email);
 }

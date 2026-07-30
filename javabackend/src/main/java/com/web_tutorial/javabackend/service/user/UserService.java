@@ -49,13 +49,10 @@ public interface UserService {
     Optional<User> getUserByEmail(String email);
 
     // Lưu Refresh Token vào Database
-    void updateRefreshToken(String email, String refreshToken);
 
     // Tìm User bằng Refresh Token
-    Optional<User> getUserByRefreshToken(String refreshToken);
 
     // Thu hồi Refresh Token khi user logout
-    void revokeRefreshToken(String email);
 
     // Gán role cho user theo tên role ("USER" hoặc "ADMIN")
     // Trả về false nếu role không tồn tại

@@ -15,7 +15,6 @@ import com.web_tutorial.javabackend.domain.dto.request.auth.RegisterRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.auth.LoginResponseDTO;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.service.auth.AuthService;
-import com.web_tutorial.javabackend.service.user.UserService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
 import jakarta.validation.Valid;
@@ -26,11 +25,8 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserService userService;
-
-    public AuthController(AuthService authService, UserService userService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userService = userService;
     }
 
     @PostMapping("/register")
@@ -63,7 +59,7 @@ public class AuthController {
     public ResponseEntity<Void> logout(@AuthenticationPrincipal Jwt jwt) {
         // Lấy email từ JWT claim "sub" để revoke đúng user
         String email = jwt.getSubject();
-        userService.revokeRefreshToken(email);
+        authService.logout(email);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

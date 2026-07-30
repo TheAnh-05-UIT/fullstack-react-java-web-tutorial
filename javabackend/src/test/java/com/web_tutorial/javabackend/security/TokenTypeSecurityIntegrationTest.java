@@ -33,10 +33,12 @@ import com.web_tutorial.javabackend.config.SecurityConfiguration;
 import com.web_tutorial.javabackend.domain.user.Role;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.repository.user.RoleRepository;
+import com.web_tutorial.javabackend.repository.user.RefreshTokenSessionRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.web_tutorial.javabackend.service.security.SecurityService;
+import com.web_tutorial.javabackend.service.security.RefreshTokenHasher;
 import com.web_tutorial.javabackend.support.AbstractMySqlIntegrationTest;
 
 @SpringBootTest
@@ -66,6 +68,12 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
     private RoleRepository roleRepository;
 
     @Autowired
+    private RefreshTokenSessionRepository refreshTokenSessionRepository;
+
+    @Autowired
+    private RefreshTokenHasher refreshTokenHasher;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -73,7 +81,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Test
     void refreshTokenCannotAuthenticateProtectedEndpoint() throws Exception {
-        String refreshToken = securityService.generateRefreshToken("stolen@example.test");
+        String refreshToken = refreshToken("stolen@example.test");
 
         mockMvc.perform(post("/api/v1/logout")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshToken))
@@ -82,7 +90,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Test
     void refreshTokenCannotAuthenticateAdminEndpoint() throws Exception {
-        String refreshToken = securityService.generateRefreshToken("stolen-admin@example.test");
+        String refreshToken = refreshToken("stolen-admin@example.test");
 
         mockMvc.perform(get("/api/v1/tutorials/admin")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + refreshToken))
@@ -183,7 +191,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_USER"),
                                 new SimpleGrantedAuthority("ROLE_UNKNOWN"))));
-        String refreshToken = securityService.generateRefreshToken("claims@example.test");
+        String refreshToken = refreshToken("claims@example.test");
 
         Jwt access = jwtDecoder.decode(accessToken);
         Jwt refresh = refreshJwtDecoder.decode(refreshToken);
@@ -198,6 +206,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         assertThat(refresh.getClaimAsString("iss")).isEqualTo("web-tutorial");
         assertThat(refresh.getAudience()).containsExactly("webtutorial-auth");
         assertThat(refresh.getClaimAsString("token_type")).isEqualTo("refresh");
+        assertThat(refresh.getClaimAsString("family_id")).isNotBlank();
         assertThat(refresh.getId()).isNotBlank();
         assertThat(refresh.getClaims()).doesNotContainKey("scope");
         assertThat(refresh.getExpiresAt()).isAfter(refresh.getIssuedAt());
@@ -209,7 +218,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         String accessToken = securityService.generateAccessToken(
                 UsernamePasswordAuthenticationToken.authenticated(
                         "cross-policy@example.test", null, List.of()));
-        String refreshToken = securityService.generateRefreshToken("cross-policy@example.test");
+        String refreshToken = refreshToken("cross-policy@example.test");
 
         assertThatThrownBy(() -> jwtDecoder.decode(refreshToken)).isInstanceOf(JwtException.class);
         assertThatThrownBy(() -> refreshJwtDecoder.decode(accessToken)).isInstanceOf(JwtException.class);
@@ -217,10 +226,13 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Test
     void validRefreshRotatesPairAndOldTokenIsRejected() throws Exception {
-        User user = createUser("rotation-" + UUID.randomUUID() + "@example.test");
-        String refreshToken = securityService.generateRefreshToken(user.getEmail());
-        user.setRefreshToken(refreshToken);
+        String email = "rotation-" + UUID.randomUUID() + "@example.test";
+        String password = "Test-password-123!";
+        User user = createUser(email);
+        user.setPassword(passwordEncoder.encode(password));
         userRepository.saveAndFlush(user);
+        String loginResponse = login(email, password);
+        String refreshToken = objectMapper.readTree(loginResponse).at("/data/refreshToken").asText();
 
         mockMvc.perform(post("/api/v1/refresh")
                         .contentType("application/json")
@@ -236,28 +248,22 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
     }
 
     @Test
-    void loginPersistsCompleteRefreshTokenWithoutTruncation() throws Exception {
+    void loginPersistsOnlyRefreshTokenHash() throws Exception {
         String email = "login-" + UUID.randomUUID() + "@example.test";
         String password = "Test-password-123!";
         User user = createUser(email);
         user.setPassword(passwordEncoder.encode(password));
         userRepository.saveAndFlush(user);
 
-        String response = mockMvc.perform(post("/api/v1/login")
-                        .contentType("application/json")
-                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        String response = login(email, password);
 
         JsonNode body = objectMapper.readTree(response);
         String responseRefreshToken = body.at("/data/refreshToken").asText();
-        String storedRefreshToken = userRepository.findByEmail(email).orElseThrow().getRefreshToken();
-        assertThat(storedRefreshToken)
-                .hasSize(responseRefreshToken.length())
-                .isEqualTo(responseRefreshToken);
+        Jwt refreshJwt = refreshJwtDecoder.decode(responseRefreshToken);
+        var session = refreshTokenSessionRepository
+                .findByFamilyId(refreshJwt.getClaimAsString("family_id")).orElseThrow();
+        assertThat(session.getTokenHash()).hasSize(64).isEqualTo(refreshTokenHasher.hash(responseRefreshToken));
+        assertThat(session.getTokenHash()).doesNotContain(responseRefreshToken);
     }
 
     @Test
@@ -269,14 +275,11 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
         String adminAccess = securityService.generateAccessToken(
                 UsernamePasswordAuthenticationToken.authenticated(
                         longEmail, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
-        String refresh = securityService.generateRefreshToken(longEmail);
+        String refresh = refreshToken(longEmail);
 
         assertThat(userAccess.length()).isLessThan(2048);
         assertThat(adminAccess.length()).isLessThan(2048);
         assertThat(refresh.length()).isLessThan(2048);
-        System.out.printf(
-                "JWT length evidence only: ROLE_USER access=%d, ROLE_ADMIN access=%d, max-subject refresh=%d%n",
-                userAccess.length(), adminAccess.length(), refresh.length());
     }
 
     @Test
@@ -290,7 +293,7 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Test
     void validRefreshJwtThatDoesNotMatchDatabaseIsRejected() throws Exception {
-        assertRefreshRejects(securityService.generateRefreshToken("not-stored@example.test"));
+        assertRefreshRejects(refreshToken("not-stored@example.test"));
     }
 
     @Test
@@ -323,10 +326,13 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
 
     @Test
     void logoutRevokesRefreshToken() throws Exception {
-        User user = createUser("logout-" + UUID.randomUUID() + "@example.test");
-        String refreshToken = securityService.generateRefreshToken(user.getEmail());
-        user.setRefreshToken(refreshToken);
+        String email = "logout-" + UUID.randomUUID() + "@example.test";
+        String password = "Test-password-123!";
+        User user = createUser(email);
+        user.setPassword(passwordEncoder.encode(password));
         userRepository.saveAndFlush(user);
+        String refreshToken = objectMapper.readTree(login(email, password))
+                .at("/data/refreshToken").asText();
         String accessToken = securityService.generateAccessToken(
                 UsernamePasswordAuthenticationToken.authenticated(
                         user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_USER"))));
@@ -353,6 +359,19 @@ class TokenTypeSecurityIntegrationTest extends AbstractMySqlIntegrationTest {
 
     private String refreshBody(String token) {
         return "{\"refreshToken\":\"" + token + "\"}";
+    }
+
+    private String refreshToken(String email) {
+        return securityService.generateRefreshToken(email, UUID.randomUUID().toString());
+    }
+
+    private String login(String email, String password) throws Exception {
+        return mockMvc.perform(post("/api/v1/login")
+                        .contentType("application/json")
+                        .content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.refreshToken").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
     }
 
     private User createUser(String email) {

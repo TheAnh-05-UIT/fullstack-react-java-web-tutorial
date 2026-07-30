@@ -38,7 +38,7 @@ class RefreshTokenColumnMigrationTest {
     }
 
     @Test
-    void migrationExpandsColumnAndPreservesExistingRows() throws Exception {
+    void migrationsExpandLegacyColumnCreateSessionsAndPreserveUsers() throws Exception {
         try (Connection connection = connection(); Statement statement = connection.createStatement()) {
             try (ResultSet column = statement.executeQuery("""
                     SELECT data_type, character_maximum_length, is_nullable
@@ -57,7 +57,58 @@ class RefreshTokenColumnMigrationTest {
                     "SELECT COUNT(*) AS row_count, MAX(CHAR_LENGTH(refresh_token)) AS max_length FROM users")) {
                 assertThat(rows.next()).isTrue();
                 assertThat(rows.getLong("row_count")).isEqualTo(2);
-                assertThat(rows.getLong("max_length")).isEqualTo(EXISTING_VALUE.length());
+                assertThat(rows.getLong("max_length")).isZero();
+            }
+
+            try (ResultSet table = statement.executeQuery("""
+                    SELECT COUNT(*) AS table_count
+                    FROM information_schema.tables
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'refresh_token_sessions'
+                    """)) {
+                assertThat(table.next()).isTrue();
+                assertThat(table.getLong("table_count")).isOne();
+            }
+
+            try (ResultSet constraints = statement.executeQuery("""
+                    SELECT COUNT(*) AS constraint_count
+                    FROM information_schema.table_constraints
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'refresh_token_sessions'
+                      AND constraint_type IN ('FOREIGN KEY', 'UNIQUE')
+                    """)) {
+                assertThat(constraints.next()).isTrue();
+                assertThat(constraints.getLong("constraint_count")).isEqualTo(3);
+            }
+
+            try (ResultSet indexes = statement.executeQuery("""
+                    SELECT COUNT(DISTINCT index_name) AS index_count
+                    FROM information_schema.statistics
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'refresh_token_sessions'
+                      AND index_name IN (
+                        'idx_refresh_token_sessions_user',
+                        'idx_refresh_token_sessions_expires',
+                        'idx_refresh_token_sessions_revoked'
+                      )
+                    """)) {
+                assertThat(indexes.next()).isTrue();
+                assertThat(indexes.getLong("index_count")).isEqualTo(3);
+            }
+
+            try (ResultSet historyColumns = statement.executeQuery("""
+                    SELECT COUNT(*) AS column_count
+                    FROM information_schema.columns
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'refresh_token_sessions'
+                      AND column_name IN (
+                        'previous_token_hash',
+                        'previous_jti',
+                        'previous_consumed_at'
+                      )
+                    """)) {
+                assertThat(historyColumns.next()).isTrue();
+                assertThat(historyColumns.getLong("column_count")).isEqualTo(3);
             }
         }
     }

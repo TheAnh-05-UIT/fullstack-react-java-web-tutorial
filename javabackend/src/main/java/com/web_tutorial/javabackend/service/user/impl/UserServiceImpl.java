@@ -150,32 +150,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void updateRefreshToken(String email, String refreshToken) {
-        Optional<User> userOptional = this.userRepository.findByEmail(email);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setRefreshToken(refreshToken);
-            this.userRepository.save(user);
-        }
-    }
-
-    @Override
-    public Optional<User> getUserByRefreshToken(String refreshToken) {
-        return this.userRepository.findByRefreshToken(refreshToken);
-    }
-
-    @Override
-    @Transactional
-    public void revokeRefreshToken(String email) {
-        Optional<User> userOptional = this.userRepository.findByEmail(email);
-        userOptional.ifPresent(user -> {
-            user.setRefreshToken(null);
-            this.userRepository.save(user);
-        });
-    }
-
-    @Override
-    @Transactional
     public boolean assignRoleByName(User user, String roleName) {
         String normalizedName = roleName.toUpperCase();
         return roleRepository.findByName(normalizedName).map(role -> {

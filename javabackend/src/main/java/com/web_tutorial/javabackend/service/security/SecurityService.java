@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import com.web_tutorial.javabackend.config.SecurityConfiguration;
+import com.web_tutorial.javabackend.service.auth.RefreshTokenSessionService;
 
 // Service xử lý sinh và giải mã JWT Token
 @Service
@@ -106,7 +107,7 @@ public class SecurityService {
     }
 
     // Tạo Refresh Token Dài hạn, không chứa scope
-    public String generateRefreshToken(String email) {
+    public String generateRefreshToken(String email, String familyId) {
         Instant now = Instant.now();
         Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
 
@@ -118,6 +119,7 @@ public class SecurityService {
                 .subject(email)
                 .id(UUID.randomUUID().toString())
                 .claim("token_type", "refresh")
+                .claim(RefreshTokenSessionService.FAMILY_CLAIM, familyId)
                 .build();
 
         return this.jwtEncoder.encode(
