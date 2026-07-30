@@ -1,0 +1,11 @@
+# Temporary upstream base-image exceptions. Review/remove by 2026-08-15.
+# eclipse-temurin:21-jre-alpine: libexpat 2.8.1-r0; fixed in 2.8.2-r0.
+CVE-2026-56131
+# eclipse-temurin:21-jre-alpine: libexpat 2.8.1-r0; fixed in 2.8.2-r0.
+CVE-2026-56408
+# eclipse-temurin:21-jre-alpine: p11-kit/p11-kit-trust 0.25.5-r2;
+# fixed in 0.26.2-r0.
+CVE-2026-2100
+
+# Application JAR findings and every other HIGH/CRITICAL vulnerability remain
+# blocking. This file format does not enforce the review date automatically.

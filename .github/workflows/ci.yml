@@ -1,0 +1,345 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend-verify:
+    name: Backend verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            javabackend/pom.xml
+            javabackend/.mvn/wrapper/maven-wrapper.properties
+
+      - name: Verify Maven wrapper version
+        working-directory: javabackend
+        run: |
+          chmod +x ./mvnw
+          ./mvnw --version
+          ./mvnw --version | grep -F "Apache Maven 3.9.16"
+
+      - name: Run backend tests and verification
+        working-directory: javabackend
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+
+      - name: Upload backend test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: javabackend/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  frontend-quality:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Type-check frontend
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm run test:run
+
+      - name: Audit frontend production dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high --omit=dev
+
+      - name: Lint changed frontend source files
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_sha=""
+          head_sha="$GITHUB_SHA"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            base_sha="$PR_BASE_SHA"
+            head_sha="$PR_HEAD_SHA"
+          elif [[ "$EVENT_NAME" == "push" ]]; then
+            base_sha="$PUSH_BASE_SHA"
+          fi
+
+          if [[ -n "$base_sha" ]] &&
+             [[ "$base_sha" != "0000000000000000000000000000000000000000" ]] &&
+             git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
+            mapfile -t changed_files < <(
+              git diff --name-only --diff-filter=ACMR \
+                "$base_sha" "$head_sha" -- frontend/src |
+                awk '/\.(js|jsx|ts|tsx)$/'
+            )
+          else
+            mapfile -t changed_files < <(
+              git ls-files frontend/src |
+                awk '/\.(js|jsx|ts|tsx)$/'
+            )
+          fi
+
+          if (( ${#changed_files[@]} == 0 )); then
+            echo "No changed frontend source files require linting."
+            exit 0
+          fi
+
+          cd frontend
+          relative_files=()
+          for file in "${changed_files[@]}"; do
+            relative_files+=("${file#frontend/}")
+          done
+          npx eslint "${relative_files[@]}"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+  frontend-legacy-lint:
+    name: Frontend full lint (legacy, non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Report legacy full-project lint debt
+        working-directory: frontend
+        run: npm run lint
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out full Git history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine new commit range
+        id: commit-range
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            base_sha="$PR_BASE_SHA"
+            head_sha="$PR_HEAD_SHA"
+          elif [[ "$EVENT_NAME" == "push" ]] &&
+               [[ -n "$PUSH_BASE_SHA" ]] &&
+               [[ "$PUSH_BASE_SHA" != "0000000000000000000000000000000000000000" ]]; then
+            base_sha="$PUSH_BASE_SHA"
+            head_sha="$GITHUB_SHA"
+          else
+            base_sha=""
+            head_sha="$GITHUB_SHA"
+          fi
+
+          if [[ -n "$base_sha" ]] &&
+             git cat-file -e "${base_sha}^{commit}" 2>/dev/null; then
+            log_opts="${base_sha}..${head_sha}"
+          else
+            log_opts="-1 ${head_sha}"
+          fi
+
+          echo "log-opts=$log_opts" >> "$GITHUB_OUTPUT"
+
+      - name: Scan new commits with Gitleaks
+        env:
+          LOG_OPTS: ${{ steps.commit-range.outputs.log-opts }}
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            zricethezav/gitleaks:v8.28.0@sha256:cdbb7c955abce02001a9f6c9f602fb195b7fadc1e812065883f695d1eeaba854 \
+            git --no-banner --redact --verbose \
+            --log-opts="$LOG_OPTS" \
+            --config /repo/.gitleaks.toml /repo
+
+      - name: Scan working tree with Gitleaks
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            zricethezav/gitleaks:v8.28.0@sha256:cdbb7c955abce02001a9f6c9f602fb195b7fadc1e812065883f695d1eeaba854 \
+            dir --no-banner --redact --verbose \
+            --config /repo/.gitleaks.toml /repo
+
+  dependency-scan:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: |
+            javabackend/pom.xml
+            javabackend/.mvn/wrapper/maven-wrapper.properties
+
+      - name: Populate Maven dependency metadata
+        working-directory: javabackend
+        run: |
+          chmod +x ./mvnw
+          ./mvnw --batch-mode --no-transfer-progress dependency:go-offline
+
+      - name: Scan backend dependencies
+        run: |
+          mkdir -p "$HOME/.cache/trivy"
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            -v "$HOME/.m2:/root/.m2:ro" \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            fs --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --no-progress \
+            --skip-dirs /repo/javabackend/target \
+            --ignorefile /repo/.trivyignore \
+            /repo/javabackend
+
+  container-security:
+    name: Container build and scan
+    needs:
+      - backend-verify
+      - frontend-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build backend image without pushing
+        run: docker build --tag webtutorial-backend:ci ./javabackend
+
+      - name: Build frontend image without pushing
+        run: docker build --tag webtutorial-frontend:ci ./frontend
+
+      - name: Scan backend image
+        run: |
+          mkdir -p "$HOME/.cache/trivy"
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD:/repo:ro" \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            image --scanners vuln \
+            --severity HIGH,CRITICAL --exit-code 1 --no-progress \
+            --ignorefile /repo/.trivyignore \
+            webtutorial-backend:ci
+
+      - name: Scan frontend image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD:/repo:ro" \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            image --scanners vuln \
+            --severity HIGH,CRITICAL --exit-code 1 --no-progress \
+            --ignorefile /repo/.trivyignore \
+            webtutorial-frontend:ci
+
+  quality-gate:
+    name: Quality gate
+    if: always()
+    needs:
+      - backend-verify
+      - frontend-quality
+      - secret-scan
+      - dependency-scan
+      - container-security
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every mandatory CI job to pass
+        env:
+          BACKEND_RESULT: ${{ needs.backend-verify.result }}
+          FRONTEND_RESULT: ${{ needs.frontend-quality.result }}
+          SECRET_RESULT: ${{ needs.secret-scan.result }}
+          DEPENDENCY_RESULT: ${{ needs.dependency-scan.result }}
+          CONTAINER_RESULT: ${{ needs.container-security.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%-24s %s\n' \
+            "backend-verify" "$BACKEND_RESULT" \
+            "frontend-quality" "$FRONTEND_RESULT" \
+            "secret-scan" "$SECRET_RESULT" \
+            "dependency-scan" "$DEPENDENCY_RESULT" \
+            "container-security" "$CONTAINER_RESULT"
+
+          for result in \
+            "$BACKEND_RESULT" \
+            "$FRONTEND_RESULT" \
+            "$SECRET_RESULT" \
+            "$DEPENDENCY_RESULT" \
+            "$CONTAINER_RESULT"; do
+            [[ "$result" == "success" ]]
+          done

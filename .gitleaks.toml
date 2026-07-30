@@ -1,0 +1,17 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Test-profile JWT fixture; production requires an environment secret"
+condition = "AND"
+regexTarget = "line"
+paths = ['''(^|/)javabackend/src/(main|test)/resources/application-test\.properties$''']
+regexes = ['''^javabackend\.jwt\.base64-secret=[A-Za-z0-9+/=]+$''']
+
+[[allowlists]]
+description = "Generated and dependency directories are not CI source inputs"
+paths = [
+  '''(^|/)target/''',
+  '''(^|/)dist/''',
+  '''(^|/)node_modules/''',
+]
