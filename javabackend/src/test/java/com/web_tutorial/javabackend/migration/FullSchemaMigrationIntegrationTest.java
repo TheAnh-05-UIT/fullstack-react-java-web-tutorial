@@ -62,7 +62,7 @@ class FullSchemaMigrationIntegrationTest extends AbstractMySqlIntegrationTest {
                 ORDER BY installed_rank
                 """);
         assertThat(history).extracting(row -> row.get("version").toString())
-                .containsExactly("1", "2", "3", "4", "5");
+                .containsExactly("1", "2", "3", "4", "5", "6");
         assertThat(history).allSatisfy(row -> assertThat(row.get("success")).isEqualTo(true));
 
         assertThat(beanFactory.getBeansOfType(Repository.class)).hasSize(12);
@@ -90,6 +90,7 @@ class FullSchemaMigrationIntegrationTest extends AbstractMySqlIntegrationTest {
         assertThat(session.values().toString())
                 .contains("`family_id` varchar(36)")
                 .contains("`token_hash` varchar(64)")
+                .contains("`previous_token_hash` varchar(64)")
                 .contains("FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)");
     }
 }

@@ -130,7 +130,8 @@ class RefreshTokenColumnMigrationTest {
             }
 
             try (ResultSet historyColumns = statement.executeQuery("""
-                    SELECT COUNT(*) AS column_count
+                    SELECT COUNT(*) AS column_count,
+                           SUM(data_type = 'varchar') AS varchar_count
                     FROM information_schema.columns
                     WHERE table_schema = DATABASE()
                       AND table_name = 'refresh_token_sessions'
@@ -142,6 +143,7 @@ class RefreshTokenColumnMigrationTest {
                     """)) {
                 assertThat(historyColumns.next()).isTrue();
                 assertThat(historyColumns.getLong("column_count")).isEqualTo(3);
+                assertThat(historyColumns.getLong("varchar_count")).isEqualTo(2);
             }
         }
     }
