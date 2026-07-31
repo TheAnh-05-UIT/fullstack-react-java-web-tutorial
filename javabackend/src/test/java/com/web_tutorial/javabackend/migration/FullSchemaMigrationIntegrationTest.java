@@ -62,7 +62,7 @@ class FullSchemaMigrationIntegrationTest extends AbstractMySqlIntegrationTest {
                 ORDER BY installed_rank
                 """);
         assertThat(history).extracting(row -> row.get("version").toString())
-                .containsExactly("1", "2", "3", "4", "5", "6");
+                .containsExactly("1", "2", "3", "4", "5", "6", "7");
         assertThat(history).allSatisfy(row -> assertThat(row.get("success")).isEqualTo(true));
 
         assertThat(beanFactory.getBeansOfType(Repository.class)).hasSize(12);
