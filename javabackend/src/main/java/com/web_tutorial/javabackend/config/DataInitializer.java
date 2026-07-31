@@ -63,14 +63,14 @@ public class DataInitializer implements CommandLineRunner {
 
         // 3. Khởi tạo tài khoản Admin mặc định nếu database chưa có
         if (!userRepository.existsByEmail(adminEmail)) {
-            log.info("Creating default administrator account with email: {}", adminEmail);
+            log.info("Creating configured default administrator account");
             User admin = new User();
             admin.setUsername("Administrator");
             admin.setEmail(adminEmail);
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole(adminRole);
             userRepository.save(admin);
-            log.info("Default administrator account created successfully. Email: {}", adminEmail);
+            log.info("Default administrator account created successfully");
         }
     }
 
