@@ -28,17 +28,20 @@ public class Tutorial {
     private Long id;
 
     // Nội dung bài viết
+    @Column(nullable = false)
     private String title;
+    @Column(nullable = false, unique = true)
     private String slug; // Đường dẫn chuẩn SEO
     @Column(columnDefinition = "LONGTEXT")
     private String description; // Mô tả
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String content; // Nội dung bài viết
     private String coverImage; // URL ảnh bìa
 
     // Thông tin thêm
     private Integer readTime; // Thời gian đọc
+    @Column(nullable = false)
     private Long views; // Lượt xem bài viết
 
     @Enumerated(EnumType.STRING)

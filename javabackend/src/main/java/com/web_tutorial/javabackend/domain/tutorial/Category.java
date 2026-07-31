@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.web_tutorial.javabackend.domain.project.Project;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,7 +24,9 @@ public class Category {
     private Long id;
 
     // Tên và thông tin danh mục
+    @Column(nullable = false, unique = true)
     private String name;
+    @Column(nullable = false, unique = true)
     private String slug; // Đường dẫn SEO
     private String description;
 

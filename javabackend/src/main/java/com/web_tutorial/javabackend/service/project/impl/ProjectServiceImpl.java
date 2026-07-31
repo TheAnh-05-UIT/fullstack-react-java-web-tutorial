@@ -116,6 +116,9 @@ public class ProjectServiceImpl implements ProjectService {
         String currentUser = SecurityService.getCurrentUserLogin().orElse("System");
         project.setCreateBy(currentUser);
         project.setCreatedAt(Instant.now());
+        if (project.getViews() == null) {
+            project.setViews(0L);
+        }
 
         if (project.getCategory() != null && project.getCategory().getName() != null) {
             String catName = project.getCategory().getName();

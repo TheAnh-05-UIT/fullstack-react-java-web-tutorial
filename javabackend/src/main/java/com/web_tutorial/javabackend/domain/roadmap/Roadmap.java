@@ -6,6 +6,8 @@ import java.util.List;
 import com.web_tutorial.javabackend.domain.project.Difficulty;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,13 +24,17 @@ public class Roadmap {
     private Long id;
 
     // Thông tin chung về lộ trình
+    @Column(nullable = false)
     private String title;
+    @Column(nullable = false, unique = true)
     private String slug;
     @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
     @Column(columnDefinition = "LONGTEXT")
     private String content;
     private String coverImage;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
     private Difficulty difficulty;
     private String icon;
     private String color;
