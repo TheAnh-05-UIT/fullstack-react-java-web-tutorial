@@ -200,11 +200,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<RestResponse<Object>> handleDataIntegrityViolation(
             DataIntegrityViolationException ex) {
-        if (isDuplicateKey(ex)) {
-            return inputError(HttpStatus.CONFLICT, "A resource with the same unique value already exists.");
+        IntegrityViolationCategory category = classifyIntegrityViolation(ex);
+        auditLogger.warn(SecurityAuditEvent.DATA_INTEGRITY_REJECTED,
+                auditLogger.currentActor(), "DENIED", category.name());
+        if (category == IntegrityViolationCategory.OTHER) {
+            log.error("event=DATABASE_INTEGRITY_FAILED category=OTHER");
         }
-        log.error("Database integrity operation failed", ex);
-        return inputError(HttpStatus.INTERNAL_SERVER_ERROR, "Database operation failed.");
+        return switch (category) {
+            case DUPLICATE -> inputError(
+                    HttpStatus.CONFLICT, "A resource with the same unique value already exists.");
+            case FOREIGN_KEY -> inputError(
+                    HttpStatus.CONFLICT, "The operation conflicts with related data.");
+            case CHECK, NOT_NULL -> inputError(
+                    HttpStatus.BAD_REQUEST, "The supplied data violates a data integrity rule.");
+            case OTHER -> inputError(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Database operation failed.");
+        };
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -281,14 +292,28 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
 
-    private boolean isDuplicateKey(Throwable throwable) {
+    private IntegrityViolationCategory classifyIntegrityViolation(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            if (current instanceof SQLException sqlException && sqlException.getErrorCode() == 1062) {
-                return true;
+            if (current instanceof SQLException sqlException) {
+                return switch (sqlException.getErrorCode()) {
+                    case 1062 -> IntegrityViolationCategory.DUPLICATE;
+                    case 1451, 1452 -> IntegrityViolationCategory.FOREIGN_KEY;
+                    case 3819 -> IntegrityViolationCategory.CHECK;
+                    case 1048 -> IntegrityViolationCategory.NOT_NULL;
+                    default -> IntegrityViolationCategory.OTHER;
+                };
             }
             current = current.getCause();
         }
-        return false;
+        return IntegrityViolationCategory.OTHER;
+    }
+
+    private enum IntegrityViolationCategory {
+        DUPLICATE,
+        FOREIGN_KEY,
+        CHECK,
+        NOT_NULL,
+        OTHER
     }
 }
