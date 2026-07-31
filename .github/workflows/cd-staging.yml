@@ -1,0 +1,265 @@
+name: CD - Staging
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Full 40-character SHA already verified by the CI Quality gate
+        required: true
+        type: string
+      v7_backup_confirmed:
+        description: Confirm a verified staging backup exists before the first V7 rollout
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: cd-staging
+  cancel-in-progress: false
+
+permissions:
+  checks: read
+  contents: read
+  packages: write
+
+jobs:
+  authorize:
+    name: Authorize tested main commit
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.commit_sha }}
+
+      - name: Validate commit and CI result
+        id: commit
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_SHA: ${{ github.event.workflow_run.head_sha }}
+          INPUT_SHA: ${{ inputs.commit_sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="$WORKFLOW_SHA"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            candidate="$INPUT_SHA"
+          fi
+          if [[ ! "$candidate" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "A full 40-character commit SHA is required." >&2
+            exit 1
+          fi
+          candidate="$(git rev-parse "${candidate}^{commit}")"
+          git merge-base --is-ancestor "$candidate" origin/main
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            quality_result="$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${GITHUB_REPOSITORY}/commits/${candidate}/check-runs" \
+              --jq '[.check_runs[] | select(.name == "Quality gate" and .conclusion == "success")] | length')"
+            [[ "$quality_result" -ge 1 ]]
+          fi
+
+          echo "sha=$candidate" >> "$GITHUB_OUTPUT"
+          echo "Authorized tested main commit ${candidate}."
+
+  publish:
+    name: Publish immutable images
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      backend-image: ${{ steps.images.outputs.backend }}
+      frontend-image: ${{ steps.images.outputs.frontend }}
+    steps:
+      - name: Check out exact tested commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve immutable image references
+        id: images
+        env:
+          TESTED_SHA: ${{ needs.authorize.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          registry_base="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "backend=${registry_base}-backend:${TESTED_SHA}" >> "$GITHUB_OUTPUT"
+          echo "frontend=${registry_base}-frontend:${TESTED_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./javabackend
+          file: ./javabackend/Dockerfile
+          load: true
+          push: false
+          tags: ${{ steps.images.outputs.backend }}
+          labels: |
+            org.opencontainers.image.revision=${{ needs.authorize.outputs.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=staging-backend
+          cache-to: type=gha,mode=max,scope=staging-backend
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          load: true
+          push: false
+          tags: ${{ steps.images.outputs.frontend }}
+          build-args: |
+            VITE_API_BASE_URL=/api/v1
+          labels: |
+            org.opencontainers.image.revision=${{ needs.authorize.outputs.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=staging-frontend
+          cache-to: type=gha,mode=max,scope=staging-frontend
+
+      - name: Scan exact backend image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD:/repo:ro" \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
+            --no-progress --ignorefile /repo/.trivyignore \
+            "${{ steps.images.outputs.backend }}"
+
+      - name: Scan exact frontend image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD:/repo:ro" \
+            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
+            image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
+            --no-progress --ignorefile /repo/.trivyignore \
+            "${{ steps.images.outputs.frontend }}"
+
+      - name: Push both verified images
+        run: |
+          set -euo pipefail
+          docker push "${{ steps.images.outputs.backend }}"
+          docker push "${{ steps.images.outputs.frontend }}"
+
+  deploy:
+    name: Deploy staging
+    needs:
+      - authorize
+      - publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    env:
+      TESTED_SHA: ${{ needs.authorize.outputs.sha }}
+      BACKEND_IMAGE: ${{ needs.publish.outputs.backend-image }}
+      FRONTEND_IMAGE: ${{ needs.publish.outputs.frontend-image }}
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      STAGING_PORT: ${{ vars.STAGING_PORT }}
+      STAGING_USER: ${{ vars.STAGING_USER }}
+      STAGING_DEPLOY_PATH: ${{ vars.STAGING_DEPLOY_PATH }}
+      STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+      AUTO_V7_READY: ${{ vars.STAGING_V7_READY }}
+    steps:
+      - name: Check out exact tested commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+
+      - name: Validate staging target variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$STAGING_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
+          [[ "$STAGING_PORT" =~ ^[0-9]{1,5}$ ]]
+          (( STAGING_PORT >= 1 && STAGING_PORT <= 65535 ))
+          [[ "$STAGING_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]
+          [[ "$STAGING_DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
+          [[ "$STAGING_BASE_URL" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
+          [[ "$BACKEND_IMAGE" == *":${TESTED_SHA}" ]]
+          [[ "$FRONTEND_IMAGE" == *":${TESTED_SHA}" ]]
+
+      - name: Configure verified SSH host
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 700 "$HOME/.ssh"
+          install -m 600 /dev/null "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          install -m 600 /dev/null "$HOME/.ssh/known_hosts"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+
+      - name: Copy deployment definitions
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o ConnectTimeout=10 \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+            -o StrictHostKeyChecking=yes -p "$STAGING_PORT" \
+            "${STAGING_USER}@${STAGING_HOST}" \
+            "install -d -m 750 '$STAGING_DEPLOY_PATH/scripts'"
+          scp -o BatchMode=yes -o ConnectTimeout=10 \
+            -o StrictHostKeyChecking=yes -P "$STAGING_PORT" \
+            docker-compose.staging.yml \
+            "${STAGING_USER}@${STAGING_HOST}:${STAGING_DEPLOY_PATH}/docker-compose.staging.yml"
+          scp -o BatchMode=yes -o ConnectTimeout=10 \
+            -o StrictHostKeyChecking=yes -P "$STAGING_PORT" \
+            scripts/deploy-staging.sh scripts/smoke-staging.sh scripts/db2-preflight.sql \
+            "${STAGING_USER}@${STAGING_HOST}:${STAGING_DEPLOY_PATH}/scripts/"
+
+      - name: Deploy and verify staging
+        env:
+          MANUAL_V7_CONFIRMED: ${{ inputs.v7_backup_confirmed }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          v7_confirmed="$AUTO_V7_READY"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            v7_confirmed="$MANUAL_V7_CONFIRMED"
+          fi
+          printf -v remote_command \
+            'cd %q && chmod 750 scripts/*.sh && DEPLOY_DIR=%q BACKEND_IMAGE=%q FRONTEND_IMAGE=%q DEPLOY_SHA=%q STAGING_BASE_URL=%q V7_BACKUP_CONFIRMED=%q ./scripts/deploy-staging.sh' \
+            "$STAGING_DEPLOY_PATH" "$STAGING_DEPLOY_PATH" "$BACKEND_IMAGE" \
+            "$FRONTEND_IMAGE" "$TESTED_SHA" "$STAGING_BASE_URL" "$v7_confirmed"
+          ssh -o BatchMode=yes -o ConnectTimeout=10 \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+            -o StrictHostKeyChecking=yes -p "$STAGING_PORT" \
+            "${STAGING_USER}@${STAGING_HOST}" \
+            "$remote_command"
+
+      - name: Remove ephemeral SSH material
+        if: always()
+        shell: bash
+        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"

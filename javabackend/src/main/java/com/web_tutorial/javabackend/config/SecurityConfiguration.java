@@ -186,7 +186,7 @@ public class SecurityConfiguration {
 
                         // Cho phép truy cập không cần token
                         .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/refresh",
-                                "/api/v1/logout", "/api/v1/csrf").permitAll()
+                                "/api/v1/logout", "/api/v1/csrf", "/api/v1/health").permitAll()
                         .requestMatchers("/api/v1/users", "/api/v1/users/**")
                         .hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.GET,
