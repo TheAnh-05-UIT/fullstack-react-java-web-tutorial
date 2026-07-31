@@ -24,6 +24,8 @@ import jakarta.validation.constraints.Size;
 import java.util.Set;
 
 import com.web_tutorial.javabackend.validation.ValidatedPageRequest;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 
 import static com.web_tutorial.javabackend.validation.ApiInputConstraints.SLUG_PATTERN;
 import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHAR_MAX;
@@ -37,9 +39,11 @@ public class RoadmapController {
             Set.of("id", "title", "createdAt", "updatedAt");
 
     private final RoadmapService roadmapService;
+    private final SecurityAuditLogger auditLogger;
 
-    public RoadmapController(RoadmapService roadmapService) {
+    public RoadmapController(RoadmapService roadmapService, SecurityAuditLogger auditLogger) {
         this.roadmapService = roadmapService;
+        this.auditLogger = auditLogger;
     }
 
     @GetMapping
@@ -94,7 +98,10 @@ public class RoadmapController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<RoadmapResponseDTO> createRoadmap(
             @RequestBody @Valid CreateRoadmapRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.roadmapService.createRoadmapFromDTO(requestDTO));
+        RoadmapResponseDTO response = this.roadmapService.createRoadmapFromDTO(requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_CREATED, auditLogger.currentActor(),
+                "ROADMAP", response.getId(), "CONTENT_CREATED");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -103,7 +110,10 @@ public class RoadmapController {
     public ResponseEntity<RoadmapResponseDTO> updateRoadmap(
             @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateRoadmapRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.roadmapService.updateRoadmapFromDTO(id, requestDTO));
+        RoadmapResponseDTO response = this.roadmapService.updateRoadmapFromDTO(id, requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_UPDATED, auditLogger.currentActor(),
+                "ROADMAP", id, "CONTENT_UPDATED");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
@@ -111,6 +121,8 @@ public class RoadmapController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteRoadmap(@PathVariable @Positive Long id) {
         this.roadmapService.deleteRoadmap(id);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_DELETED, auditLogger.currentActor(),
+                "ROADMAP", id, "CONTENT_DELETED");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

@@ -24,6 +24,8 @@ import jakarta.validation.constraints.Size;
 import java.util.Set;
 
 import com.web_tutorial.javabackend.validation.ValidatedPageRequest;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 
 import static com.web_tutorial.javabackend.validation.ApiInputConstraints.SLUG_PATTERN;
 import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHAR_MAX;
@@ -37,9 +39,11 @@ public class TutorialController {
             Set.of("id", "title", "createdAt", "updatedAt", "views", "status");
 
     private final TutorialService tutorialService;
+    private final SecurityAuditLogger auditLogger;
 
-    public TutorialController(TutorialService tutorialService) {
+    public TutorialController(TutorialService tutorialService, SecurityAuditLogger auditLogger) {
         this.tutorialService = tutorialService;
+        this.auditLogger = auditLogger;
     }
 
     @GetMapping
@@ -94,7 +98,10 @@ public class TutorialController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<TutorialResponseDTO> createTutorial(
             @RequestBody @Valid CreateTutorialRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.tutorialService.createTutorialFromDTO(requestDTO));
+        TutorialResponseDTO response = this.tutorialService.createTutorialFromDTO(requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_CREATED, auditLogger.currentActor(),
+                "TUTORIAL", response.getId(), "CONTENT_CREATED");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -103,7 +110,10 @@ public class TutorialController {
     public ResponseEntity<TutorialResponseDTO> updateTutorial(
             @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateTutorialRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.tutorialService.updateTutorialFromDTO(id, requestDTO));
+        TutorialResponseDTO response = this.tutorialService.updateTutorialFromDTO(id, requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_UPDATED, auditLogger.currentActor(),
+                "TUTORIAL", id, "CONTENT_UPDATED");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
@@ -111,6 +121,8 @@ public class TutorialController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteTutorial(@PathVariable @Positive Long id) {
         this.tutorialService.deleteTutorial(id);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_DELETED, auditLogger.currentActor(),
+                "TUTORIAL", id, "CONTENT_DELETED");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

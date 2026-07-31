@@ -34,7 +34,6 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.HttpStatusAccessDeniedHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
@@ -52,6 +51,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.time.Clock;
+
+import com.web_tutorial.javabackend.observability.AuditAccessDeniedHandler;
 
 // Cấu hình trung tâm bảo mật của ứng dụng (OAuth2 + JWT)
 @Configuration
@@ -133,7 +134,9 @@ public class SecurityConfiguration {
     // Cấu hình phân quyền truy cập cho các API
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http, SecurityHeadersProperties headerProperties) throws Exception {
+            HttpSecurity http,
+            SecurityHeadersProperties headerProperties,
+            AuditAccessDeniedHandler accessDeniedHandler) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository =
                 CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfTokenRepository.setCookiePath("/");
@@ -174,8 +177,7 @@ public class SecurityConfiguration {
                         .withObjectPostProcessor(new ObjectPostProcessor<CsrfFilter>() {
                             @Override
                             public <O extends CsrfFilter> O postProcess(O filter) {
-                                filter.setAccessDeniedHandler(
-                                        new HttpStatusAccessDeniedHandler(HttpStatus.FORBIDDEN));
+                                filter.setAccessDeniedHandler(accessDeniedHandler);
                                 return filter;
                             }
                         }))
@@ -227,7 +229,7 @@ public class SecurityConfiguration {
                         // Yêu cầu token cho các request khác
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
-                        .accessDeniedHandler(new HttpStatusAccessDeniedHandler(HttpStatus.FORBIDDEN))
+                        .accessDeniedHandler(accessDeniedHandler)
                         .defaultAuthenticationEntryPointFor(
                                 new HttpStatusEntryPoint(HttpStatus.FORBIDDEN),
                                 cookieAuthenticatedSessionRequest))

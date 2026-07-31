@@ -24,6 +24,8 @@ import jakarta.validation.constraints.Size;
 import java.util.Set;
 
 import com.web_tutorial.javabackend.validation.ValidatedPageRequest;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 
 import static com.web_tutorial.javabackend.validation.ApiInputConstraints.SLUG_PATTERN;
 import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHAR_MAX;
@@ -37,9 +39,11 @@ public class ProjectController {
             Set.of("id", "title", "createdAt", "updatedAt", "views", "status");
 
     private final ProjectService projectService;
+    private final SecurityAuditLogger auditLogger;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, SecurityAuditLogger auditLogger) {
         this.projectService = projectService;
+        this.auditLogger = auditLogger;
     }
 
     @GetMapping
@@ -94,7 +98,10 @@ public class ProjectController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ProjectResponseDTO> createProject(
             @RequestBody @Valid CreateProjectRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.projectService.createProjectFromDTO(requestDTO));
+        ProjectResponseDTO response = this.projectService.createProjectFromDTO(requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_CREATED, auditLogger.currentActor(),
+                "PROJECT", response.getId(), "CONTENT_CREATED");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -103,7 +110,10 @@ public class ProjectController {
     public ResponseEntity<ProjectResponseDTO> updateProject(
             @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateProjectRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.OK).body(this.projectService.updateProjectFromDTO(id, requestDTO));
+        ProjectResponseDTO response = this.projectService.updateProjectFromDTO(id, requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_UPDATED, auditLogger.currentActor(),
+                "PROJECT", id, "CONTENT_UPDATED");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
@@ -111,6 +121,8 @@ public class ProjectController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteProject(@PathVariable @Positive Long id) {
         this.projectService.deleteProject(id);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_DELETED, auditLogger.currentActor(),
+                "PROJECT", id, "CONTENT_DELETED");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

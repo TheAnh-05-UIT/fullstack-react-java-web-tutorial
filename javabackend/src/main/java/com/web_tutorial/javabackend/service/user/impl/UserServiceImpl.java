@@ -9,6 +9,8 @@ import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.mapper.MapperUtils;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 import com.web_tutorial.javabackend.repository.user.RoleRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.user.UserService;
@@ -27,11 +29,17 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecurityAuditLogger auditLogger;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder,
+            SecurityAuditLogger auditLogger) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditLogger = auditLogger;
     }
 
     @Override
@@ -118,6 +126,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UpdateUserResponseDTO updateUserFromDTO(Long id, UpdateUserRequestDTO requestDTO) {
+        User existingUser = this.userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + id + " not found"));
+        String oldRole = roleName(existingUser);
         User userDetails = new User();
         MapperUtils.updateUserFromDTO(requestDTO, userDetails);
 
@@ -125,8 +136,25 @@ public class UserServiceImpl implements UserService {
             this.assignRoleByName(userDetails, requestDTO.getRole());
         }
 
-        User userUpdate = this.updateUser(id, userDetails);
+        if (userDetails.getUsername() != null)
+            existingUser.setUsername(userDetails.getUsername());
+        if (userDetails.getEmail() != null)
+            existingUser.setEmail(userDetails.getEmail());
+        if (userDetails.getAvatar() != null)
+            existingUser.setAvatar(userDetails.getAvatar());
+        if (userDetails.getRole() != null)
+            existingUser.setRole(userDetails.getRole());
+        User userUpdate = this.userRepository.save(existingUser);
+        String newRole = roleName(userUpdate);
+        if (!oldRole.equals(newRole)) {
+            auditLogger.admin(SecurityAuditEvent.ADMIN_ROLE_CHANGED, auditLogger.currentActor(),
+                    "USER", id, "oldRole=" + oldRole + " newRole=" + newRole);
+        }
         return MapperUtils.toUpdateUserResponseDTO(userUpdate);
+    }
+
+    private String roleName(User user) {
+        return user.getRole() == null ? "none" : user.getRole().getName();
     }
 
     @Override

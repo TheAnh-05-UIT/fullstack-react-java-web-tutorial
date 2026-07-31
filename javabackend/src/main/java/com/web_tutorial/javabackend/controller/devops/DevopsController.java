@@ -19,6 +19,8 @@ import com.web_tutorial.javabackend.domain.devops.dto.DevopsDTOs;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.service.devops.DevopsService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -44,9 +46,11 @@ import static com.web_tutorial.javabackend.validation.ApiInputConstraints.VARCHA
 public class DevopsController {
 
     private final DevopsService devopsService;
+    private final SecurityAuditLogger auditLogger;
 
-    public DevopsController(DevopsService devopsService) {
+    public DevopsController(DevopsService devopsService, SecurityAuditLogger auditLogger) {
         this.devopsService = devopsService;
+        this.auditLogger = auditLogger;
     }
 
     /**
@@ -93,6 +97,8 @@ public class DevopsController {
     public ResponseEntity<DevopsDTOs.PhaseDetailResponse> createPhase(
             @RequestBody @Valid DevopsDTOs.PhaseRequest request) {
         DevopsDTOs.PhaseDetailResponse createdPhase = devopsService.createPhase(request);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_CREATED, auditLogger.currentActor(),
+                "DEVOPS_PHASE", createdPhase.id(), "CONTENT_CREATED");
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPhase);
     }
 
@@ -106,6 +112,8 @@ public class DevopsController {
             @PathVariable @Positive Long id,
             @RequestBody @Valid DevopsDTOs.PhaseRequest request) {
         DevopsDTOs.PhaseDetailResponse updatedPhase = devopsService.updatePhase(id, request);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_UPDATED, auditLogger.currentActor(),
+                "DEVOPS_PHASE", id, "CONTENT_UPDATED");
         return ResponseEntity.status(HttpStatus.OK).body(updatedPhase);
     }
 
@@ -118,6 +126,8 @@ public class DevopsController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deletePhase(@PathVariable @Positive Long id) {
         devopsService.deletePhase(id);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_CONTENT_DELETED, auditLogger.currentActor(),
+                "DEVOPS_PHASE", id, "CONTENT_DELETED");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
