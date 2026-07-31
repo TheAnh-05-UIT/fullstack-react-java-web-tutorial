@@ -6,8 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +16,9 @@ import com.web_tutorial.javabackend.domain.dto.request.auth.LoginRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.request.auth.RegisterRequestDTO;
 import com.web_tutorial.javabackend.domain.dto.response.auth.LoginResponseDTO;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
+import com.web_tutorial.javabackend.security.ratelimit.RateLimitKeyFactory;
 import com.web_tutorial.javabackend.service.auth.AuthCookieService;
 import com.web_tutorial.javabackend.service.auth.AuthService;
 import com.web_tutorial.javabackend.security.ratelimit.SensitiveEndpointRateLimiter;
@@ -31,18 +32,23 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/v1")
 public class AuthController {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
     private final AuthCookieService authCookieService;
     private final SensitiveEndpointRateLimiter rateLimiter;
+    private final SecurityAuditLogger auditLogger;
+    private final RateLimitKeyFactory keyFactory;
 
     public AuthController(
             AuthService authService,
             AuthCookieService authCookieService,
-            SensitiveEndpointRateLimiter rateLimiter) {
+            SensitiveEndpointRateLimiter rateLimiter,
+            SecurityAuditLogger auditLogger,
+            RateLimitKeyFactory keyFactory) {
         this.authService = authService;
         this.authCookieService = authCookieService;
         this.rateLimiter = rateLimiter;
+        this.auditLogger = auditLogger;
+        this.keyFactory = keyFactory;
     }
 
     @PostMapping("/register")
@@ -51,7 +57,16 @@ public class AuthController {
             @Valid @RequestBody RegisterRequestDTO registerDTO,
             HttpServletRequest request) throws IdInvalidException {
         rateLimiter.beforeRegister(request);
-        return sessionResponse(authService.register(registerDTO), HttpStatus.CREATED);
+        try {
+            LoginResponseDTO response = authService.register(registerDTO);
+            auditLogger.info(SecurityAuditEvent.AUTH_REGISTER_SUCCEEDED,
+                    "user:" + response.getUserLogin().getId(), "SUCCESS", "REGISTERED");
+            return sessionResponse(response, HttpStatus.CREATED);
+        } catch (IdInvalidException exception) {
+            auditLogger.info(SecurityAuditEvent.AUTH_REGISTER_REJECTED,
+                    subject(registerDTO.getEmail()), "DENIED", "DUPLICATE");
+            throw exception;
+        }
     }
 
     @PostMapping("/login")
@@ -63,10 +78,13 @@ public class AuthController {
         try {
             LoginResponseDTO response = authService.login(loginDTO);
             rateLimiter.loginSucceeded(loginDTO.getEmail());
+            auditLogger.info(SecurityAuditEvent.AUTH_LOGIN_SUCCEEDED,
+                    "user:" + response.getUserLogin().getId(), "SUCCESS", "AUTHENTICATED");
             return sessionResponse(response, HttpStatus.OK);
         } catch (AuthenticationException exception) {
             rateLimiter.loginFailed(loginDTO.getEmail());
-            log.debug("Authentication failed");
+            auditLogger.warn(SecurityAuditEvent.AUTH_LOGIN_FAILED,
+                    subject(loginDTO.getEmail()), "DENIED", "INVALID_CREDENTIALS");
             throw new BadCredentialsException(
                     "Invalid credentials or too many attempts.", exception);
         }
@@ -78,11 +96,18 @@ public class AuthController {
         rateLimiter.beforeRefresh(request);
         String refreshToken = readRefreshToken(request);
         if (refreshToken == null || refreshToken.isBlank()) {
+            auditLogger.info(SecurityAuditEvent.AUTH_REFRESH_FAILED,
+                    "anonymous", "DENIED", "MISSING_COOKIE");
             return unauthorizedAndClearCookie();
         }
         try {
-            return sessionResponse(authService.refreshToken(refreshToken), HttpStatus.OK);
+            LoginResponseDTO response = authService.refreshToken(refreshToken);
+            auditLogger.info(SecurityAuditEvent.AUTH_REFRESH_SUCCEEDED,
+                    "user:" + response.getUserLogin().getId(), "SUCCESS", "ROTATED");
+            return sessionResponse(response, HttpStatus.OK);
         } catch (RuntimeException exception) {
+            auditLogger.warn(SecurityAuditEvent.AUTH_REFRESH_FAILED,
+                    "anonymous", "DENIED", "INVALID_TOKEN");
             return unauthorizedAndClearCookie();
         }
     }
@@ -91,12 +116,21 @@ public class AuthController {
     @ApiMessage("Logout Success")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
         String refreshToken = readRefreshToken(request);
+        boolean activeSessionRevoked = false;
         if (refreshToken != null && !refreshToken.isBlank()) {
             try {
                 authService.logout(refreshToken);
+                activeSessionRevoked = true;
             } catch (RuntimeException ignored) {
                 // Logout is idempotent and always clears the browser cookie.
             }
+        }
+        if (activeSessionRevoked) {
+            auditLogger.info(SecurityAuditEvent.AUTH_LOGOUT_SUCCEEDED,
+                    "authenticated-session", "SUCCESS", "SESSION_REVOKED");
+        } else {
+            auditLogger.debug(SecurityAuditEvent.AUTH_LOGOUT_SUCCEEDED,
+                    "anonymous", "SUCCESS", "NO_ACTIVE_SESSION");
         }
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .header(HttpHeaders.SET_COOKIE, authCookieService.clearRefreshCookie().toString())
@@ -140,5 +174,9 @@ public class AuthController {
             }
         }
         return null;
+    }
+
+    private String subject(String email) {
+        return "subject:" + keyFactory.email(email).substring(0, 16);
     }
 }

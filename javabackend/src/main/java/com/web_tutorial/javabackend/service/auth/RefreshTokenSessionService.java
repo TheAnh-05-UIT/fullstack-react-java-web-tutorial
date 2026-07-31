@@ -14,6 +14,8 @@ import com.web_tutorial.javabackend.domain.user.RefreshTokenSession;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.exception.InvalidRefreshTokenException;
 import com.web_tutorial.javabackend.repository.user.RefreshTokenSessionRepository;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 import com.web_tutorial.javabackend.service.security.RefreshTokenHasher;
 
 import jakarta.annotation.PostConstruct;
@@ -30,14 +32,17 @@ public class RefreshTokenSessionService {
 
     private final RefreshTokenSessionRepository sessionRepository;
     private final RefreshTokenHasher tokenHasher;
+    private final SecurityAuditLogger auditLogger;
 
     @Value("${javabackend.jwt.refresh-concurrency-grace:3s}")
     private Duration concurrencyGrace;
 
     public RefreshTokenSessionService(RefreshTokenSessionRepository sessionRepository,
-            RefreshTokenHasher tokenHasher) {
+            RefreshTokenHasher tokenHasher,
+            SecurityAuditLogger auditLogger) {
         this.sessionRepository = sessionRepository;
         this.tokenHasher = tokenHasher;
+        this.auditLogger = auditLogger;
     }
 
     @PostConstruct
@@ -88,6 +93,8 @@ public class RefreshTokenSessionService {
         session.setRevokedAt(now);
         session.setRevokeReason(REUSE_REASON);
         sessionRepository.saveAndFlush(session);
+        auditLogger.warn(SecurityAuditEvent.AUTH_REFRESH_REUSE_DETECTED,
+                "user:" + session.getUser().getId(), "DENIED", "FAMILY_REVOKED");
         throw invalid();
     }
 

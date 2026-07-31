@@ -28,6 +28,8 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.web_tutorial.javabackend.domain.dto.response.RestResponse;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +37,11 @@ import org.slf4j.LoggerFactory;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final SecurityAuditLogger auditLogger;
+
+    public GlobalExceptionHandler(SecurityAuditLogger auditLogger) {
+        this.auditLogger = auditLogger;
+    }
 
     // lỗi 400 Bad Request – nghiệp vụ không hợp lệ (id không tồn tại, email trùng, ...)
     @ExceptionHandler(value = {
@@ -50,17 +57,23 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidUploadException.class)
     public ResponseEntity<RestResponse<Object>> handleInvalidUploadException(InvalidUploadException ex) {
+        auditLogger.warn(SecurityAuditEvent.UPLOAD_REJECTED,
+                auditLogger.currentActor(), "DENIED", "INVALID_IMAGE");
         return uploadError(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(UnsupportedUploadTypeException.class)
     public ResponseEntity<RestResponse<Object>> handleUnsupportedUploadTypeException(
             UnsupportedUploadTypeException ex) {
+        auditLogger.warn(SecurityAuditEvent.UPLOAD_REJECTED,
+                auditLogger.currentActor(), "DENIED", "MIME");
         return uploadError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
     }
 
     @ExceptionHandler({UploadTooLargeException.class, MaxUploadSizeExceededException.class})
     public ResponseEntity<RestResponse<Object>> handleUploadTooLargeException(Exception ex) {
+        auditLogger.warn(SecurityAuditEvent.UPLOAD_REJECTED,
+                auditLogger.currentActor(), "DENIED", "SIZE");
         return uploadError(HttpStatus.PAYLOAD_TOO_LARGE, "Image file exceeds the configured size limit.");
     }
 
@@ -68,7 +81,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RestResponse<Object>> handleUploadStorageException(
             UploadStorageException ex,
             HttpServletRequest request) {
-        log.error("Upload storage operation failed at {}", request.getRequestURI(), ex);
+        log.error("event=UPLOAD_STORAGE_FAILED method={}", request.getMethod(), ex);
         return uploadError(HttpStatus.INTERNAL_SERVER_ERROR, "Image storage operation failed.");
     }
 
@@ -117,6 +130,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<RestResponse<Object>> handleAccessDeniedException(
             AccessDeniedException ex, HttpServletRequest request) {
+        auditLogger.warn(SecurityAuditEvent.AUTHZ_ACCESS_DENIED,
+                auditLogger.currentActor(), "DENIED",
+                "INSUFFICIENT_ROLE method=" + request.getMethod());
         RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.FORBIDDEN.value());
         res.setError(HttpStatus.FORBIDDEN.getReasonPhrase());
@@ -127,9 +143,20 @@ public class GlobalExceptionHandler {
 
     // Xử lý lỗi Validation (form input không hợp lệ)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<RestResponse<Object>> validationError(MethodArgumentNotValidException ex) {
+    public ResponseEntity<RestResponse<Object>> validationError(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+        log.debug("event={} outcome=DENIED", SecurityAuditEvent.INPUT_VALIDATION_REJECTED);
         BindingResult result = ex.getBindingResult();
         final List<FieldError> fieldErrors = result.getFieldErrors();
+        if ("/api/v1/register".equals(request.getRequestURI())) {
+            auditLogger.info(SecurityAuditEvent.AUTH_REGISTER_REJECTED,
+                    "anonymous", "DENIED", "VALIDATION");
+        }
+        if (fieldErrors.stream().anyMatch(error -> "role".equals(error.getField()))) {
+            auditLogger.warn(SecurityAuditEvent.AUTHZ_ROLE_ESCALATION_REJECTED,
+                    auditLogger.currentActor(), "DENIED", "INVALID_ROLE");
+        }
 
         RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
@@ -160,6 +187,7 @@ public class GlobalExceptionHandler {
             MissingServletRequestParameterException.class
     })
     public ResponseEntity<RestResponse<Object>> handleMalformedInput(Exception ex) {
+        log.debug("event={} outcome=DENIED", SecurityAuditEvent.INPUT_VALIDATION_REJECTED);
         return inputError(HttpStatus.BAD_REQUEST, "Request input is invalid.");
     }
 
@@ -196,8 +224,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RestResponse<Object>> handleDevopsContentSerializationException(
             com.web_tutorial.javabackend.exception.DevopsContentSerializationException ex, HttpServletRequest request) {
 
-        log.error("Failed to process DevOps content at {}. Operation: {}, Field: {}", 
-                request.getRequestURI(), ex.getOperation(), ex.getFieldName(), ex);
+        log.error("event=DEVOPS_CONTENT_PROCESSING_FAILED method={} operation={} field={}",
+                request.getMethod(), ex.getOperation(), ex.getFieldName(), ex);
 
         RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -213,7 +241,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<RestResponse<Object>> handleGlobalException(
             Exception ex, HttpServletRequest request) {
 
-        log.error("Unhandled exception occurred at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        log.error("event=UNHANDLED_SERVER_ERROR method={}", request.getMethod(), ex);
 
         RestResponse<Object> res = new RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());

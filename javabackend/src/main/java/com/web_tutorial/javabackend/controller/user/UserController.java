@@ -6,6 +6,8 @@ import com.web_tutorial.javabackend.domain.dto.response.user.CreateUserResponseD
 import com.web_tutorial.javabackend.domain.dto.response.user.UpdateUserResponseDTO;
 import com.web_tutorial.javabackend.domain.dto.response.user.UserResponseDTO;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
+import com.web_tutorial.javabackend.observability.SecurityAuditEvent;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 import com.web_tutorial.javabackend.service.user.UserService;
 import com.web_tutorial.javabackend.util.annotation.ApiMessage;
 
@@ -28,9 +30,11 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final SecurityAuditLogger auditLogger;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, SecurityAuditLogger auditLogger) {
         this.userService = userService;
+        this.auditLogger = auditLogger;
     }
 
     @GetMapping
@@ -50,7 +54,10 @@ public class UserController {
     public ResponseEntity<CreateUserResponseDTO> createUser(
             @RequestBody @Valid CreateUserRequestDTO requestDTO)
             throws IdInvalidException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.userService.createUserFromDTO(requestDTO));
+        CreateUserResponseDTO response = this.userService.createUserFromDTO(requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_USER_CREATED, auditLogger.currentActor(),
+                "USER", response.getId(), "USER_CREATED");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -58,13 +65,18 @@ public class UserController {
     public ResponseEntity<UpdateUserResponseDTO> updateUser(
             @PathVariable @Positive Long id,
             @RequestBody @Valid UpdateUserRequestDTO requestDTO) throws IdInvalidException {
-        return ResponseEntity.status(HttpStatus.OK).body(this.userService.updateUserFromDTO(id, requestDTO));
+        UpdateUserResponseDTO response = this.userService.updateUserFromDTO(id, requestDTO);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_USER_UPDATED, auditLogger.currentActor(),
+                "USER", id, "PROFILE_FIELDS");
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a User")
     public ResponseEntity<Void> deleteUser(@PathVariable @Positive Long id) {
         this.userService.deleteUser(id);
+        auditLogger.admin(SecurityAuditEvent.ADMIN_USER_DELETED, auditLogger.currentActor(),
+                "USER", id, "USER_DELETED");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

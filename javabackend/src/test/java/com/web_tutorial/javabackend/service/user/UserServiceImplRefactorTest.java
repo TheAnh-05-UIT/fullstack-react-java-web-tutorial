@@ -28,6 +28,7 @@ import com.web_tutorial.javabackend.domain.user.Role;
 import com.web_tutorial.javabackend.domain.user.User;
 import com.web_tutorial.javabackend.exception.IdInvalidException;
 import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
+import com.web_tutorial.javabackend.observability.SecurityAuditLogger;
 import com.web_tutorial.javabackend.repository.user.RoleRepository;
 import com.web_tutorial.javabackend.repository.user.UserRepository;
 import com.web_tutorial.javabackend.service.user.impl.UserServiceImpl;
@@ -44,11 +45,15 @@ class UserServiceImplRefactorTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private SecurityAuditLogger auditLogger;
+
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, roleRepository, passwordEncoder);
+        userService = new UserServiceImpl(
+                userRepository, roleRepository, passwordEncoder, auditLogger);
     }
 
     @Test
