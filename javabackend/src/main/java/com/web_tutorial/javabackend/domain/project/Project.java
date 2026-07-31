@@ -31,12 +31,14 @@ public class Project {
     private Long id;
 
     // Thông tin nội dung cơ bản
+    @Column(nullable = false)
     private String title;
+    @Column(nullable = false, unique = true)
     private String slug; // Đường dẫn chuẩn SEO
     @Column(columnDefinition = "MEDIUMTEXT")
     private String description;
 
-    @Column(columnDefinition = "MEDIUMTEXT")
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
     private String content; // Nội dung chi tiết
     private String coverImage; // URL ảnh bìa
 
@@ -51,6 +53,7 @@ public class Project {
     private String githubUrl;
     private String demoUrl;
     // Thống kê và Trạng thái
+    @Column(nullable = false)
     private Long views; // Số lượt xem
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;

@@ -259,6 +259,8 @@ class PublicContentVisibilityIntegrationTest extends AbstractMySqlIntegrationTes
         Tutorial tutorial = new Tutorial();
         tutorial.setTitle(slug);
         tutorial.setSlug(slug);
+        tutorial.setContent("content");
+        tutorial.setViews(0L);
         tutorial.setStatus(status);
         tutorial.setDeleted(deleted);
         return tutorial;
@@ -268,6 +270,8 @@ class PublicContentVisibilityIntegrationTest extends AbstractMySqlIntegrationTes
         Project project = new Project();
         project.setTitle(slug);
         project.setSlug(slug);
+        project.setContent("content");
+        project.setViews(0L);
         project.setStatus(status);
         project.setDeleted(deleted);
         return project;

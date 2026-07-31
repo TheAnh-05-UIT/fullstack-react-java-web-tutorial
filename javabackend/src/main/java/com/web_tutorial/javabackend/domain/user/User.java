@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -35,8 +36,11 @@ public class User {
     private Long id;
 
     // Thông tin cơ bản
+    @Column(nullable = false)
     private String username;
+    @Column(nullable = false, length = 254)
     private String email;
+    @Column(nullable = false)
     private String password; // Mật khẩu đã được mã hóa
     private String avatar; // Đường dẫn URL ảnh đại diện
 

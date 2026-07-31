@@ -159,6 +159,7 @@ class RefreshTokenColumnMigrationTest {
                 .dataSource(migrationJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
                 .baselineOnMigrate(true)
                 .baselineVersion("0")
+                .target("6")
                 .load();
     }
 

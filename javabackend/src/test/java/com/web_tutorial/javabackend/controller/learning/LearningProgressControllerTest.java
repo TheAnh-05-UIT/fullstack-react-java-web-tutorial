@@ -80,6 +80,8 @@ public class LearningProgressControllerTest extends AbstractMySqlIntegrationTest
         tutorial.setTitle("Test Tutorial");
         tutorial.setSlug("test-tutorial");
         tutorial.setDescription("Desc");
+        tutorial.setContent("Content");
+        tutorial.setViews(0L);
         tutorial.setStatus(TutorialStatus.PUBLISHED);
         tutorial.setDeleted(false);
         tutorial = tutorialRepository.save(tutorial);
