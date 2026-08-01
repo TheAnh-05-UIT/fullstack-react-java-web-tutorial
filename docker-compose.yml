@@ -41,6 +41,7 @@ services:
       ADMIN_BOOTSTRAP_ENABLED: "${ADMIN_BOOTSTRAP_ENABLED:-false}"
       ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      APP_STORAGE_TYPE: "local"
       UPLOAD_ROOT: "/app/data/uploads"
     ports:
       - "8080:8080"
