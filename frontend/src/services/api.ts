@@ -11,7 +11,11 @@ interface RetriableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+export function resolveApiBaseUrl(configuredUrl?: string): string {
+  return configuredUrl?.trim() || '/api/v1';
+}
+
+const API_BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 let accessToken: string | null = null;
 let authFailureHandler: (() => void) | null = null;

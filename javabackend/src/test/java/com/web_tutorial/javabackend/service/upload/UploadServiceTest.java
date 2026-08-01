@@ -24,6 +24,7 @@ import com.web_tutorial.javabackend.exception.ResourceNotFoundException;
 import com.web_tutorial.javabackend.exception.UnsupportedUploadTypeException;
 import com.web_tutorial.javabackend.exception.UploadTooLargeException;
 import com.web_tutorial.javabackend.service.upload.impl.UploadServiceImpl;
+import com.web_tutorial.javabackend.service.storage.impl.LocalObjectStorageService;
 
 class UploadServiceTest {
 
@@ -37,7 +38,10 @@ class UploadServiceTest {
     void setUp() {
         UploadProperties properties = properties(temporaryDirectory, DataSize.ofMegabytes(5), 4096, 4096, 16_000_000);
         validator = new ImageUploadValidator(properties);
-        uploadService = new UploadServiceImpl(properties, validator);
+        uploadService = new UploadServiceImpl(
+                properties,
+                validator,
+                new LocalObjectStorageService(properties));
     }
 
     @Test
