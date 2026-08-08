@@ -14,11 +14,6 @@ on:
         description: Full 40-character SHA already verified by the CI Quality gate
         required: true
         type: string
-      v7_backup_confirmed:
-        description: Confirm a verified staging backup exists before the first V7 rollout
-        required: true
-        default: false
-        type: boolean
 
 concurrency:
   group: cd-staging
@@ -27,7 +22,6 @@ concurrency:
 permissions:
   checks: read
   contents: read
-  packages: write
 
 jobs:
   authorize:
@@ -80,186 +74,95 @@ jobs:
           echo "sha=$candidate" >> "$GITHUB_OUTPUT"
           echo "Authorized tested main commit ${candidate}."
 
-  publish:
-    name: Publish immutable images
+  deploy-backend:
+    name: Deploy backend to AWS
     needs: authorize
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    outputs:
-      backend-image: ${{ steps.images.outputs.backend }}
-      frontend-image: ${{ steps.images.outputs.frontend }}
+    environment: staging
     steps:
       - name: Check out exact tested commit
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.authorize.outputs.sha }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Resolve immutable image references
-        id: images
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push backend image to Amazon ECR
         env:
-          TESTED_SHA: ${{ needs.authorize.outputs.sha }}
-        shell: bash
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ needs.authorize.outputs.sha }}
         run: |
-          set -euo pipefail
-          registry_base="ghcr.io/${GITHUB_REPOSITORY,,}"
-          echo "backend=${registry_base}-backend:${TESTED_SHA}" >> "$GITHUB_OUTPUT"
-          echo "frontend=${registry_base}-frontend:${TESTED_SHA}" >> "$GITHUB_OUTPUT"
+          cd javabackend
+          docker build -t $REGISTRY/$REPOSITORY:latest -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:latest
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
-      - name: Build backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./javabackend
-          file: ./javabackend/Dockerfile
-          load: true
-          push: false
-          tags: ${{ steps.images.outputs.backend }}
-          labels: |
-            org.opencontainers.image.revision=${{ needs.authorize.outputs.sha }}
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          cache-from: type=gha,scope=staging-backend
-          cache-to: type=gha,mode=max,scope=staging-backend
-
-      - name: Build frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          load: true
-          push: false
-          tags: ${{ steps.images.outputs.frontend }}
-          build-args: |
-            VITE_API_BASE_URL=/api/v1
-          labels: |
-            org.opencontainers.image.revision=${{ needs.authorize.outputs.sha }}
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-          cache-from: type=gha,scope=staging-frontend
-          cache-to: type=gha,mode=max,scope=staging-frontend
-
-      - name: Scan exact backend image
+      - name: Force new ECS deployment
+        env:
+          CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
+          SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
         run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "$PWD:/repo:ro" \
-            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
-            image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
-            --no-progress --ignorefile /repo/.trivyignore \
-            "${{ steps.images.outputs.backend }}"
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment
 
-      - name: Scan exact frontend image
-        run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v "$PWD:/repo:ro" \
-            aquasec/trivy:0.72.0@sha256:cffe3f5161a47a6823fbd23d985795b3ed72a4c806da4c4df16266c02accdd6f \
-            image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
-            --no-progress --ignorefile /repo/.trivyignore \
-            "${{ steps.images.outputs.frontend }}"
-
-      - name: Push both verified images
-        run: |
-          set -euo pipefail
-          docker push "${{ steps.images.outputs.backend }}"
-          docker push "${{ steps.images.outputs.frontend }}"
-
-  deploy:
-    name: Deploy staging
-    needs:
-      - authorize
-      - publish
+  deploy-frontend:
+    name: Deploy frontend to AWS
+    needs: authorize
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: staging
-    env:
-      TESTED_SHA: ${{ needs.authorize.outputs.sha }}
-      BACKEND_IMAGE: ${{ needs.publish.outputs.backend-image }}
-      FRONTEND_IMAGE: ${{ needs.publish.outputs.frontend-image }}
-      STAGING_HOST: ${{ vars.STAGING_HOST }}
-      STAGING_PORT: ${{ vars.STAGING_PORT }}
-      STAGING_USER: ${{ vars.STAGING_USER }}
-      STAGING_DEPLOY_PATH: ${{ vars.STAGING_DEPLOY_PATH }}
-      STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
-      AUTO_V7_READY: ${{ vars.STAGING_V7_READY }}
     steps:
       - name: Check out exact tested commit
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.authorize.outputs.sha }}
 
-      - name: Validate staging target variables
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$STAGING_HOST" =~ ^[A-Za-z0-9.-]+$ ]]
-          [[ "$STAGING_PORT" =~ ^[0-9]{1,5}$ ]]
-          (( STAGING_PORT >= 1 && STAGING_PORT <= 65535 ))
-          [[ "$STAGING_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]]
-          [[ "$STAGING_DEPLOY_PATH" =~ ^/[A-Za-z0-9._/-]+$ ]]
-          [[ "$STAGING_BASE_URL" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]
-          [[ "$BACKEND_IMAGE" == *":${TESTED_SHA}" ]]
-          [[ "$FRONTEND_IMAGE" == *":${TESTED_SHA}" ]]
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Configure verified SSH host
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend static files
+        working-directory: frontend
+        run: npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Sync static files to Amazon S3
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.STAGING_SSH_KNOWN_HOSTS }}
-        shell: bash
+          BUCKET_NAME: ${{ vars.S3_FRONTEND_BUCKET }}
+        working-directory: frontend
         run: |
-          set -euo pipefail
-          install -d -m 700 "$HOME/.ssh"
-          install -m 600 /dev/null "$HOME/.ssh/id_ed25519"
-          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
-          install -m 600 /dev/null "$HOME/.ssh/known_hosts"
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          aws s3 sync ./dist s3://$BUCKET_NAME --delete
 
-      - name: Copy deployment definitions
-        shell: bash
-        run: |
-          set -euo pipefail
-          ssh -o BatchMode=yes -o ConnectTimeout=10 \
-            -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
-            -o StrictHostKeyChecking=yes -p "$STAGING_PORT" \
-            "${STAGING_USER}@${STAGING_HOST}" \
-            "install -d -m 750 '$STAGING_DEPLOY_PATH/scripts'"
-          scp -o BatchMode=yes -o ConnectTimeout=10 \
-            -o StrictHostKeyChecking=yes -P "$STAGING_PORT" \
-            docker-compose.staging.yml \
-            "${STAGING_USER}@${STAGING_HOST}:${STAGING_DEPLOY_PATH}/docker-compose.staging.yml"
-          scp -o BatchMode=yes -o ConnectTimeout=10 \
-            -o StrictHostKeyChecking=yes -P "$STAGING_PORT" \
-            scripts/deploy-staging.sh scripts/smoke-staging.sh scripts/db2-preflight.sql \
-            "${STAGING_USER}@${STAGING_HOST}:${STAGING_DEPLOY_PATH}/scripts/"
-
-      - name: Deploy and verify staging
+      - name: Invalidate CloudFront CDN Cache
         env:
-          MANUAL_V7_CONFIRMED: ${{ inputs.v7_backup_confirmed }}
-        shell: bash
+          DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
-          set -euo pipefail
-          v7_confirmed="$AUTO_V7_READY"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            v7_confirmed="$MANUAL_V7_CONFIRMED"
-          fi
-          printf -v remote_command \
-            'cd %q && chmod 750 scripts/*.sh && DEPLOY_DIR=%q BACKEND_IMAGE=%q FRONTEND_IMAGE=%q DEPLOY_SHA=%q STAGING_BASE_URL=%q V7_BACKUP_CONFIRMED=%q ./scripts/deploy-staging.sh' \
-            "$STAGING_DEPLOY_PATH" "$STAGING_DEPLOY_PATH" "$BACKEND_IMAGE" \
-            "$FRONTEND_IMAGE" "$TESTED_SHA" "$STAGING_BASE_URL" "$v7_confirmed"
-          ssh -o BatchMode=yes -o ConnectTimeout=10 \
-            -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
-            -o StrictHostKeyChecking=yes -p "$STAGING_PORT" \
-            "${STAGING_USER}@${STAGING_HOST}" \
-            "$remote_command"
-
-      - name: Remove ephemeral SSH material
-        if: always()
-        shell: bash
-        run: rm -f "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+          aws cloudfront create-invalidation \
+            --distribution-id $DISTRIBUTION_ID \
+            --paths "/*"
