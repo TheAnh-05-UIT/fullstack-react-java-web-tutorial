@@ -31,7 +31,7 @@ export function TutorialsPage() {
   const { data: allTutorials = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['tutorials-all'],
     // Gọi qua tutorialService thay vì api trực tiếp để tuân thủ kiến trúc phân tầng Service
-    queryFn: () => tutorialService.getAll(0, 1000)
+    queryFn: () => tutorialService.getAll(0, 100)
   });
 
   // Calculate global category counts across ALL tutorials

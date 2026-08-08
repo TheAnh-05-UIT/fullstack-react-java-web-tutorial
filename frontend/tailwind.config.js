@@ -3,7 +3,8 @@ export default {
   content: [
     './index.html', 
     './src/**/*.{js,ts,jsx,tsx}',
-    './src/data/devops_phases/**/*.json'
+    '../javabackend/src/main/resources/data/devops_phases/**/*.json',
+    '../javabackend/src/main/java/com/web_tutorial/javabackend/config/DevopsDataSeeder.java'
   ],
   darkMode: 'class',
   safelist: [],

@@ -1,0 +1,10 @@
+output "cluster_name" { value = aws_ecs_cluster.this.name }
+output "backend_task_definition_arn" { value = aws_ecs_task_definition.backend.arn }
+output "migration_task_definition_arn" { value = aws_ecs_task_definition.migration.arn }
+output "alb_dns_name" { value = aws_lb.this.dns_name }
+output "target_group_arn" { value = aws_lb_target_group.backend.arn }
+output "cloudfront_distribution_id" { value = aws_cloudfront_distribution.this.id }
+output "cloudfront_distribution_arn" { value = aws_cloudfront_distribution.this.arn }
+output "cloudfront_domain_name" { value = aws_cloudfront_distribution.this.domain_name }
+output "application_task_role_arn" { value = aws_iam_role.application.arn }
+output "migration_task_role_arn" { value = aws_iam_role.migration.arn }
