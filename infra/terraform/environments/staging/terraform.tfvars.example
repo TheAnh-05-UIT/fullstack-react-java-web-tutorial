@@ -1,0 +1,23 @@
+aws_region  = "ap-southeast-1"
+environment = "staging"
+
+availability_zones = ["ap-southeast-1a", "ap-southeast-1b"]
+
+ecs_cpu            = 512
+ecs_memory         = 2048
+ecs_desired_count  = 1
+create_ecs_service = false
+
+rds_instance_class       = "db.t4g.micro"
+rds_allocated_storage    = 20
+backup_retention_days    = 1
+rds_deletion_protection  = false
+rds_skip_final_snapshot  = true
+
+enable_nat_gateway = true
+log_retention_days = 14
+s3_force_destroy   = false
+
+# Set only after AWS-C pushes the exact immutable image and CloudFront exists:
+# backend_image_uri = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/web-tutorial-backend:sha-COMMIT"
+# allowed_origins   = "https://DISTRIBUTION.cloudfront.net"
