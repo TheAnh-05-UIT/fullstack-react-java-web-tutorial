@@ -108,6 +108,41 @@ jobs:
           docker push $REGISTRY/$REPOSITORY:latest
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
+      - name: Run Database Migration Task
+        env:
+          CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
+          SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
+        run: |
+          NETWORK_CONFIG=$(aws ecs describe-services \
+            --cluster $CLUSTER_NAME \
+            --services $SERVICE_NAME \
+            --query 'services[0].networkConfiguration' \
+            --output json)
+          
+          echo "Starting Migration Task..."
+          TASK_ARN=$(aws ecs run-task \
+            --cluster $CLUSTER_NAME \
+            --task-definition web-tutorial-staging-migration \
+            --launch-type FARGATE \
+            --network-configuration "$NETWORK_CONFIG" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+            
+          echo "Waiting for Migration Task ($TASK_ARN) to complete..."
+          aws ecs wait tasks-stopped --cluster $CLUSTER_NAME --tasks $TASK_ARN
+          
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster $CLUSTER_NAME \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+            
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration Task FAILED with exit code: $EXIT_CODE"
+            exit 1
+          fi
+          echo "Migration SUCCESSFUL!"
+
       - name: Force new ECS deployment
         env:
           CLUSTER_NAME: ${{ vars.ECS_CLUSTER_NAME }}
